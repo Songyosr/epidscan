@@ -1,0 +1,17 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+*.rds
+*.prm
+*.geo
+*.pop
+*.cas
+data/
+temp/
+output/
+local/
+Population/
+Cases/
+Shapefiles/

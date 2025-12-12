@@ -1,0 +1,280 @@
+---
+title: "Leptospirosis SatScan Analysis Results"
+output: html_document
+---
+
+# Load Libraries
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(htmltools)
+library(rsatscan) # For structure definitions if needed
+```
+
+# Load Results
+```{r}
+# Define paths
+# Define paths
+paths <- list(
+  Current_Run = "data/derived/results_sf.rds"
+)
+
+# Load available results
+results_list <- list()
+
+for (name in names(paths)) {
+  if (file.exists(paths[[name]])) {
+    results_list[[name]] <- readRDS(paths[[name]])
+    print(paste("Loaded", name, "results with", nrow(results_list[[name]]), "locations"))
+  }
+}
+
+if (length(results_list) == 0) {
+  stop("No results files found. Please run the pipeline first.")
+}
+```
+
+# Visualization Functions
+```{r}
+# Function to extract cluster summary
+get_cluster_summary <- function(map_data) {
+  if (!"in_cluster" %in% names(map_data)) {
+    return(NULL)
+  }
+
+  map_data |>
+    filter(in_cluster) |>
+    group_by(CLUSTER) |>
+    summarise(
+      significant = first(significant),
+      CLUSTER_RR = first(CLUSTER_RR),
+      SPAN = first(SPAN),
+      START_DATE = first(START_DATE),
+      END_DATE = first(END_DATE),
+      NUMBER_LOC = n(),
+      OBSERVED = first(CLUSTER_OBS),
+      EXPECTED = first(CLUSTER_EXP),
+      P_VALUE = first(P_VALUE),
+      RADIUS = first(RADIUS),
+      CLUSTER_POP = first(CLUSTER_POP),
+      .groups = "drop"
+    )
+}
+
+# Function to create map
+create_map <- function(map_data, type = c("cluster", "local")) {
+  type <- match.arg(type)
+
+  clusters <- get_cluster_summary(map_data)
+
+  # Get cluster boundaries
+  cluster_boundaries <- NULL
+  if (!is.null(clusters) && nrow(clusters) > 0) {
+    cluster_boundaries <- map_data |>
+      filter(in_cluster) |>
+      group_by(CLUSTER) |>
+      summarise(
+        geometry = st_union(geometry),
+        significant = first(significant),
+        CLUSTER_RR = first(CLUSTER_RR),
+        SPAN = first(SPAN),
+        START_DATE = first(START_DATE),
+        END_DATE = first(END_DATE),
+        CLUSTER_POP = first(CLUSTER_POP),
+        CLUSTER_OBS = first(CLUSTER_OBS),
+        CLUSTER_EXP = first(CLUSTER_EXP),
+        .groups = "drop"
+      )
+  }
+
+  # Province border
+  province_border <- map_data |> summarise(geometry = st_union(geometry))
+
+  # Prepare data for visualization
+  map_data_vis <- map_data
+
+  if (type == "cluster") {
+    map_data_vis <- map_data_vis |>
+      mutate(
+        display_rr = ifelse(in_cluster, CLUSTER_RR, NA),
+        log_display_rr = log(pmax(display_rr, 0.01, na.rm = TRUE))
+      )
+    legend_title <- "Cluster Average<br/>Relative Risk<br/>"
+  } else {
+    map_data_vis <- map_data_vis |>
+      mutate(
+        display_rr = ifelse(in_cluster & LOC_OBS > 0, LOC_RR, NA),
+        log_display_rr = log(display_rr)
+      )
+    legend_title <- "Local Outbreak<br/>Relative Risk<br/>"
+  }
+
+  # Color palette
+  rr_range <- max(abs(map_data_vis$log_display_rr), na.rm = TRUE)
+  if (is.infinite(rr_range) || is.na(rr_range)) rr_range <- 1
+
+  pal <- colorNumeric(
+    palette = colorRampPalette(c("#2166AC", "#D1E5F0", "#FFFFFF", "#FDDBC7", "#B2182B"))(100),
+    domain = c(-rr_range, rr_range),
+    na.color = "#E8E8E8"
+  )
+
+  # Base Map
+  m <- leaflet(map_data_vis) |>
+    addProviderTiles(providers$CartoDB.Positron) |>
+    addPolygons(
+      fillColor = ~ pal(log_display_rr),
+      fillOpacity = ~ ifelse(in_cluster, 0.7, 0.1),
+      color = "#999999",
+      weight = 0.5,
+      popup = ~ paste0(
+        "<b>", ADM3_EN, "</b> (", location_id, ")<br/>",
+        "ต.", ADM3_TH, " อ.", ADM2_TH, " จ.", ADM1_TH, "<br/>",
+        "<hr>",
+        ifelse(in_cluster,
+          paste0(
+            "<b>Cluster ", CLUSTER, "</b>",
+            ifelse(significant, " ⭐ <i>(Significant)</i>", " <i>(Not significant)</i>"), "<br/>",
+            "<b>Cluster Avg RR: ", round(CLUSTER_RR, 2), "</b><br/>",
+            "Time Span: ", as.numeric(difftime(as.Date(END_DATE), as.Date(START_DATE), units = "days")) + 1, " days<br/>",
+            "Period: ", START_DATE, " to ", END_DATE, "<br/>",
+            "Cluster Pop: ", format(CLUSTER_POP, big.mark = ","), "<br/>",
+            "Cluster Obs/Exp: ", CLUSTER_OBS, " / ", round(CLUSTER_EXP, 2), "<br/>",
+            "P-value: ", format(P_VALUE, digits = 3),
+            if (type == "local") {
+              paste0(
+                "<hr>",
+                "<b>Location Stats:</b><br/>",
+                "Local RR: ", round(LOC_RR, 2), "<br/>",
+                "Local Pop: ", format(LOC_POP, big.mark = ","), "<br/>",
+                "Local Obs: ", LOC_OBS
+              )
+            } else {
+              ""
+            }
+          ),
+          "Not in any cluster"
+        )
+      )
+    )
+
+  # Add cluster boundaries
+  if (!is.null(cluster_boundaries)) {
+    m <- m |>
+      addPolygons(
+        data = cluster_boundaries,
+        fillColor = "transparent",
+        color = ~ ifelse(significant, "#D32F2F", "#808080"),
+        weight = 3,
+        opacity = ~ ifelse(significant, 0.9, 0.5),
+        popup = ~ paste0(
+          "<b>Cluster ", CLUSTER, "</b><br/>",
+          "Avg Relative Risk: ", round(CLUSTER_RR, 2), "<br/>",
+          "Time Span: ", as.numeric(difftime(as.Date(END_DATE), as.Date(START_DATE), units = "days")) + 1, " days<br/>",
+          "Period: ", START_DATE, " to ", END_DATE, "<br/>",
+          "Population: ", format(CLUSTER_POP, big.mark = ","), "<br/>",
+          "Observed: ", CLUSTER_OBS, "<br/>",
+          "Expected: ", round(CLUSTER_EXP, 2)
+        )
+      )
+  }
+
+  # Add province border
+  m <- m |>
+    addPolylines(
+      data = province_border,
+      color = "black",
+      weight = 2,
+      opacity = 1,
+      fill = FALSE
+    )
+
+  # Add Legend
+  legend_vals <- c(0.25, 0.5, 1, 2, 4, 8, 16)
+  legend_colors <- sapply(log(legend_vals), function(x) pal(x))
+
+  m <- m |>
+    addLegend(
+      colors = legend_colors,
+      labels = legend_vals,
+      title = legend_title,
+      position = "bottomright",
+      opacity = 1
+    )
+
+  return(m)
+}
+```
+
+# Results {.tabset}
+
+# Results {.tabset}
+
+```{r echo=FALSE}
+# Initialize list to hold all output
+final_output <- list()
+
+for (name in names(results_list)) {
+  # Create a list for this mode's content
+  mode_content <- list()
+
+  # 1. Header
+  mode_content[[length(mode_content) + 1]] <- htmltools::h2(paste(name, "Mode"))
+
+  map_data <- results_list[[name]]
+  clusters <- get_cluster_summary(map_data)
+
+  # 2. Summary Stats
+  if (!is.null(clusters) && nrow(clusters) > 0) {
+    sig_clusters <- clusters |> filter(significant)
+
+    summary_html <- htmltools::div(
+      htmltools::h3("Key Findings"),
+      htmltools::tags$ul(
+        htmltools::tags$li(htmltools::strong("Total clusters detected: "), nrow(clusters)),
+        htmltools::tags$li(htmltools::strong("Significant clusters (p < 0.05): "), nrow(sig_clusters))
+      )
+    )
+
+    if (nrow(sig_clusters) > 0) {
+      # Create a simple table for top clusters
+      top_clusters_table <- sig_clusters |>
+        arrange(P_VALUE) |>
+        select(CLUSTER, NUMBER_LOC, RADIUS, OBSERVED, EXPECTED, CLUSTER_RR, P_VALUE) |>
+        mutate(
+          RADIUS = round(RADIUS, 2),
+          EXPECTED = round(EXPECTED, 2),
+          CLUSTER_RR = round(CLUSTER_RR, 2),
+          P_VALUE = format(P_VALUE, scientific = TRUE, digits = 3)
+        ) |>
+        knitr::kable(format = "html") |>
+        kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+
+      summary_html <- htmltools::tagList(
+        summary_html,
+        htmltools::h3("Top Significant Clusters"),
+        htmltools::HTML(as.character(top_clusters_table))
+      )
+    }
+    mode_content[[length(mode_content) + 1]] <- summary_html
+  } else {
+    mode_content[[length(mode_content) + 1]] <- htmltools::p("No clusters detected.")
+  }
+
+  # 3. Maps
+  mode_content[[length(mode_content) + 1]] <- htmltools::h3("Cluster Risk Map")
+  mode_content[[length(mode_content) + 1]] <- create_map(map_data, "cluster")
+
+  mode_content[[length(mode_content) + 1]] <- htmltools::h3("Local Risk Map")
+  mode_content[[length(mode_content) + 1]] <- create_map(map_data, "local")
+
+  mode_content[[length(mode_content) + 1]] <- htmltools::hr()
+
+  # Add this mode's content to final output
+  final_output[[length(final_output) + 1]] <- htmltools::tagList(mode_content)
+}
+
+# Print the final tagList
+htmltools::tagList(final_output)
+```

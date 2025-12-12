@@ -1,0 +1,13 @@
+^.gitignore$
+^.Rbuildignore$
+^.git$
+^.DS_Store$
+^data/
+^temp/
+^output/
+^local/
+^docs/
+^.*\.Rproj$
+^task.md$
+^implementation_plan.md$
+^walkthrough.md$
