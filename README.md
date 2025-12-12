@@ -32,22 +32,37 @@ set_satscan_path("/Applications/SaTScan.app/Contents/MacOS/SaTScan")
 
 ## Usage
 
-### Run Full Pipeline
-The `run_pipeline` function orchestrates the entire process:
+### Tidy Workflow (Recommended)
+
+The easiest way to run an analysis is using `epid_satscan` with your data frame or `sf` object:
 
 ```r
-run_pipeline(
-  mode = "simple",
-  shapefile_path = "data/shapefiles/adm3.shp",
-  case_file = "data/cases.rds",
-  start_date = "2024-01-01",
-  end_date = "2024-12-31",
-  pop_years = 2024
-)
+library(epidscan)
+
+# Prepare your data (e.g., an sf object with cases)
+# my_data <- ... 
+
+# Run SatScan directly via pipe
+results <- my_data |>
+  epid_satscan(
+    obs_col = case_count,    # Column with observed cases
+    pop_col = population,    # Column with population
+    date_col = date,         # Column with date (Date or numeric)
+    id_col = district_id,    # Column with unique ID
+    type = "space-time",
+    time_precision = "Day",  # Optional: "Year", "Month", or "Generic"
+    output_dir = "satscan_out" # Optional: Save intermediate files here
+  )
+
+
+# The result is an sf object joined with SatScan clusters
+plot(results["recurrence_interval"])
 ```
 
-### Use Individual Modules
-You can also use specific modules for custom workflows:
+### Advanced: Modular Pipeline
+For complex data capabilities (like cleaning Thai addresses), use the modular functions:
+
+
 
 ```r
 # Process case data only

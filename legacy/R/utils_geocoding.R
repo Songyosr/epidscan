@@ -3,11 +3,7 @@
 # This module provides functions to construct Thai addresses from administrative
 # codes and geocode them using the tidygeocoder package.
 
-#' @importFrom dplyr mutate select distinct left_join rename case_when row_number %>%
-#' @importFrom stringr str_pad str_squish
-#' @importFrom sf st_drop_geometry
-#' @importFrom tidygeocoder geocode
-#' @export
+#' Construct Full Thai Address
 #'
 #' Combines house number, moo, and administrative names into a full address string.
 #' Requires a dataframe with columns: address, moo, tmb_code, amp_code, chw_code.
@@ -16,6 +12,11 @@
 #' @param data Dataframe containing case data
 #' @param admin_ref Dataframe/SF object with columns: ADM3_PCODE, ADM3_TH, ADM2_TH, ADM1_TH
 #' @return Dataframe with new 'full_address' column
+#' @importFrom dplyr mutate select distinct left_join rename case_when row_number %>%
+#' @importFrom stringr str_pad str_squish
+#' @importFrom sf st_drop_geometry
+#' @importFrom tidygeocoder geocode
+#' @export
 construct_address <- function(data, admin_ref) {
     # Prepare admin reference lookup
     # ADM3_PCODE is the key (e.g., "TH900101")

@@ -9,7 +9,7 @@
 #' @param satscan_config Optional configuration (list or path to .prm file)
 #' @param project_name Base name for SatScan files (default: "satscan")
 #'
-#' @importFrom rsatscan writes.cas writes.pop writes.geo ss.options write.ss.prm satscan
+#' @importFrom rsatscan write.cas write.pop write.geo ss.options write.ss.prm satscan
 #' @importFrom utils read.table write.csv modifyList
 #' @importFrom stats sd
 #' @export

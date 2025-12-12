@@ -8,6 +8,7 @@ Description: A modular pipeline for preparing data and running SatScan analyses 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 4.1.0)
 Imports:
     sf,
     dplyr,
@@ -16,7 +17,8 @@ Imports:
     terra,
     purrr,
     readr,
-    tools
+    tools,
+    rlang
 Suggests:
     testthat,
     knitr,
