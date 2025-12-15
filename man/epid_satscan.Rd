@@ -12,51 +12,104 @@ epid_satscan(
   id_col = NULL,
   lat_col = NULL,
   long_col = NULL,
-  covariates = NULL,
   type = "space-time",
   model = "poisson",
   time_precision = NULL,
   output_dir = NULL,
-  base_prm = NULL,
   verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{Input data. Can be an \code{sf} object or a data.frame.}
+\item{data}{Input data. Can be an \code{sf} object (geometry auto-extracted) or a data.frame
+(requires lat_col and long_col).}
 
-\item{obs_col}{Column containing observed case counts (unquoted).}
+\item{obs_col}{Column containing observed case counts (unquoted, required).}
 
-\item{pop_col}{Column containing population counts (unquoted, optional).}
+\item{pop_col}{Column containing population counts (unquoted, optional for Poisson model).}
 
-\item{date_col}{Column containing time/dates (unquoted, optional).}
+\item{date_col}{Column containing dates/times (unquoted, optional for temporal analysis).}
 
-\item{id_col}{Column containing unique location IDs (unquoted). If missing, will attempt to use row numbers or generate IDs.}
+\item{id_col}{Column containing unique location IDs (unquoted). If missing, row numbers used.}
 
 \item{lat_col}{Column containing latitude (unquoted, required if data is not sf).}
 
 \item{long_col}{Column containing longitude (unquoted, required if data is not sf).}
 
-\item{covariates}{List of columns to be used as covariates (unquoted).}
+\item{type}{Analysis type. One of:
+\itemize{
+  \item "space-time" (default) - Detect clusters in both space and time
+  \item "purely-spatial" - Detect spatial clusters only
+  \item "space-time-permutation" - For case-only data
+}}
 
-\item{type}{Analysis type: "space-time", "purely-spatial", "space-time-permutation", etc.}
+\item{model}{Probability model. One of:
+\itemize{
+  \item "poisson" (default) - For count data with known population
+  \item "bernoulli" - For case/control data
+  \item "space-time-permutation" - For case-only data
+}}
 
-\item{model}{Model type: "poisson", "bernoulli", "space-time-permutation", etc.}
+\item{time_precision}{Unit of time: "day", "month", "year", "generic", or NULL for auto-detect.
+Auto-detection uses Date objects for "day", numeric for "generic".}
 
-\item{time_precision}{Unit of time: "Day", "Month", "Year", "Generic".}
+\item{output_dir}{Directory for SatScan output files. If NULL (default), uses temp directory.}
 
-\item{output_dir}{Directory to save SatScan input/output files. If NULL (default), uses a temporary directory.}
+\item{verbose}{Logical. Print SatScan progress and debug info?}
 
-\item{base_prm}{Path to an existing .prm file to use as a template.}
-
-\item{verbose}{Logical. Print SatScan output to console?}
-
-\item{...}{Additional arguments passed to \code{rsatscan::ss.options}.}
+\item{...}{Additional arguments passed to \code{rsatscan::ss.options()}. Common options include:
+\itemize{
+  \item MonteCarloReps - Number of Monte Carlo replications (default 999)
+  \item MaxSpatialSizeInPopulationAtRisk - Max cluster size as percentage (default 50)
+  \item MaxTemporalSize - Max temporal cluster size
+}}
 }
 \value{
-An sf object containing the results joined with the input geometry.
+A data.frame or sf object with cluster columns added:
+  \itemize{
+    \item CLUSTER - Cluster ID (1 = most significant)
+    \item P_VALUE - Statistical significance
+    \item REL_RISK - Relative risk compared to rest of study area
+  }
 }
 \description{
-A pipe-friendly wrapper for running SatScan analyses directly on data frames or sf objects.
-Abstracts away the file creation process.
+A pipe-friendly wrapper for running SatScan spatial and space-time cluster analyses
+directly on data frames or sf objects. Handles file creation, parameter configuration,
+and result parsing automatically.
+}
+\details{
+This function requires SatScan to be installed on your system. Set the path using
+\code{set_satscan_path()}.
+
+The function internally:
+\enumerate{
+  \item Extracts geometry from sf objects or lat/long columns
+  \item Writes .cas, .pop, and .geo files for SatScan
+  \item Configures parameters based on data and user options
+  \item Executes SatScan via rsatscan
+  \item Parses results and joins cluster info back to input data
+}
+}
+\examples{
+\dontrun{
+# Basic space-time analysis
+set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")
+
+result <- my_data |>
+  epid_satscan(
+    obs_col = cases,
+    pop_col = population,
+    date_col = date,
+    id_col = location_id,
+    lat_col = latitude,
+    long_col = longitude
+  )
+
+# Filter significant clusters
+clusters <- result |> dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
+}
+
+}
+\seealso{
+\code{\link{set_satscan_path}}, \code{\link{get_satscan_path}}
 }

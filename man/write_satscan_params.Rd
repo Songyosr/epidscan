@@ -20,6 +20,8 @@ Path to created .prm file
 Writes parameter list to .prm file using rsatscan.
 }
 \examples{
+\dontrun{
 params <- create_satscan_params(start_date = "2025/01/01", end_date = "2025/11/30")
 write_satscan_params(params, tempdir(), "lepto")
+}
 }

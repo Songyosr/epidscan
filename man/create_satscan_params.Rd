@@ -48,9 +48,11 @@ Named list of SatScan parameters suitable for ss.options()
 Creates a configuration list for SatScan analysis with default or custom parameters.
 }
 \examples{
+\dontrun{
 params <- create_satscan_params(
     start_date = "2025/01/01",
     end_date = "2025/11/30",
     max_spatial_size = 25
 )
+}
 }

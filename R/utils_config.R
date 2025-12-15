@@ -45,24 +45,27 @@ get_satscan_path <- function() {
 #' @return Named list of SatScan parameters suitable for ss.options()
 #'
 #' @examples
+#' \dontrun{
 #' params <- create_satscan_params(
 #'     start_date = "2025/01/01",
 #'     end_date = "2025/11/30",
 #'     max_spatial_size = 25
 #' )
+#' }
 #' @export
 create_satscan_params <- function(
-    analysis_type = 4, # Prospective Space-Time
-    model_type = 0, # Discrete Poisson
-    start_date = NULL,
-    end_date = NULL,
-    max_spatial_size = 25,
-    max_temporal_size = 30,
-    case_file = "lepto.cas",
-    pop_file = "lepto.pop",
-    geo_file = "lepto.geo",
-    scan_areas = 1, # High rates
-    ...) {
+  analysis_type = 4, # Prospective Space-Time
+  model_type = 0, # Discrete Poisson
+  start_date = NULL,
+  end_date = NULL,
+  max_spatial_size = 25,
+  max_temporal_size = 30,
+  case_file = "lepto.cas",
+  pop_file = "lepto.pop",
+  geo_file = "lepto.geo",
+  scan_areas = 1, # High rates
+  ...
+) {
     # Validate required parameters
     if (is.null(start_date) || is.null(end_date)) {
         stop("start_date and end_date are required")
@@ -151,8 +154,10 @@ validate_satscan_params <- function(params) {
 #' @return Path to created .prm file
 #'
 #' @examples
+#' \dontrun{
 #' params <- create_satscan_params(start_date = "2025/01/01", end_date = "2025/11/30")
 #' write_satscan_params(params, tempdir(), "lepto")
+#' }
 #' @export
 write_satscan_params <- function(params, output_dir, project_name) {
     # Validate parameters first
