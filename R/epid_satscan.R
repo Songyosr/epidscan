@@ -14,15 +14,25 @@
 #' @param long_col Column containing longitude (unquoted, required if data is not sf).
 #' @param type Analysis type. One of:
 #'   \itemize{
-#'     \item "space-time" (default) - Detect clusters in both space and time
-#'     \item "purely-spatial" - Detect spatial clusters only
-#'     \item "space-time-permutation" - For case-only data
+#'     \item "purely-spatial" (1)
+#'     \item "purely-temporal" (2)
+#'     \item "space-time" (3, default)
+#'     \item "space-time-permutation" (4)
+#'     \item "spatial-variation-in-temporal-trends" (5)
+#'     \item "space-time-magnitude" (6)
 #'   }
+#'   Note: "bernoulli" is NOT a valid analysis type; use \code{model="bernoulli"} with an appropriate type (e.g. "purely-spatial").
 #' @param model Probability model. One of:
 #'   \itemize{
-#'     \item "poisson" (default) - For count data with known population
-#'     \item "bernoulli" - For case/control data
-#'     \item "space-time-permutation" - For case-only data
+#'     \item "poisson" (0, default)
+#'     \item "bernoulli" (1)
+#'     \item "space-time-permutation" (2)
+#'     \item "ordinal" (3)
+#'     \item "exponential" (4)
+#'     \item "normal" (5)
+#'     \item "continuous-poisson" (6)
+#'     \item "multinomial" (7)
+#'     \item "rank" (8)
 #'   }
 #' @param time_precision Unit of time: "day", "month", "year", "generic", or NULL for auto-detect.
 #'   Auto-detection uses Date objects for "day", numeric for "generic".
