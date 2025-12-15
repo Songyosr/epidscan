@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2025 Songyosr
+Copyright (c) 2025 Songyos Rajborirug
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
