@@ -78,6 +78,14 @@ If NULL, defaults to minimum date in data.}
 \item{end_date}{Optional end date (Date, POSIXt, or character).
 If NULL, defaults to maximum date in data.}
 
+\item{monitor_mode}{String. "retrospective" (default) or "prospective".
+"retrospective" analyzes the entire dataset for past clusters.
+"prospective" scans for "active" clusters surviving to the end of the study period.}
+
+\item{prospective_start_date}{Start date for the prospective surveillance period.
+Required if \code{monitor_mode = "prospective"}. Clusters must arguably be "active" after this date to be reported
+in prospective mode. Defined as Date, POSIXt, or character string.}
+
 \item{output_dir}{Directory for SatScan output files. If NULL (default), uses temp directory.}
 
 \item{verbose}{Logical. Print SatScan progress and debug info?}
