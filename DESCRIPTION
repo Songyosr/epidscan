@@ -2,8 +2,8 @@ Package: epidscan
 Type: Package
 Title: Modular SatScan Pipeline for Epidemiological Analysis
 Version: 0.1.0
-Author: User <user@example.com>
-Maintainer: User <user@example.com>
+Author: Songyos Rajborirug <songyos.r@psu.ac.th>
+Maintainer: Songyos Rajborirug <songyos.r@psu.ac.th>
 Description: A modular pipeline for preparing data and running SatScan analyses for disease surveillance. Provides tools for processing geographic, population, and case data, generating SatScan input files, and post-processing results.
 License: MIT + file LICENSE
 Encoding: UTF-8
