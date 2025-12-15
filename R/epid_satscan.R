@@ -186,8 +186,9 @@ epid_satscan <- function(data,
   clean_ss_options <- list(
     CaseFile = cas_file,
     CoordinatesFile = geo_file,
-    CoordinatesType = 0, # Lat/Long
+    CoordinatesType = 1, # Lat/Long (CRITICAL - must be 1!)
     PrecisionCaseTimes = time_precision,
+    TimeAggregationUnits = time_precision,  # Must match case time precision
     AnalysisType = switch(type,
                           "space-time" = 3,
                           "purely-spatial" = 1,
@@ -204,6 +205,13 @@ epid_satscan <- function(data,
   
   if ("pop" %in% names(export_df)) {
     clean_ss_options$PopulationFile <- pop_file
+  }
+  
+  # Add date range from data if available
+  if ("date" %in% names(export_df)) {
+    dates <- export_df$date
+    clean_ss_options$StartDate <- format(min(dates), "%Y/%m/%d")
+    clean_ss_options$EndDate <- format(max(dates), "%Y/%m/%d")
   }
   
   # 7. Merge Options from Base and User
@@ -252,63 +260,96 @@ epid_satscan <- function(data,
       }
   }
   
-  # Apply User Overrides (...) last
-  user_opts <- list(...)
-  final_opts <- modifyList(final_opts, user_opts)
+  # 8. Run SatScan using rsatscan's proper API
+  ss_full_path <- get_satscan_path()
+  if (is.null(ss_full_path)) stop("SatScan path not set. Use set_satscan_path().")
   
-  # 8. Run SatScan
-  ss_path <- get_satscan_path()
-  if (is.null(ss_path)) stop("SatScan path not set. Use set_satscan_path().")
+  ss_location <- dirname(ss_full_path)
+  ss_batch <- basename(ss_full_path)
   
-  prm_file <- file.path(work_dir, "epid.prm")
-  rsatscan::write.ss.prm(final_opts, prm_file)
-  
-  cmd <- paste0("\"", ss_path, "\" \"", prm_file, "\"")
-  
-  if (verbose) message("Running SatScan command: ", cmd)
-  
-  system(cmd, show.output.on.console = verbose)
-  
-  # 9. Read Results & Join
-  col_file <- paste0(out_file, ".col.txt")
-  if (!file.exists(col_file)) {
-      warning("SatScan output missing. Check ", work_dir)
-      return(NULL)
+  # macOS App Bundle handling - use CLI binary, not GUI launcher
+  if (Sys.info()["sysname"] == "Darwin" && ss_batch == "SaTScan") {
+    if (basename(ss_location) == "MacOS") {
+      alt_location <- file.path(dirname(ss_location), "app")
+      alt_batch <- "satscan"
+      if (file.exists(file.path(alt_location, alt_batch))) {
+        ss_location <- alt_location
+        ss_batch <- alt_batch
+      }
+    }
   }
   
-  clusters_map <- tryCatch({
-    read.table(col_file, header = TRUE, comment.char = "")
-  }, error = function(e) NULL)
+  if (verbose) message("Running SatScan via rsatscan...")
   
-  if (!is.null(clusters_map)) {
-    clusters_map$LOC_ID <- as.character(clusters_map$LOC_ID)
+  # Set options in rsatscan environment (required pattern)
+  rsatscan::ss.options(reset = TRUE)
+  rsatscan::ss.options(final_opts)
+  
+  # write.ss.prm takes (directory, project_name)
+  rsatscan::write.ss.prm(work_dir, "epid")
+  
+  ss_results <- tryCatch({
+    rsatscan::satscan(
+      work_dir,
+      "epid",
+      sslocation = ss_location,
+      ssbatchfilename = ss_batch,
+      verbose = verbose,
+      cleanup = FALSE
+    )
+  }, error = function(e) {
+    warning("SatScan failed: ", e$message)
+    return(data)
+  })
+  
+  # 9. Parse Results
+  if (verbose) {
+    message("SatScan Result Debug:")
+    message("  ss_results$col class: ", paste(class(ss_results$col), collapse = ", "))
+    message("  ss_results$gis class: ", paste(class(ss_results$gis), collapse = ", "))
+  }
+  
+  # Check if we have GIS output (location-cluster mapping)
+  if (!is.null(ss_results) && !is.null(ss_results$gis) && is.data.frame(ss_results$gis)) {
+    if (verbose) message("DEBUG: GIS data.frame found - extracting clusters")
     
-    # Return strategy: Join to Unique Locations
-    if (is_sf) {
-        unique_sf <- data |> 
-            dplyr::group_by(!!id_quo) |>
-            dplyr::slice(1) |>
-            dplyr::ungroup() |>
-            dplyr::mutate(epid_link_id = as.character(!!id_quo))
-            
-        final_sf <- unique_sf |>
-             dplyr::left_join(clusters_map, by = c("epid_link_id" = "LOC_ID")) |>
-             dplyr::select(-epid_link_id)
-        
-        return(final_sf)
+    # GIS contains: LOC_ID, CLUSTER, P_VALUE, CLU_OBS, CLU_EXP, CLU_ODE, CLU_RR, CLU_POP, etc.
+    # Extract what we need
+    loc_cluster_map <- ss_results$gis |>
+      dplyr::select(LOC_ID, CLUSTER) |>
+      dplyr::mutate(LOC_ID = as.character(LOC_ID))
+    
+    # Get cluster stats - prefer $col if available, otherwise use $gis summary
+    if (!is.null(ss_results$col) && is.data.frame(ss_results$col)) {
+      cluster_info <- ss_results$col |>
+        dplyr::select(CLUSTER, P_VALUE, REL_RISK)
     } else {
-        unique_df <- data |> 
-            dplyr::group_by(!!id_quo) |>
-            dplyr::slice(1) |>
-            dplyr::ungroup() |>
-            dplyr::mutate(epid_link_id = as.character(!!id_quo))
-            
-        final_df <- unique_df |>
-             dplyr::left_join(clusters_map, by = c("epid_link_id" = "LOC_ID")) |>
-             dplyr::select(-epid_link_id)
-        return(final_df)
+      # Extract unique cluster info from $gis (use CLU_RR for relative risk)
+      cluster_info <- ss_results$gis |>
+        dplyr::select(CLUSTER, P_VALUE, REL_RISK = CLU_RR) |>
+        dplyr::distinct(CLUSTER, .keep_all = TRUE)
     }
+    
+    # Join cluster info to location map
+    full_map <- loc_cluster_map |>
+      dplyr::left_join(cluster_info, by = "CLUSTER")
+    
+    # Join to data
+    if (!rlang::quo_is_null(id_quo)) {
+      data$epid_link_id <- as.character(dplyr::pull(data, !!id_quo))
+    } else {
+      data$epid_link_id <- as.character(seq_len(nrow(data)))
+    }
+    
+    final_df <- data |>
+      dplyr::left_join(full_map, by = c("epid_link_id" = "LOC_ID")) |>
+      dplyr::select(-epid_link_id)
+    
+    return(final_df)
+  } else {
+    if (verbose) message("DEBUG: No valid cluster data found")
   }
   
   return(data)
 }
+

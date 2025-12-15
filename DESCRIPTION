@@ -18,7 +18,8 @@ Imports:
     purrr,
     readr,
     tools,
-    rlang
+    rlang,
+    checkmate
 Suggests:
     testthat,
     knitr,
