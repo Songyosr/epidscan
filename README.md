@@ -1,82 +1,100 @@
 # epidscan
 
-**Modular SatScan Pipeline for Epidemiological Analysis**
+**Tidy Interface for SatScan Cluster Analysis**
 
-`epidscan` provides a structured, modular framework for preparing data and running SatScan analyses for disease surveillance in R.
+`epidscan` provides a pipe-friendly R wrapper for running SatScan spatial and space-time cluster analyses directly on data frames or sf objects.
 
 ## Installation
 
-You can install the package directly from the source:
-
 ```r
-# Install devtools if not already installed
-if (!require("devtools")) install.packages("devtools")
-
-# Install epidscan
-devtools::install()
+# Install from GitHub
+devtools::install_github("Songyosr/epidscan")
 ```
 
-## Setup
+**Requirements:** [SatScan](https://www.satscan.org/) must be installed on your system.
 
-Before running an analysis, you must point `epidscan` to your SatScan executable:
+## Quick Start
 
 ```r
 library(epidscan)
 
-# macOS Example
-set_satscan_path("/Applications/SaTScan.app/Contents/MacOS/SaTScan")
+# 1. Set SatScan path (once per session)
+set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")  # macOS
+# set_satscan_path("C:/Program Files/SaTScan/SaTScan.exe")          # Windows
 
-# Windows Example
-# set_satscan_path("C:/Program Files/SaTScan/SaTScan.exe")
-```
-
-## Usage
-
-### Tidy Workflow (Recommended)
-
-The easiest way to run an analysis is using `epid_satscan` with your data frame or `sf` object:
-
-```r
-library(epidscan)
-
-# Prepare your data (e.g., an sf object with cases)
-# my_data <- ... 
-
-# Run SatScan directly via pipe
-results <- my_data |>
+# 2. Run analysis
+result <- my_data |>
   epid_satscan(
-    obs_col = case_count,    # Column with observed cases
-    pop_col = population,    # Column with population
-    date_col = date,         # Column with date (Date or numeric)
-    id_col = district_id,    # Column with unique ID
-    type = "space-time",
-    time_precision = "Day",  # Optional: "Year", "Month", or "Generic"
-    output_dir = "satscan_out" # Optional: Save intermediate files here
+    obs_col = cases,
+    pop_col = population,
+    date_col = date,
+    id_col = location_id,
+    lat_col = latitude,
+    long_col = longitude
   )
 
-
-# The result is an sf object joined with SatScan clusters
-plot(results["recurrence_interval"])
+# 3. Filter significant clusters
+clusters <- result |> 
+  dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
 ```
 
-### Advanced: Modular Pipeline
-For complex data capabilities (like cleaning Thai addresses), use the modular functions:
+## Features
 
+- **Tidy interface** - Works with pipes and data frames
+- **sf support** - Auto-extracts geometry from sf objects
+- **Auto-detection** - Infers time precision from Date columns
+- **Result joining** - Cluster info joined back to original data
 
+## Parameters
+
+| Parameter             | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `obs_col`             | Observed case counts (required)                                |
+| `pop_col`             | Population counts (optional, for Poisson)                      |
+| `date_col`            | Date/time column (optional, for temporal)                      |
+| `id_col`              | Location IDs (optional, auto-generated if missing)             |
+| `lat_col`, `long_col` | Coordinates (required if not sf)                               |
+| `type`                | `"space-time"`, `"purely-spatial"`, `"space-time-permutation"` |
+| `model`               | `"poisson"`, `"bernoulli"`, `"space-time-permutation"`         |
+| `time_precision`      | `"day"`, `"month"`, `"year"`, `"generic"`, or `NULL` (auto)    |
+| `...`                 | Additional `rsatscan::ss.options()` arguments                  |
+
+## Output
+
+Returns the original data with cluster columns added:
+
+| Column     | Description                          |
+| ---------- | ------------------------------------ |
+| `CLUSTER`  | Cluster ID (1 = most significant)    |
+| `P_VALUE`  | Statistical significance             |
+| `REL_RISK` | Relative risk vs. rest of study area |
+
+## Example: Leptospirosis Surveillance
 
 ```r
-# Process case data only
-cases <- process_cases(
-    case_file = "cases.rds",
-    output_dir = "data/derived",
-    start_date = "2024-01-01", 
-    end_date = "2024-12-31"
-)
+# Load case data with location and population
+lepto_data <- readRDS("cases_with_pop.rds")
 
-# Run SatScan on pre-prepared files
-run_satscan_module(
-    input_dir = "data/derived",
-    start_date = "2024-01-01",
-    end_date = "2024-12-31"
-)
+# Run space-time Poisson analysis
+result <- lepto_data |>
+  epid_satscan(
+    obs_col = cases,
+    pop_col = pop,
+    date_col = date,
+    id_col = tambon_code,
+    lat_col = lat,
+    long_col = long,
+    type = "space-time",
+    model = "poisson",
+    MonteCarloReps = 999
+  )
+
+# View detected clusters
+result |>
+  dplyr::filter(!is.na(CLUSTER)) |>
+  dplyr::distinct(CLUSTER, P_VALUE, REL_RISK)
 ```
+
+## License
+
+MIT
