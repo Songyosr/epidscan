@@ -3,22 +3,29 @@
 .RData
 .Ruserdata
 .DS_Store
-*.rds
+
+# SatScan temp files
 *.prm
 *.geo
 *.pop
 *.cas
+
+# Data directories (not in package)
 data/
 temp/
 output/
 local/
-Population/
-Cases/
-Shapefiles/
 
-# Large data files
+# R CMD check output
 ..Rcheck/
-inst/extdata/thai_bound/
-inst/extdata/population_cache/
+
+# Large files
 *.shp
 *.zip
+inst/extdata/thai_bound/
+inst/extdata/population_cache/
+
+# Legacy/development files (not part of package)
+legacy/
+docs/
+*.rds
