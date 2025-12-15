@@ -15,6 +15,9 @@ epid_satscan(
   type = "space-time",
   model = "poisson",
   time_precision = NULL,
+  geo_type = "latlong",
+  start_date = NULL,
+  end_date = NULL,
   output_dir = NULL,
   verbose = FALSE,
   ...
@@ -52,6 +55,16 @@ epid_satscan(
 
 \item{time_precision}{Unit of time: "day", "month", "year", "generic", or NULL for auto-detect.
 Auto-detection uses Date objects for "day", numeric for "generic".}
+
+\item{geo_type}{String. "latlong" (default) or "cartesian".
+If "latlong", `sf` data is transformed to WGS84.
+If "cartesian", raw coordinates are used (CoordinatesType=0).}
+
+\item{start_date}{Optional start date (Date, POSIXt, or character).
+If NULL, defaults to minimum date in data.}
+
+\item{end_date}{Optional end date (Date, POSIXt, or character).
+If NULL, defaults to maximum date in data.}
 
 \item{output_dir}{Directory for SatScan output files. If NULL (default), uses temp directory.}
 

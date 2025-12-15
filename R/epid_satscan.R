@@ -26,6 +26,13 @@
 #'   }
 #' @param time_precision Unit of time: "day", "month", "year", "generic", or NULL for auto-detect.
 #'   Auto-detection uses Date objects for "day", numeric for "generic".
+#' @param geo_type String. "latlong" (default) or "cartesian".
+#'   If "latlong", `sf` data is transformed to WGS84.
+#'   If "cartesian", raw coordinates are used (CoordinatesType=0).
+#' @param start_date Optional start date (Date, POSIXt, or character).
+#'   If NULL, defaults to minimum date in data.
+#' @param end_date Optional end date (Date, POSIXt, or character).
+#'   If NULL, defaults to maximum date in data.
 #' @param output_dir Directory for SatScan output files. If NULL (default), uses temp directory.
 #' @param verbose Logical. Print SatScan progress and debug info?
 #' @param ... Additional arguments passed to \code{rsatscan::ss.options()}. Common options include:
@@ -91,6 +98,9 @@ epid_satscan <- function(data,
                          type = "space-time",
                          model = "poisson",
                          time_precision = NULL,
+                         geo_type = "latlong",
+                         start_date = NULL,
+                         end_date = NULL,
                          output_dir = NULL,
                          verbose = FALSE,
                          ...) {
@@ -103,7 +113,7 @@ epid_satscan <- function(data,
   long_quo <- rlang::enquo(long_col)
 
   # 2. Extract geometry
-  geo_df <- extract_geometry(data, lat_quo, long_quo)
+  geo_df <- extract_geometry(data, lat_quo, long_quo, geo_type)
 
   # 3. Extract/generate IDs
   if (rlang::quo_is_null(id_quo)) {
@@ -143,11 +153,31 @@ epid_satscan <- function(data,
   date_values <- if ("date" %in% names(export_df)) export_df$date else NULL
   time_prec <- detect_time_precision(date_values, time_precision)
 
+  # Validate explicit start/end dates against precision
+  # We basically just check if we can format them without error using the detected precision
+  if (!is.null(start_date)) {
+    # If character, trust user or try to parse?
+    # SatScan expects string matching precision.
+    # Only simple check if it's not a string
+    if (inherits(start_date, "Date") || inherits(start_date, "POSIXt")) {
+      # Good
+    } else if (!is.character(start_date)) {
+      stop("start_date must be Date, POSIXt or character string.")
+    }
+  }
+  if (!is.null(end_date)) {
+    if (inherits(end_date, "Date") || inherits(end_date, "POSIXt")) {
+      # Good
+    } else if (!is.character(end_date)) {
+      stop("end_date must be Date, POSIXt or character string.")
+    }
+  }
+
   # 7. Write input files (Now using time_prec)
   files <- write_satscan_files(geo_df, export_df, work_dir, time_precision = time_prec)
 
   # 8. Build options
-  opts <- build_satscan_options(files, export_df, time_prec, type, model)
+  opts <- build_satscan_options(files, export_df, time_prec, type, model, geo_type, start_date, end_date)
   opts <- apply_user_overrides(opts, list(...))
 
   # 9. Get SatScan path

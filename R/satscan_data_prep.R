@@ -13,14 +13,17 @@ utils::globalVariables(c("id", "lat", "long", "date"))
 #' @param long_quo Quosure for longitude column (if data.frame)
 #' @return data.frame with lat, long columns
 #' @keywords internal
-extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL) {
+extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL, geo_type = "latlong") {
     is_sf <- inherits(data, "sf")
 
     if (is_sf) {
-        # Ensure WGS84 (Lat/Long) since SatScan is configured for Lat/Long (CoordsType=1)
-        if (sf::st_crs(data) != sf::st_crs(4326)) {
-            data <- sf::st_transform(data, 4326)
+        # If latlong, enforce WGS84
+        if (geo_type == "latlong") {
+            if (sf::st_crs(data) != sf::st_crs(4326)) {
+                data <- sf::st_transform(data, 4326)
+            }
         }
+        # If cartesian, use raw coordinates (no transform)
 
         # Use sf centroids
         centroids <- sf::st_centroid(sf::st_geometry(data))

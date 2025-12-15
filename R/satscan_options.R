@@ -51,11 +51,14 @@ detect_time_precision <- function(date_values, user_precision = NULL) {
 #' @param model Model type string
 #' @return Named list of SatScan options
 #' @keywords internal
-build_satscan_options <- function(files, export_df, time_precision, type, model) {
+build_satscan_options <- function(files, export_df, time_precision, type, model, geo_type = "latlong", start_date = NULL, end_date = NULL) {
+    # 0=Cartesian, 1=Lat/Long
+    coords_type <- if (geo_type == "cartesian") 0 else 1
+
     opts <- list(
         CaseFile = basename(files$cas_file),
         CoordinatesFile = basename(files$geo_file),
-        CoordinatesType = 1, # Lat/Long (CRITICAL!)
+        CoordinatesType = coords_type,
         PrecisionCaseTimes = time_precision,
         TimeAggregationUnits = time_precision,
         AnalysisType = switch(type,
@@ -78,24 +81,46 @@ build_satscan_options <- function(files, export_df, time_precision, type, model)
         opts$PopulationFile <- basename(files$pop_file)
     }
 
-    # Add date range from data
+    # Helper to format any date/string using precision logic
+    fmt_date <- function(d, prec) {
+        # If it's already character, assume user knows best?
+        # But we could try to reformat if it looks like a Date object
+        if (inherits(d, "Date") || inherits(d, "POSIXt")) {
+            fmt <- switch(as.character(prec),
+                "1" = "%Y",
+                "2" = "%Y/%m",
+                "3" = "%Y/%m/%d",
+                "%Y/%m/%d"
+            )
+            return(format(d, fmt))
+        }
+        # If character, just return as is (assuming valid)
+        return(as.character(d))
+    }
+
+    # Add date range from data OR explicit arguments
+    # If explicit dates provided, they take precedence
+
+    # Defaults from data
+    min_d <- NULL
+    max_d <- NULL
     if ("date" %in% names(export_df)) {
-        dates <- export_df$date
+        min_d <- min(export_df$date, na.rm = TRUE)
+        max_d <- max(export_df$date, na.rm = TRUE)
+    }
 
-        fmt <- switch(as.character(time_precision),
-            "1" = "%Y",
-            "2" = "%Y/%m",
-            "3" = "%Y/%m/%d",
-            "%Y/%m/%d" # Default for Generic if not handled or fallthrough
-        )
+    # Resolve StartDate
+    if (!is.null(start_date)) {
+        opts$StartDate <- fmt_date(start_date, time_precision)
+    } else if (!is.null(min_d)) {
+        opts$StartDate <- fmt_date(min_d, time_precision)
+    }
 
-        # Generic (0) often doesn't need start/end date in same format, but usually SatScan infers from data file
-        # If generic, we might skip StartDate/EndDate or trust as.character?
-        # rsatscan usually expects Y/M/D for parameters if they are dates.
-        # BUT if precision is Year, it MUST be Year.
-
-        opts$StartDate <- format(min(dates), fmt)
-        opts$EndDate <- format(max(dates), fmt)
+    # Resolve EndDate
+    if (!is.null(end_date)) {
+        opts$EndDate <- fmt_date(end_date, time_precision)
+    } else if (!is.null(max_d)) {
+        opts$EndDate <- fmt_date(max_d, time_precision)
     }
 
     opts
