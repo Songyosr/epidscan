@@ -1,6 +1,6 @@
 test_that("set_satscan_path sets option", {
     # Mock path
-    mock_path <- "/tmp/fake/satscan"
+    mock_path <- tempdir()
 
     # Set path
     expect_message(set_satscan_path(mock_path), "SatScan path set to")

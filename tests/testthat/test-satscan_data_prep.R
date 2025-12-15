@@ -40,7 +40,7 @@ test_that("extract_geometry works with data.frame and specified columns", {
 
 test_that("extract_geometry errors when columns missing", {
     data <- data.frame(id = 1:2)
-    expect_error(extract_geometry(data, rlang::quo(NULL), rlang::quo(NULL)))
+    expect_error(extract_geometry(data, rlang::quo(), rlang::quo()))
 })
 
 test_that("write_satscan_files creates correct files", {
@@ -62,12 +62,13 @@ test_that("write_satscan_files creates correct files", {
     files <- write_satscan_files(geo_df, export_df, temp_dir, project_name)
 
     # Check file existence
-    expect_true(file.exists(files$cas))
-    expect_true(file.exists(files$geo))
+    expect_true(file.exists(files$cas_file))
+    expect_true(file.exists(files$geo_file))
 
     # specific checks for content could be added here
 
     # Cleanup
-    unlink(files$cas)
-    unlink(files$geo)
+    unlink(files$cas_file)
+    unlink(files$geo_file)
+    if (!is.null(files$pop_file)) unlink(files$pop_file)
 })
