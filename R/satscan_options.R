@@ -76,10 +76,24 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
         "space-time-permutation" = 4L,
         "spatial-variation-in-temporal-trends" = 5L,
         "space-time-magnitude" = 6L,
-        "bernoulli" = 7L, # Sometimes users confuse model/analysis, but SaTScan AnalysisType 7 is not standard.
-        # Actually Bernoulli is a MODEL type.
+        # "bernoulli" is NOT a valid AnalysisType. It is a ModelType.
         as_int_or_val(type) # Fallback to user input
     )
+
+    # Validation for AnalysisType
+    if (is.numeric(analysis_type)) {
+        if (analysis_type == 7L) {
+            stop("AnalysisType 7 (Bernoulli) is not a valid SaTScan analysis type. Did you mean to set model='bernoulli'?")
+        }
+        if (!analysis_type %in% 1:6) {
+            warning(sprintf("Unknown AnalysisType: %s. Valid types are 1-6.", analysis_type))
+        }
+    } else {
+        # Character validation
+        if (tolower(as.character(analysis_type)) == "bernoulli") {
+            stop("AnalysisType 'bernoulli' is not a valid SaTScan analysis type. Did you mean to set model='bernoulli'?")
+        }
+    }
 
     # 2. Map ModelType
     model_key <- if (is.character(model)) tolower(model) else model

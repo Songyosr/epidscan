@@ -20,6 +20,7 @@ epid_satscan(
   end_date = NULL,
   monitor_mode = "retrospective",
   prospective_start_date = NULL,
+  work_dir = NULL,
   output_dir = NULL,
   verbose = FALSE,
   ...
@@ -43,16 +44,26 @@ epid_satscan(
 
 \item{type}{Analysis type. One of:
 \itemize{
-  \item "space-time" (default) - Detect clusters in both space and time
-  \item "purely-spatial" - Detect spatial clusters only
-  \item "space-time-permutation" - For case-only data
-}}
+  \item "purely-spatial" (1)
+  \item "purely-temporal" (2)
+  \item "space-time" (3, default)
+  \item "space-time-permutation" (4)
+  \item "spatial-variation-in-temporal-trends" (5)
+  \item "space-time-magnitude" (6)
+}
+Note: "bernoulli" is NOT a valid analysis type; use \code{model="bernoulli"} with an appropriate type (e.g. "purely-spatial").}
 
 \item{model}{Probability model. One of:
 \itemize{
-  \item "poisson" (default) - For count data with known population
-  \item "bernoulli" - For case/control data
-  \item "space-time-permutation" - For case-only data
+  \item "poisson" (0, default)
+  \item "bernoulli" (1)
+  \item "space-time-permutation" (2)
+  \item "ordinal" (3)
+  \item "exponential" (4)
+  \item "normal" (5)
+  \item "continuous-poisson" (6)
+  \item "multinomial" (7)
+  \item "rank" (8)
 }}
 
 \item{time_precision}{Unit of time: "day", "month", "year", "generic", or NULL for auto-detect.
@@ -68,7 +79,19 @@ If NULL, defaults to minimum date in data.}
 \item{end_date}{Optional end date (Date, POSIXt, or character).
 If NULL, defaults to maximum date in data.}
 
-\item{output_dir}{Directory for SatScan output files. If NULL (default), uses temp directory.}
+\item{monitor_mode}{String. "retrospective" (default) or "prospective".
+"retrospective" analyzes the entire dataset for past clusters.
+"prospective" scans for "active" clusters surviving to the end of the study period.}
+
+\item{prospective_start_date}{Start date for the prospective surveillance period.
+Required if \code{monitor_mode = "prospective"}. Clusters must arguably be "active" after this date to be reported
+in prospective mode. Defined as Date, POSIXt, or character string.}
+
+\item{work_dir}{Directory for intermediate SaTScan input/output files. Defaults to \code{tempdir()}.
+This keeps your project clean.}
+
+\item{output_dir}{Directory for FINAL SatScan results (e.g. cluster reports, shapefiles).
+If provided, result files will be copied here from \code{work_dir} after successful execution.}
 
 \item{verbose}{Logical. Print SatScan progress and debug info?}
 

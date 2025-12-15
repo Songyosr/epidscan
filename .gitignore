@@ -30,3 +30,6 @@ inst/extdata/population_cache/
 legacy/
 docs/
 *.rds
+
+# Documentation to ignore
+SaTScan_Users_Guide.md
