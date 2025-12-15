@@ -12,14 +12,9 @@ Depends: R (>= 4.1.0)
 Imports:
     sf,
     dplyr,
-    stringr,
     rsatscan,
-    terra,
-    purrr,
-    readr,
-    tools,
     rlang,
-    checkmate
+    utils
 Suggests:
     testthat,
     knitr,

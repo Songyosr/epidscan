@@ -7,13 +7,13 @@
 set_satscan_path(path)
 }
 \arguments{
-\item{path}{Character. Absolute path to SatScan executable or directory.}
+\item{path}{Character. Absolute path to SatScan executable.}
 }
 \description{
 Sets the path to the SatScan executable for the current session.
 }
 \examples{
 \dontrun{
-set_satscan_path("C:/Progra~1/SaTScan/SaTScan.exe")
+set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")
 }
 }
