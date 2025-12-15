@@ -131,18 +131,25 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
     }
 
     # Helper to format any date/string using precision logic
-    fmt_date <- function(d, prec) {
+    fmt_date <- function(d, prec, is_end = FALSE) {
+        # 1. If Date/POSIXt, standard formatting
         if (inherits(d, "Date") || inherits(d, "POSIXt")) {
-            fmt <- switch(as.character(prec),
-                "1" = "%Y",
-                "2" = "%Y/%m",
-                "3" = "%Y/%m/%d",
-                "%Y/%m/%d"
-            )
-            return(format(d, fmt))
+            # SaTScan StartDate/EndDate parameters generally accept YYYY/MM/DD
+            return(format(d, "%Y/%m/%d"))
         }
-        # If character, just return as is (assuming valid)
-        return(as.character(d))
+
+        # 2. If Character/Numeric Year (e.g. "2024" or 2024)
+        d_str <- as.character(d)
+        if (grepl("^\\d{4}$", d_str)) {
+            if (is_end) {
+                return(paste0(d_str, "/12/31"))
+            } else {
+                return(paste0(d_str, "/01/01"))
+            }
+        }
+
+        # Fallback
+        return(d_str)
     }
 
     # Add date range from data OR explicit arguments
@@ -155,23 +162,21 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
 
     # Resolve StartDate
     if (!is.null(start_date)) {
-        opts$StartDate <- fmt_date(start_date, time_precision)
+        opts$StartDate <- fmt_date(start_date, time_precision, is_end = FALSE)
     } else if (!is.null(min_d)) {
-        opts$StartDate <- fmt_date(min_d, time_precision)
+        opts$StartDate <- fmt_date(min_d, time_precision, is_end = FALSE)
     }
 
     # Resolve EndDate
     if (!is.null(end_date)) {
-        opts$EndDate <- fmt_date(end_date, time_precision)
+        opts$EndDate <- fmt_date(end_date, time_precision, is_end = TRUE)
     } else if (!is.null(max_d)) {
-        opts$EndDate <- fmt_date(max_d, time_precision)
+        opts$EndDate <- fmt_date(max_d, time_precision, is_end = TRUE)
     }
 
     # Resolve Prospective Scanning
     if (monitor_mode == "prospective" && !is.null(prospective_start_date)) {
-        opts$ProspectiveStartDate <- fmt_date(prospective_start_date, time_precision)
-        # Note: AnalysisType should ideally be compatible (Space-Time or Permuation),
-        # but we trust the user or let SaTScan error if they try prospective on purely spatial.
+        opts$ProspectiveStartDate <- fmt_date(prospective_start_date, time_precision, is_end = FALSE)
     }
 
     opts
