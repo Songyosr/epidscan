@@ -1,6 +1,9 @@
 # Internal helpers for SatScan data preparation
 # These functions are NOT exported - used by epid_satscan()
 
+# Suppress R CMD check notes for NSE columns
+utils::globalVariables(c("id", "lat", "long", "date"))
+
 #' Extract Geometry from Data
 #'
 #' Uses sf::st_geometry() for sf objects, lat/long columns for data.frames.
