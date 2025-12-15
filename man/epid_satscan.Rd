@@ -20,6 +20,7 @@ epid_satscan(
   end_date = NULL,
   monitor_mode = "retrospective",
   prospective_start_date = NULL,
+  work_dir = NULL,
   output_dir = NULL,
   verbose = FALSE,
   ...
@@ -86,7 +87,11 @@ If NULL, defaults to maximum date in data.}
 Required if \code{monitor_mode = "prospective"}. Clusters must arguably be "active" after this date to be reported
 in prospective mode. Defined as Date, POSIXt, or character string.}
 
-\item{output_dir}{Directory for SatScan output files. If NULL (default), uses temp directory.}
+\item{work_dir}{Directory for intermediate SaTScan input/output files. Defaults to \code{tempdir()}.
+This keeps your project clean.}
+
+\item{output_dir}{Directory for FINAL SatScan results (e.g. cluster reports, shapefiles).
+If provided, result files will be copied here from \code{work_dir} after successful execution.}
 
 \item{verbose}{Logical. Print SatScan progress and debug info?}
 

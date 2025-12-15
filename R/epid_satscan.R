@@ -49,7 +49,10 @@
 #' @param prospective_start_date Start date for the prospective surveillance period.
 #'   Required if \code{monitor_mode = "prospective"}. Clusters must arguably be "active" after this date to be reported
 #'   in prospective mode. Defined as Date, POSIXt, or character string.
-#' @param output_dir Directory for SatScan output files. If NULL (default), uses temp directory.
+#' @param work_dir Directory for intermediate SaTScan input/output files. Defaults to \code{tempdir()}.
+#'   This keeps your project clean.
+#' @param output_dir Directory for FINAL SatScan results (e.g. cluster reports, shapefiles).
+#'   If provided, result files will be copied here from \code{work_dir} after successful execution.
 #' @param verbose Logical. Print SatScan progress and debug info?
 #' @param ... Additional arguments passed to \code{rsatscan::ss.options()}. Common options include:
 #'   \itemize{
@@ -119,6 +122,7 @@ epid_satscan <- function(data,
                          end_date = NULL,
                          monitor_mode = "retrospective",
                          prospective_start_date = NULL,
+                         work_dir = NULL,
                          output_dir = NULL,
                          verbose = FALSE,
                          ...) {
@@ -159,12 +163,14 @@ epid_satscan <- function(data,
     export_df$date <- rlang::eval_tidy(date_quo, data)
   }
 
-  # 5. Setup work directory
-  work_dir <- if (!is.null(output_dir)) {
+  # 5. Setup directories
+  # Use provided work_dir or default to tempdir (for intermediate files)
+  if (is.null(work_dir)) work_dir <- tempdir()
+  if (!dir.exists(work_dir)) dir.create(work_dir, recursive = TRUE)
+
+  # Ensure output_dir exists if provided
+  if (!is.null(output_dir)) {
     if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
-    output_dir
-  } else {
-    tempdir()
   }
 
   # 6. Detect time precision (MOVED UP)
@@ -225,5 +231,24 @@ epid_satscan <- function(data,
     return(data)
   }
 
-  parse_results(ss_results, data, id_quo, verbose)
+  parsed_results <- parse_results(ss_results, data, id_quo, verbose)
+
+  # 12. Copy results to output_dir if requested
+  if (!is.null(output_dir) && !is.null(ss_results)) {
+    if (verbose) message(sprintf("Copying results to %s", output_dir))
+
+    # Get all files starting with epid.
+    all_epid <- list.files(work_dir, pattern = "^epid\\.", full.names = TRUE)
+
+    # Filter out input/intermediate files (.cas, .pop, .geo, .prm)
+    # We keep everything else (.txt, .shp, .kml, etc)
+    is_excluded <- grepl("\\.(cas|pop|geo|prm)$", all_epid)
+    to_copy <- all_epid[!is_excluded]
+
+    if (length(to_copy) > 0) {
+      file.copy(to_copy, output_dir, overwrite = TRUE)
+    }
+  }
+
+  parsed_results
 }
