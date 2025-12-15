@@ -139,12 +139,12 @@ epid_satscan <- function(data,
     tempdir()
   }
 
-  # 6. Write input files
-  files <- write_satscan_files(geo_df, export_df, work_dir)
-
-  # 7. Detect time precision
+  # 6. Detect time precision (MOVED UP)
   date_values <- if ("date" %in% names(export_df)) export_df$date else NULL
   time_prec <- detect_time_precision(date_values, time_precision)
+
+  # 7. Write input files (Now using time_prec)
+  files <- write_satscan_files(geo_df, export_df, work_dir, time_precision = time_prec)
 
   # 8. Build options
   opts <- build_satscan_options(files, export_df, time_prec, type, model)

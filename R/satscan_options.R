@@ -81,8 +81,21 @@ build_satscan_options <- function(files, export_df, time_precision, type, model)
     # Add date range from data
     if ("date" %in% names(export_df)) {
         dates <- export_df$date
-        opts$StartDate <- format(min(dates), "%Y/%m/%d")
-        opts$EndDate <- format(max(dates), "%Y/%m/%d")
+
+        fmt <- switch(as.character(time_precision),
+            "1" = "%Y",
+            "2" = "%Y/%m",
+            "3" = "%Y/%m/%d",
+            "%Y/%m/%d" # Default for Generic if not handled or fallthrough
+        )
+
+        # Generic (0) often doesn't need start/end date in same format, but usually SatScan infers from data file
+        # If generic, we might skip StartDate/EndDate or trust as.character?
+        # rsatscan usually expects Y/M/D for parameters if they are dates.
+        # BUT if precision is Year, it MUST be Year.
+
+        opts$StartDate <- format(min(dates), fmt)
+        opts$EndDate <- format(max(dates), fmt)
     }
 
     opts
