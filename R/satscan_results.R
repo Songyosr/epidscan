@@ -92,6 +92,9 @@ parse_results <- function(ss_results, data, id_quo, verbose = FALSE) {
     # Check for GIS output
     if (is.null(ss_results) || is.null(ss_results$gis) || !is.data.frame(ss_results$gis)) {
         if (verbose) message("No valid cluster data found")
+        data$CLUSTER <- NA_real_
+        data$P_VALUE <- NA_real_
+        data$REL_RISK <- NA_real_
         return(data)
     }
 

@@ -15,14 +15,18 @@ test_that("Full Leptospirosis Workflow Test", {
 
     # 1. Load Data
     # Cases
-    cases_raw <- readRDS("../../data/cases_prepared.rds")
+    cases_path <- system.file("extdata", "cases_prepared.rds", package = "epidscan")
+    if (cases_path == "") skip("cases_prepared.rds not found")
+    cases_raw <- readRDS(cases_path)
 
     # Population
-    pop_raw <- readRDS("../../data/population_cache/thailand_pop_2024.rds")
+    pop_path <- system.file("extdata", "population_cache", "thailand_pop_2024.rds", package = "epidscan")
+    if (pop_path == "") skip("thailand_pop_2024.rds not found")
+    pop_raw <- readRDS(pop_path)
 
     # Shapefile for Geo
-    shp_path <- "../../data/thai_bound/tha_admbnda_adm3_rtsd_20220121.shp"
-    if (!file.exists(shp_path)) {
+    shp_path <- system.file("extdata", "thai_bound", "tha_admbnda_adm3_rtsd_20220121.shp", package = "epidscan")
+    if (shp_path == "") {
         skip("Shapefile not found")
     }
     shp <- st_read(shp_path, quiet = TRUE)
