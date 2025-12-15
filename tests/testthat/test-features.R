@@ -52,8 +52,8 @@ test_that("epid_satscan accepts start_date/end_date arguments", {
         time_precision = 1, type = "space-time", model = "poisson",
         start_date = as.Date("2024-01-01"), end_date = as.Date("2025-01-01")
     )
-    expect_equal(opts_yr$StartDate, "2024")
-    expect_equal(opts_yr$EndDate, "2025")
+    expect_equal(opts_yr$StartDate, "2024/01/01")
+    expect_equal(opts_yr$EndDate, "2025/01/01")
 })
 
 test_that("epid_satscan validates date arguments", {
