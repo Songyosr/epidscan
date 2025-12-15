@@ -64,16 +64,48 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
 
     # Helper for date formatting
     format_date_by_precision <- function(d, prec) {
+        # 1. If Date/POSIXt, standard formatting
+        if (inherits(d, "Date") || inherits(d, "POSIXt")) {
+            if (prec == 1L) {
+                return(format(d, "%Y"))
+            } # Year
+            if (prec == 2L) {
+                return(format(d, "%Y/%m"))
+            } # Month
+            if (prec == 3L) {
+                return(format(d, "%Y/%m/%d"))
+            } # Day
+            return(as.character(d)) # Fallback
+        }
+
+        # 2. If Generic (0), just stringify
+        if (prec == 0L) {
+            return(as.character(d))
+        }
+
+        # 3. Handling Non-Date inputs for specific precision
+        # If Year precision and numeric -> Assume valid 4-digit year
         if (prec == 1L) {
-            return(format(d, "%Y"))
-        } # Year
-        if (prec == 2L) {
-            return(format(d, "%Y/%m"))
-        } # Month
-        if (prec == 3L) {
-            return(format(d, "%Y/%m/%d"))
-        } # Day
-        as.character(d) # Generic / Default
+            if (is.numeric(d)) {
+                return(as.character(d))
+            }
+            if (is.character(d)) {
+                return(d)
+            }
+        }
+
+        # 4. Otherwise, error because we cannot safely infer YYYY or YYYY/MM from raw numbers/strings
+        # (e.g. does "202401" mean Jan 2024? Or is it just a number?)
+        stop(sprintf(
+            "Time precision %s requires a Date/POSIXt column, or (for Year) a numeric/character column. Found: %s",
+            switch(as.character(prec),
+                "1" = "Year",
+                "2" = "Month",
+                "3" = "Day",
+                "Unknown"
+            ),
+            class(d)[1]
+        ))
     }
 
     # Write Geo (id, lat, long) - deduplicated
