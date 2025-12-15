@@ -13,10 +13,18 @@ utils::globalVariables(c("id", "lat", "long", "date"))
 #' @param long_quo Quosure for longitude column (if data.frame)
 #' @return data.frame with lat, long columns
 #' @keywords internal
-extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL) {
+extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL, geo_type = "latlong") {
     is_sf <- inherits(data, "sf")
 
     if (is_sf) {
+        # If latlong, enforce WGS84
+        if (geo_type == "latlong") {
+            if (sf::st_crs(data) != sf::st_crs(4326)) {
+                data <- sf::st_transform(data, 4326)
+            }
+        }
+        # If cartesian, use raw coordinates (no transform)
+
         # Use sf centroids
         centroids <- sf::st_centroid(sf::st_geometry(data))
         coords <- sf::st_coordinates(centroids)
@@ -46,12 +54,27 @@ extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL) {
 #' @param export_df Export data.frame with id, cases, date, pop (optional)
 #' @param work_dir Working directory
 #' @param project_name Project name for files (default: "epid")
+#' @param time_precision Integer (0=Generic, 1=Year, 2=Month, 3=Day)
 #' @return List with file paths (cas_file, geo_file, pop_file)
 #' @keywords internal
-write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epid") {
+write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epid", time_precision = 3L) {
     cas_file <- file.path(work_dir, paste0(project_name, ".cas"))
     geo_file <- file.path(work_dir, paste0(project_name, ".geo"))
     pop_file <- file.path(work_dir, paste0(project_name, ".pop"))
+
+    # Helper for date formatting
+    format_date_by_precision <- function(d, prec) {
+        if (prec == 1L) {
+            return(format(d, "%Y"))
+        } # Year
+        if (prec == 2L) {
+            return(format(d, "%Y/%m"))
+        } # Month
+        if (prec == 3L) {
+            return(format(d, "%Y/%m/%d"))
+        } # Day
+        as.character(d) # Generic / Default
+    }
 
     # Write Geo (id, lat, long) - deduplicated
     geo_unique <- geo_df |>
@@ -65,7 +88,7 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
     cas_df <- data.frame(id = export_df$id, cases = export_df$cases)
     if ("date" %in% names(export_df)) {
         # Format date for SatScan
-        cas_df$date <- format(export_df$date, "%Y/%m/%d")
+        cas_df$date <- format_date_by_precision(export_df$date, time_precision)
     }
     utils::write.table(cas_df, cas_file,
         row.names = FALSE, col.names = FALSE, quote = FALSE
@@ -76,7 +99,7 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
     if ("pop" %in% names(export_df)) {
         pop_df <- data.frame(id = export_df$id)
         if ("date" %in% names(export_df)) {
-            pop_df$date <- format(export_df$date, "%Y/%m/%d")
+            pop_df$date <- format_date_by_precision(export_df$date, time_precision)
         }
         pop_df$pop <- export_df$pop
 

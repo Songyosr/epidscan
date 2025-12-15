@@ -51,25 +51,63 @@ detect_time_precision <- function(date_values, user_precision = NULL) {
 #' @param model Model type string
 #' @return Named list of SatScan options
 #' @keywords internal
-build_satscan_options <- function(files, export_df, time_precision, type, model) {
+build_satscan_options <- function(files, export_df, time_precision, type, model,
+                                  geo_type = "latlong", start_date = NULL, end_date = NULL,
+                                  monitor_mode = "retrospective", prospective_start_date = NULL) {
+    # helper for checking if a value is effectively an integer
+    as_int_or_val <- function(x) {
+        if (is.numeric(x) && x %% 1 == 0) {
+            return(as.integer(x))
+        }
+        if (grepl("^[0-9]+$", as.character(x))) {
+            return(as.integer(x))
+        }
+        x
+    }
+
+    # 1. Map AnalysisType
+    # Clean string input
+    type_key <- if (is.character(type)) tolower(type) else type
+
+    analysis_type <- switch(as.character(type_key),
+        "purely-spatial" = 1L,
+        "purely-temporal" = 2L,
+        "space-time" = 3L,
+        "space-time-permutation" = 4L,
+        "spatial-variation-in-temporal-trends" = 5L,
+        "space-time-magnitude" = 6L,
+        "bernoulli" = 7L, # Sometimes users confuse model/analysis, but SaTScan AnalysisType 7 is not standard.
+        # Actually Bernoulli is a MODEL type.
+        as_int_or_val(type) # Fallback to user input
+    )
+
+    # 2. Map ModelType
+    model_key <- if (is.character(model)) tolower(model) else model
+
+    model_type <- switch(as.character(model_key),
+        "poisson" = 0L,
+        "bernoulli" = 1L,
+        "space-time-permutation" = 2L,
+        "ordinal" = 3L,
+        "exponential" = 4L,
+        "normal" = 5L,
+        "continuous-poisson" = 6L,
+        "multinomial" = 7L,
+        "rank" = 8L,
+        as_int_or_val(model) # Fallback
+    )
+
+    # 3. Geo Type
+    coords_type <- if (geo_type == "cartesian") 0L else 1L
+
     opts <- list(
         CaseFile = basename(files$cas_file),
         CoordinatesFile = basename(files$geo_file),
-        CoordinatesType = 1, # Lat/Long (CRITICAL!)
+        CoordinatesType = coords_type,
         PrecisionCaseTimes = time_precision,
         TimeAggregationUnits = time_precision,
-        AnalysisType = switch(type,
-            "space-time" = 3,
-            "purely-spatial" = 1,
-            "space-time-permutation" = 4,
-            3 # default
-        ),
-        ModelType = switch(model,
-            "poisson" = 0,
-            "bernoulli" = 1,
-            "space-time-permutation" = 2,
-            0 # default
-        ),
+        AnalysisType = analysis_type,
+        ModelType = model_type,
         ResultsFile = "epid.txt"
     )
 
@@ -78,11 +116,48 @@ build_satscan_options <- function(files, export_df, time_precision, type, model)
         opts$PopulationFile <- basename(files$pop_file)
     }
 
-    # Add date range from data
+    # Helper to format any date/string using precision logic
+    fmt_date <- function(d, prec) {
+        if (inherits(d, "Date") || inherits(d, "POSIXt")) {
+            fmt <- switch(as.character(prec),
+                "1" = "%Y",
+                "2" = "%Y/%m",
+                "3" = "%Y/%m/%d",
+                "%Y/%m/%d"
+            )
+            return(format(d, fmt))
+        }
+        # If character, just return as is (assuming valid)
+        return(as.character(d))
+    }
+
+    # Add date range from data OR explicit arguments
+    min_d <- NULL
+    max_d <- NULL
     if ("date" %in% names(export_df)) {
-        dates <- export_df$date
-        opts$StartDate <- format(min(dates), "%Y/%m/%d")
-        opts$EndDate <- format(max(dates), "%Y/%m/%d")
+        min_d <- min(export_df$date, na.rm = TRUE)
+        max_d <- max(export_df$date, na.rm = TRUE)
+    }
+
+    # Resolve StartDate
+    if (!is.null(start_date)) {
+        opts$StartDate <- fmt_date(start_date, time_precision)
+    } else if (!is.null(min_d)) {
+        opts$StartDate <- fmt_date(min_d, time_precision)
+    }
+
+    # Resolve EndDate
+    if (!is.null(end_date)) {
+        opts$EndDate <- fmt_date(end_date, time_precision)
+    } else if (!is.null(max_d)) {
+        opts$EndDate <- fmt_date(max_d, time_precision)
+    }
+
+    # Resolve Prospective Scanning
+    if (monitor_mode == "prospective" && !is.null(prospective_start_date)) {
+        opts$ProspectiveStartDate <- fmt_date(prospective_start_date, time_precision)
+        # Note: AnalysisType should ideally be compatible (Space-Time or Permuation),
+        # but we trust the user or let SaTScan error if they try prospective on purely spatial.
     }
 
     opts

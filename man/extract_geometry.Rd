@@ -4,7 +4,7 @@
 \alias{extract_geometry}
 \title{Extract Geometry from Data}
 \usage{
-extract_geometry(data, lat_quo = NULL, long_quo = NULL)
+extract_geometry(data, lat_quo = NULL, long_quo = NULL, geo_type = "latlong")
 }
 \arguments{
 \item{data}{Input data (sf or data.frame)}

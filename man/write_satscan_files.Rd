@@ -4,7 +4,13 @@
 \alias{write_satscan_files}
 \title{Write SatScan Input Files}
 \usage{
-write_satscan_files(geo_df, export_df, work_dir, project_name = "epid")
+write_satscan_files(
+  geo_df,
+  export_df,
+  work_dir,
+  project_name = "epid",
+  time_precision = 3L
+)
 }
 \arguments{
 \item{geo_df}{Geometry data.frame with id, lat, long}
@@ -14,6 +20,8 @@ write_satscan_files(geo_df, export_df, work_dir, project_name = "epid")
 \item{work_dir}{Working directory}
 
 \item{project_name}{Project name for files (default: "epid")}
+
+\item{time_precision}{Integer (0=Generic, 1=Year, 2=Month, 3=Day)}
 }
 \value{
 List with file paths (cas_file, geo_file, pop_file)

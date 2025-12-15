@@ -4,7 +4,18 @@
 \alias{build_satscan_options}
 \title{Build SatScan Options List}
 \usage{
-build_satscan_options(files, export_df, time_precision, type, model)
+build_satscan_options(
+  files,
+  export_df,
+  time_precision,
+  type,
+  model,
+  geo_type = "latlong",
+  start_date = NULL,
+  end_date = NULL,
+  monitor_mode = "retrospective",
+  prospective_start_date = NULL
+)
 }
 \arguments{
 \item{files}{List with cas_file, geo_file, pop_file paths}
