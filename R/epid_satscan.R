@@ -101,6 +101,8 @@ epid_satscan <- function(data,
                          geo_type = "latlong",
                          start_date = NULL,
                          end_date = NULL,
+                         monitor_mode = "retrospective",
+                         prospective_start_date = NULL,
                          output_dir = NULL,
                          verbose = FALSE,
                          ...) {
@@ -173,11 +175,16 @@ epid_satscan <- function(data,
     }
   }
 
+  # Validate prospective settings
+  if (monitor_mode == "prospective" && is.null(prospective_start_date)) {
+    stop("prospective_start_date is required when monitor_mode is 'prospective'.")
+  }
+
   # 7. Write input files (Now using time_prec)
   files <- write_satscan_files(geo_df, export_df, work_dir, time_precision = time_prec)
 
   # 8. Build options
-  opts <- build_satscan_options(files, export_df, time_prec, type, model, geo_type, start_date, end_date)
+  opts <- build_satscan_options(files, export_df, time_prec, type, model, geo_type, start_date, end_date, monitor_mode, prospective_start_date)
   opts <- apply_user_overrides(opts, list(...))
 
   # 9. Get SatScan path

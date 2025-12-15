@@ -12,7 +12,9 @@ build_satscan_options(
   model,
   geo_type = "latlong",
   start_date = NULL,
-  end_date = NULL
+  end_date = NULL,
+  monitor_mode = "retrospective",
+  prospective_start_date = NULL
 )
 }
 \arguments{

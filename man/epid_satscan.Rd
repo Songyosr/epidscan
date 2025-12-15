@@ -18,6 +18,8 @@ epid_satscan(
   geo_type = "latlong",
   start_date = NULL,
   end_date = NULL,
+  monitor_mode = "retrospective",
+  prospective_start_date = NULL,
   output_dir = NULL,
   verbose = FALSE,
   ...
