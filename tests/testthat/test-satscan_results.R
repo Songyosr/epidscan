@@ -1,4 +1,4 @@
-test_that("parse_results handles empty results gracefully", {
+test_that("parse_satscan_output handles empty results gracefully", {
     # Mock SatScan result with no clusters
     mock_ss <- list(
         col = NULL,
@@ -6,20 +6,25 @@ test_that("parse_results handles empty results gracefully", {
     )
 
     data <- data.frame(id = 1:5)
-    result <- parse_results(mock_ss, data, rlang::quo(id))
+    geo_df <- data.frame(id = as.character(1:5), lat = 10, long = 10)
 
-    expect_equal(nrow(result), 5)
-    expect_true("CLUSTER" %in% names(result))
-    expect_true(all(is.na(result$CLUSTER)))
+    result <- parse_satscan_output(mock_ss, data, geo_df, rlang::quo(id))
+
+    expect_s3_class(result, "satscan_result")
+    expect_null(result$location_summary)
+
+    # If we convert to DF it should be empty or NULL if no location summary
+    expect_null(as.data.frame(result))
 })
 
-test_that("parse_results joins cluster info correctly", {
+test_that("parse_satscan_output joins cluster info correctly", {
     # Mock SatScan GIS result
     mock_gis <- data.frame(
         LOC_ID = c("1", "2"),
         CLUSTER = c(1, 1),
         P_VALUE = c(0.001, 0.001),
-        CLU_RR = c(5.5, 5.5)
+        CLU_RR = c(5.5, 5.5),
+        CLU_ODE = c(10, 10)
     )
 
     mock_ss <- list(
@@ -28,15 +33,19 @@ test_that("parse_results joins cluster info correctly", {
     )
 
     data <- data.frame(id = c(1, 2, 3))
-    # Important: parse_results expects id_col to be a quosure
-    result <- parse_results(mock_ss, data, rlang::quo(id))
+    geo_df <- data.frame(id = as.character(c(1, 2, 3)), lat = c(10, 10, 20), long = c(10, 10, 20))
 
-    expect_equal(nrow(result), 3)
+    # Test location summary (default)
+    result <- parse_satscan_output(mock_ss, data, geo_df, rlang::quo(id))
+
+    loc_summary <- result$location_summary
+    expect_equal(nrow(loc_summary), 3)
 
     # Check IDs 1 and 2 define cluster 1
-    expect_equal(result$CLUSTER[result$id == 1], 1)
-    expect_equal(result$CLUSTER[result$id == 2], 1)
+    # Note: geo_df IDs are numeric 1,2,3 but join uses char matching usually if prepared right
+    expect_equal(loc_summary$CLUSTER[loc_summary$id == 1], 1)
+    expect_equal(loc_summary$CLUSTER[loc_summary$id == 2], 1)
 
     # Check ID 3 has NA cluster
-    expect_true(is.na(result$CLUSTER[result$id == 3]))
+    expect_true(is.na(loc_summary$CLUSTER[loc_summary$id == 3]))
 })
