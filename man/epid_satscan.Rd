@@ -94,6 +94,9 @@ This keeps your project clean.}
 \item{output_dir}{Directory for FINAL SatScan results (e.g. cluster reports, shapefiles).
 If provided, result files will be copied here from \code{work_dir} after successful execution.}
 
+\item{merge_time_series}{Logical. If TRUE, creates a joined data frame with cluster IDs added to every time point.
+Defaults to FALSE to save memory. Access via \code{$main_results} on the returned object.}
+
 \item{verbose}{Logical. Print SatScan progress and debug info?}
 
 \item{...}{Additional arguments passed to \code{rsatscan::ss.options()}. Common options include:
@@ -104,12 +107,13 @@ If provided, result files will be copied here from \code{work_dir} after success
 }}
 }
 \value{
-A data.frame or sf object with cluster columns added:
+An S3 object of class \code{satscan_result} containing:
   \itemize{
-    \item CLUSTER - Cluster ID (1 = most significant)
-    \item P_VALUE - Statistical significance
-    \item REL_RISK - Relative risk compared to rest of study area
+    \item \code{location_summary}: A data.frame/sf with 1 row per location, including local statistics and cluster info.
+    \item \code{cluster_summary}: A data.frame with metadata for each cluster (p-value, start/end date, etc.).
+    \item \code{main_results}: (Optional) The original data with cluster IDs, if \code{merge_time_series = TRUE}.
   }
+  Use \code{as.data.frame(x)} to extract the location summary (compatible with pipes).
 }
 \description{
 A pipe-friendly wrapper for running SatScan spatial and space-time cluster analyses
@@ -126,7 +130,7 @@ The function internally:
   \item Writes .cas, .pop, and .geo files for SatScan
   \item Configures parameters based on data and user options
   \item Executes SatScan via rsatscan
-  \item Parses results and joins cluster info back to input data
+  \item Parses results into a tidy S3 object
 }
 }
 \examples{
@@ -144,8 +148,12 @@ result <- my_data |>
     long_col = longitude
   )
 
-# Filter significant clusters
-clusters <- result |> dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
+# Print summary
+print(result)
+
+# Filter significant clusters from the location summary
+significant_locs <- as.data.frame(result) |>
+  dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
 }
 
 }
