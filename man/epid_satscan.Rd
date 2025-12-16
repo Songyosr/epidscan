@@ -22,6 +22,7 @@ epid_satscan(
   prospective_start_date = NULL,
   work_dir = NULL,
   output_dir = NULL,
+  merge_time_series = FALSE,
   verbose = FALSE,
   ...
 )
