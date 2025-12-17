@@ -101,6 +101,8 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
     # 2. Create Cluster Summary (metadata for each cluster)
     # ss_results$col contains: CLUSTER, LOCATION_IDs, START_DATE, END_DATE, P_VALUE, etc.
     # It is usually the authoritative source for cluster-level stats.
+    cluster_summary <- NULL
+    
     if (!is.null(ss_results$col)) {
         cluster_summary <- ss_results$col
 
@@ -109,7 +111,7 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
         if ("RR" %in% names(cluster_summary) && !"REL_RISK" %in% names(cluster_summary)) {
             cluster_summary <- dplyr::rename(cluster_summary, REL_RISK = RR)
         }
-    } else {
+    } else if (!is.null(ss_results$gis) && is.data.frame(ss_results$gis)) {
         # Fallback: Extract from GIS if COL file is missing
         if (verbose) message("No .col file found - extracting cluster summary from GIS data")
         cluster_summary <- ss_results$gis |>
@@ -140,26 +142,13 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
 
         location_summary <- loc_geo |>
             dplyr::left_join(gis_df, by = c("id" = "LOC_ID"))
-
-        # Define cluster_summary here when GIS results are present
-        if (!is.null(ss_results$col)) {
-            cluster_summary <- ss_results$col
-            # Ensure standardized column names for REL_RISK (handling variation in SatScan versions)
-            if ("RR" %in% names(cluster_summary) && !"REL_RISK" %in% names(cluster_summary)) {
-                cluster_summary <- dplyr::rename(cluster_summary, REL_RISK = RR)
-            }
-        } else {
-            # Fallback: Extract from GIS if COL file is missing
-            if (verbose) message("No .col file found - extracting cluster summary from GIS data")
-            cluster_summary <- ss_results$gis |>
-                dplyr::select(CLUSTER, P_VALUE, REL_RISK = CLU_RR, ODE = CLU_ODE) |>
-                dplyr::distinct(CLUSTER, .keep_all = TRUE) |>
-                dplyr::arrange(CLUSTER)
-        }
     } else {
         # No GIS results - just return location info with NAs for stats
         location_summary <- loc_geo
-        # Return empty DF with expected columns to satisfy tests/API
+    }
+    
+    # Ensure cluster_summary exists with expected structure
+    if (is.null(cluster_summary)) {
         cluster_summary <- data.frame(
             CLUSTER = integer(),
             P_VALUE = numeric(),

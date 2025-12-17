@@ -74,15 +74,33 @@ prep_ctl <- function(df, loc_id, time = NULL, cases = NULL, covars = NULL,
     # Format Time logic (same as prep_cas)
     if ("time" %in% names(tmp)) {
         if (time_precision == "day") {
-            d <- tryCatch(as.Date(tmp$time), error = function(e) as.Date(paste0(tmp$time, "-01-01")))
+            d <- tryCatch(as.Date(tmp$time), error = function(e) {
+                # If direct conversion fails, try year conversion
+                tryCatch(as.Date(paste0(tmp$time, "-01-01")), 
+                        error = function(e2) rep(NA, length(tmp$time)))
+            })
+            if (all(is.na(d))) {
+                stop("Failed to convert time values to Date format for 'day' precision")
+            }
             tmp$time <- format(d, "%Y/%m/%d")
         } else if (time_precision == "month") {
             d <- as.Date(paste0(as.character(tmp$time), "-01"), format = "%Y-%m-%d")
-            if (all(is.na(d))) d <- as.Date(tmp$time)
+            if (all(is.na(d))) {
+                d <- as.Date(tmp$time)
+            }
+            if (all(is.na(d))) {
+                stop("Failed to convert time values to Date format for 'month' precision")
+            }
             tmp$time <- format(d, "%Y/%m")
         } else if (time_precision == "year") {
-            tmp$time <- format(as.Date(paste0(tmp$time, "-01-01")), "%Y")
-            if (all(is.na(tmp$time))) tmp$time <- as.character(tmp$time)
+            d <- tryCatch(as.Date(paste0(tmp$time, "-01-01")),
+                         error = function(e) rep(NA, length(tmp$time)))
+            if (all(is.na(d))) {
+                # Fall back to character representation
+                tmp$time <- as.character(tmp$time)
+            } else {
+                tmp$time <- format(d, "%Y")
+            }
         }
     }
 

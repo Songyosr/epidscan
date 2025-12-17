@@ -64,6 +64,11 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
 
     # Helper for date formatting
     format_date_by_precision <- function(d, prec) {
+        # Validate input
+        if (is.null(d) || length(d) == 0) {
+            stop("Date values cannot be NULL or empty")
+        }
+        
         # 1. If Date/POSIXt, standard formatting
         if (inherits(d, "Date") || inherits(d, "POSIXt")) {
             if (prec == 1L) {
@@ -87,6 +92,10 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
         # If Year precision and numeric -> Assume valid 4-digit year
         if (prec == 1L) {
             if (is.numeric(d)) {
+                # Validate year range
+                if (any(!is.na(d) & (d < 1900 | d > 2100))) {
+                    warning("Some year values are outside typical range (1900-2100)")
+                }
                 return(as.character(d))
             }
             if (is.character(d)) {

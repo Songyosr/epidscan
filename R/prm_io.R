@@ -238,10 +238,21 @@ prm_add <- function(prm, key, value, section, info = NULL) {
 #' @return Invisibly returns the path.
 #' @export
 prm_write <- function(prm, path) {
+    # Validate prm object
+    if (!inherits(prm, "prm_list")) {
+        stop("prm must be a prm_list object", call. = FALSE)
+    }
+    
     skeleton <- attr(prm, "skeleton")
 
     if (is.null(skeleton)) {
         stop("prm_list has no skeleton attribute. Cannot write.", call. = FALSE)
+    }
+    
+    if (length(skeleton) == 0) {
+        warning("prm_list skeleton is empty. Writing empty file.", call. = FALSE)
+        writeLines(character(0), path)
+        return(invisible(path))
     }
 
     line_map <- attr(prm, "line_map")
@@ -256,15 +267,17 @@ prm_write <- function(prm, path) {
         if (length(common_keys) > 0) {
             indices <- line_map[common_keys]
             # Filter valid indices
-            valid <- indices > 0 & indices <= length(output)
+            valid <- indices > 0 & indices <= length(output) & !is.na(indices)
             valid_keys <- common_keys[valid]
             valid_indices <- indices[valid]
 
-            # Vectorized line construction
-            new_lines <- paste0(valid_keys, "=", vapply(prm[valid_keys], as.character, character(1)))
+            if (length(valid_keys) > 0) {
+                # Vectorized line construction
+                new_lines <- paste0(valid_keys, "=", vapply(prm[valid_keys], as.character, character(1)))
 
-            # Single vectorized assignment
-            output[valid_indices] <- new_lines
+                # Single vectorized assignment
+                output[valid_indices] <- new_lines
+            }
         }
     } else {
         # Fallback: match keys in skeleton lines vectorized

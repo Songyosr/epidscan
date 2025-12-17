@@ -57,11 +57,18 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
     .Deprecated("satscanr", msg = "build_satscan_options is deprecated. Use ss.options directly or via set_satscan_opts().")
     # helper for checking if a value is effectively an integer
     as_int_or_val <- function(x) {
+        if (is.null(x) || length(x) == 0) {
+            return(x)
+        }
+        if (is.na(x)) {
+            return(x)
+        }
         if (is.numeric(x) && x %% 1 == 0) {
             return(as.integer(x))
         }
-        if (grepl("^[0-9]+$", as.character(x))) {
-            return(as.integer(x))
+        x_str <- as.character(x)
+        if (grepl("^[0-9]+$", x_str)) {
+            return(as.integer(x_str))
         }
         x
     }
@@ -82,14 +89,14 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
     )
 
     # Validation for AnalysisType
-    if (is.numeric(analysis_type)) {
+    if (is.numeric(analysis_type) && !is.na(analysis_type)) {
         if (analysis_type == 7L) {
             stop("AnalysisType 7 (Bernoulli) is not a valid SaTScan analysis type. Did you mean to set model='bernoulli'?")
         }
         if (!analysis_type %in% 1:6) {
             warning(sprintf("Unknown AnalysisType: %s. Valid types are 1-6.", analysis_type))
         }
-    } else {
+    } else if (!is.null(analysis_type) && !is.na(analysis_type)) {
         # Character validation
         if (tolower(as.character(analysis_type)) == "bernoulli") {
             stop("AnalysisType 'bernoulli' is not a valid SaTScan analysis type. Did you mean to set model='bernoulli'?")

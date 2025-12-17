@@ -96,6 +96,14 @@ prep_geo <- function(x, loc_id, coords = NULL, geometry = NULL) {
         col1 <- x[[coords[1]]]
         col2 <- x[[coords[2]]]
 
+        # Validate that coordinates are numeric and not all NA
+        if (!is.numeric(col1) || !is.numeric(col2)) {
+            stop("Coordinate columns must be numeric")
+        }
+        if (all(is.na(col1)) || all(is.na(col2))) {
+            stop("Coordinate columns cannot be all NA")
+        }
+
         # Simple heuristic for type if not provided?
         # Spec says: "cartesian or lat/lon coordinates... Store coordinate type"
         # User instructions: "If additional scan centers are needed, use .grd, not fake cases"
@@ -108,7 +116,7 @@ prep_geo <- function(x, loc_id, coords = NULL, geometry = NULL) {
         # But I DO need to put something in `spec$coord_type`.
         # I'll default to 'latlong' but allow override via `...` if needed, OR just leave it null and let `satscanr` decide/default?
         # Better: check if values look like lat/long.
-        if (all(col1 >= -180 & col1 <= 180, na.rm = T) && all(col2 >= -90 & col2 <= 90, na.rm = T)) {
+        if (all(col1 >= -180 & col1 <= 180, na.rm = TRUE) && all(col2 >= -90 & col2 <= 90, na.rm = TRUE)) {
             coord_type <- "latlong"
         } else {
             coord_type <- "cartesian"
