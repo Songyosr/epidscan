@@ -32,41 +32,42 @@ prm_parse <- function(source) {
         lines <- source
     }
 
-    # Initialize
-    result <- list()
-    sections <- character()
-    line_map <- integer()
-    current_section <- "Unknown"
+    # Vectorized parsing
+    trimmed <- trimws(lines)
 
-    for (i in seq_along(lines)) {
-        line <- lines[i]
-        trimmed <- trimws(line)
+    # Identify line types
+    is_empty <- !nzchar(trimmed)
+    is_comment <- startsWith(trimmed, ";")
+    is_section <- grepl("^\\[.+\\]$", trimmed)
 
-        # Skip empty lines
-        if (!nzchar(trimmed)) next
+    # Find Key=Value lines (has "=" and not empty/comment/section)
+    eq_pos <- regexpr("=", lines, fixed = TRUE)
+    is_kv <- eq_pos > 0 & !is_empty & !is_comment & !is_section
 
-        # Skip comment lines
-        if (startsWith(trimmed, ";")) next
+    # Extract section names and propagate forward
+    section_names <- gsub("^\\[|\\]$", "", trimmed)
+    section_names[!is_section] <- NA
+    # Fill forward: each line gets the most recent section header
+    section_idx <- cumsum(is_section)
+    section_idx[section_idx == 0] <- NA
+    section_lookup <- section_names[is_section]
+    current_sections <- section_lookup[section_idx]
+    current_sections[is.na(current_sections)] <- "Unknown"
 
-        # Section header
-        if (grepl("^\\[.+\\]$", trimmed)) {
-            current_section <- gsub("^\\[|\\]$", "", trimmed)
-            next
-        }
+    # Extract keys and values for K=V lines
+    kv_indices <- which(is_kv)
+    kv_lines <- lines[kv_indices]
+    kv_eq_pos <- eq_pos[kv_indices]
 
-        # Key=Value line
-        eq_pos <- regexpr("=", line, fixed = TRUE)
-        if (eq_pos > 0) {
-            key <- trimws(substr(line, 1, eq_pos - 1))
-            value <- trimws(substr(line, eq_pos + 1, nchar(line)))
+    keys <- trimws(substr(kv_lines, 1, kv_eq_pos - 1))
+    values <- trimws(substr(kv_lines, kv_eq_pos + 1, nchar(kv_lines)))
 
-            if (nzchar(key)) {
-                result[[key]] <- value
-                sections[key] <- current_section
-                line_map[key] <- i
-            }
-        }
-    }
+    # Build result list
+    result <- setNames(as.list(values), keys)
+
+    # Build section and line_map named vectors
+    sections <- setNames(current_sections[kv_indices], keys)
+    line_map <- setNames(kv_indices, keys)
 
     # Attach metadata as attributes
     attr(result, "skeleton") <- lines
@@ -236,38 +237,46 @@ prm_write <- function(prm, path) {
         stop("prm_list has no skeleton attribute. Cannot write.", call. = FALSE)
     }
 
-    # Use line_map for O(1) lookup instead of O(n) grep per key
     line_map <- attr(prm, "line_map")
     output <- skeleton
 
     if (!is.null(line_map) && length(line_map) > 0) {
-        # Fast path: use pre-computed line numbers
-        for (key in names(prm)) {
-            if (key %in% names(line_map)) {
-                idx <- line_map[[key]]
-                if (idx > 0 && idx <= length(output)) {
-                    output[idx] <- paste0(key, "=", prm[[key]])
-                }
-            }
+        # Vectorized: use line_map for direct index assignment
+        keys <- names(prm)
+        # Only process keys that exist in line_map
+        common_keys <- intersect(keys, names(line_map))
+
+        if (length(common_keys) > 0) {
+            indices <- line_map[common_keys]
+            # Filter valid indices
+            valid <- indices > 0 & indices <= length(output)
+            valid_keys <- common_keys[valid]
+            valid_indices <- indices[valid]
+
+            # Vectorized line construction
+            new_lines <- paste0(valid_keys, "=", vapply(prm[valid_keys], as.character, character(1)))
+
+            # Single vectorized assignment
+            output[valid_indices] <- new_lines
         }
     } else {
-        # Fallback: build replacement patterns vectorized
-        # Create a lookup: key -> new_line
+        # Fallback: match keys in skeleton lines vectorized
         keys <- names(prm)
-        new_lines <- paste0(keys, "=", vapply(prm, as.character, character(1)))
-        names(new_lines) <- keys
+        eq_pos <- regexpr("=", output, fixed = TRUE)
+        has_eq <- eq_pos > 0
 
-        # For each line, check if it's a Key= line and replace
-        for (i in seq_along(output)) {
-            line <- output[i]
-            # Quick check: skip non-assignment lines
-            eq_pos <- regexpr("=", line, fixed = TRUE)
-            if (eq_pos > 0) {
-                key <- trimws(substr(line, 1, eq_pos - 1))
-                if (key %in% keys) {
-                    output[i] <- new_lines[[key]]
-                }
-            }
+        # Extract key from each line with "="
+        line_keys <- character(length(output))
+        line_keys[has_eq] <- trimws(substr(output[has_eq], 1, eq_pos[has_eq] - 1))
+
+        # Find which lines match our keys
+        match_idx <- match(line_keys, keys)
+        lines_to_update <- !is.na(match_idx)
+
+        if (any(lines_to_update)) {
+            matched_keys <- keys[match_idx[lines_to_update]]
+            new_lines <- paste0(matched_keys, "=", vapply(prm[matched_keys], as.character, character(1)))
+            output[lines_to_update] <- new_lines
         }
     }
 
