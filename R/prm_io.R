@@ -69,10 +69,17 @@ prm_parse <- function(source) {
     sections <- setNames(current_sections[kv_indices], keys)
     line_map <- setNames(kv_indices, keys)
 
+    # Extract version from [System] section if present
+    version <- NULL
+    if ("Version" %in% keys) {
+        version <- result[["Version"]]
+    }
+
     # Attach metadata as attributes
     attr(result, "skeleton") <- lines
     attr(result, "sections") <- sections
     attr(result, "line_map") <- line_map
+    attr(result, "version") <- version
 
     class(result) <- c("prm_list", "list")
     result
@@ -335,6 +342,73 @@ prm_defaults <- function(version = NULL) {
     }
 
     prm_parse(template_path)
+}
+
+# -----------------------------------------------------------------------------
+# prm_validate: Validate PRM against a reference template
+# -----------------------------------------------------------------------------
+
+#' Validate PRM Parameters
+#'
+#' Validates a parsed PRM against a known version template. Useful for
+#' checking external PRM files before use.
+#'
+#' @param prm A `prm_list` object (from prm_parse).
+#' @param version Version to compare against (e.g., "10.3"). If NULL, uses
+#'   the prm's version attribute or defaults to "10.3".
+#' @return A list with:
+#'   \itemize{
+#'     \item \code{valid}: TRUE if no critical issues found
+#'     \item \code{missing}: Character vector of keys in reference but not in prm
+#'     \item \code{extra}: Character vector of keys in prm but not in reference
+#'     \item \code{prm_version}: Version found in prm (or NULL)
+#'     \item \code{ref_version}: Reference version used for comparison
+#'   }
+#' @export
+prm_validate <- function(prm, version = NULL) {
+    # Determine reference version
+    prm_version <- attr(prm, "version")
+
+    if (is.null(version)) {
+        # Use prm's version if available, otherwise default
+        if (!is.null(prm_version)) {
+            # Normalize version: "10.3.0" -> "10.3"
+            version <- sub("^(\\d+\\.\\d+).*", "\\1", prm_version)
+        } else {
+            version <- "10.3" # Default to latest
+        }
+    }
+
+    # Get reference template
+    ref <- tryCatch(
+        prm_defaults(version),
+        error = function(e) {
+            warning("Could not load reference template for version ", version,
+                ". Using 10.3.",
+                call. = FALSE
+            )
+            prm_defaults("10.3")
+        }
+    )
+
+    # Compare keys
+    prm_keys <- names(prm)
+    ref_keys <- names(ref)
+
+    missing_keys <- setdiff(ref_keys, prm_keys)
+    extra_keys <- setdiff(prm_keys, ref_keys)
+
+    # Determine validity (no critical missing keys = valid)
+    # For now, valid if no missing keys
+    valid <- length(missing_keys) == 0
+
+    list(
+        valid = valid,
+        missing = missing_keys,
+        extra = extra_keys,
+        prm_version = prm_version,
+        ref_version = version
+    )
 }
 
 # -----------------------------------------------------------------------------

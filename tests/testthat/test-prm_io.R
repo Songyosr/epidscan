@@ -185,3 +185,93 @@ test_that("round-trip preserves structure", {
 
     unlink(tmp)
 })
+
+# -----------------------------------------------------------------------------
+# Version Attribute Tests
+# -----------------------------------------------------------------------------
+
+test_that("prm_parse extracts version attribute from [System] section", {
+    lines <- c(
+        "[Input]",
+        "CaseFile=test.cas",
+        "[System]",
+        "Version=10.3.0"
+    )
+
+    prm <- prm_parse(lines)
+
+    expect_equal(attr(prm, "version"), "10.3.0")
+})
+
+test_that("prm_parse handles missing version gracefully", {
+    lines <- c(
+        "[Input]",
+        "CaseFile=test.cas"
+    )
+
+    prm <- prm_parse(lines)
+
+    expect_null(attr(prm, "version"))
+})
+
+test_that("prm_defaults includes version attribute", {
+    prm <- prm_defaults("10.3")
+
+    expect_equal(attr(prm, "version"), "10.3.0")
+})
+
+# -----------------------------------------------------------------------------
+# prm_validate Tests
+# -----------------------------------------------------------------------------
+
+test_that("prm_validate returns valid=TRUE for complete template", {
+    prm <- prm_defaults("10.3")
+    result <- prm_validate(prm)
+
+    expect_true(result$valid)
+    expect_equal(length(result$missing), 0)
+    expect_equal(length(result$extra), 0)
+})
+
+test_that("prm_validate detects missing keys", {
+    # Create minimal PRM missing almost all keys
+    lines <- c(
+        "[Input]",
+        "CaseFile=test.cas"
+    )
+
+    prm <- prm_parse(lines)
+    result <- prm_validate(prm, version = "10.3")
+
+    expect_false(result$valid)
+    expect_true(length(result$missing) > 100) # Many missing
+    expect_true("AnalysisType" %in% result$missing)
+    expect_true("MonteCarloReps" %in% result$missing)
+})
+
+test_that("prm_validate detects extra keys", {
+    prm <- prm_defaults("10.3")
+
+    # Add a custom key
+    prm <- prm_add(prm, "CustomKey", "CustomValue", "Custom")
+    result <- prm_validate(prm, version = "10.3")
+
+    # Still valid (extra keys are OK)
+    expect_true(result$valid)
+    expect_true("CustomKey" %in% result$extra)
+})
+
+test_that("prm_validate uses prm version attribute when version=NULL", {
+    lines <- c(
+        "[Input]",
+        "CaseFile=test.cas",
+        "[System]",
+        "Version=9.7.0"
+    )
+
+    prm <- prm_parse(lines)
+    result <- prm_validate(prm) # version=NULL, should use 9.7
+
+    expect_equal(result$ref_version, "9.7")
+    expect_equal(result$prm_version, "9.7.0")
+})
