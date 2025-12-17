@@ -23,6 +23,7 @@ epid_satscan(
   work_dir = NULL,
   output_dir = NULL,
   merge_time_series = FALSE,
+  covariates = NULL,
   verbose = FALSE,
   ...
 )
@@ -96,6 +97,9 @@ If provided, result files will be copied here from \code{work_dir} after success
 
 \item{merge_time_series}{Logical. If TRUE, creates a joined data frame with cluster IDs added to every time point.
 Defaults to FALSE to save memory. Access via \code{$main_results} on the returned object.}
+
+\item{covariates}{Character vector of column names to adjust for (covariates).
+Must exist in the data provider.}
 
 \item{verbose}{Logical. Print SatScan progress and debug info?}
 

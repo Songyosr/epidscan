@@ -57,7 +57,7 @@ extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL, geo_type = "
 #' @param time_precision Integer (0=Generic, 1=Year, 2=Month, 3=Day)
 #' @return List with file paths (cas_file, geo_file, pop_file)
 #' @keywords internal
-write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epid", time_precision = 3L) {
+write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epid", time_precision = 3L, covariates = NULL) {
     cas_file <- file.path(work_dir, paste0(project_name, ".cas"))
     geo_file <- file.path(work_dir, paste0(project_name, ".geo"))
     pop_file <- file.path(work_dir, paste0(project_name, ".pop"))
@@ -116,31 +116,66 @@ write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epi
         row.names = FALSE, col.names = FALSE, quote = FALSE
     )
 
-    # Write Case (id, cases, [date])
+    # Write Case (id, cases, [date], [covariates])
+    # Case File Structure: LocationID, NoCases, [Date], [Covariate1, Covariate2...]
     cas_df <- data.frame(id = export_df$id, cases = export_df$cases)
+
+    # 1. Add Date if present
     if ("date" %in% names(export_df)) {
-        # Format date for SatScan
         cas_df$date <- format_date_by_precision(export_df$date, time_precision)
     }
+
+    # 2. Add Covariates if present
+    if (!is.null(covariates)) {
+        for (cov in covariates) {
+            if (cov %in% names(export_df)) {
+                cas_df[[cov]] <- export_df[[cov]]
+            } else {
+                warning(sprintf("Covariate '%s' not found in data - skipping.", cov))
+            }
+        }
+    }
+
     utils::write.table(cas_df, cas_file,
         row.names = FALSE, col.names = FALSE, quote = FALSE
     )
 
-    # Write Pop (id, [date], pop) - includes date for space-time analysis
+    # Write Pop (id, [date], pop, [covariates])
+    # Population File Structure: LocationID, [Date/Year], Population, [Covariate1, Covariate2...]
+    # Note: If covariates are used, population data usually needs to be stratified by them too (for Poisson).
     pop_written <- FALSE
     if ("pop" %in% names(export_df)) {
         pop_df <- data.frame(id = export_df$id)
+
+        # 1. Add Date if present
         if ("date" %in% names(export_df)) {
             pop_df$date <- format_date_by_precision(export_df$date, time_precision)
         }
+
+        # 2. Add Population
         pop_df$pop <- export_df$pop
 
-        # Deduplicate by id (and date if present)
-        if ("date" %in% names(pop_df)) {
-            pop_df <- pop_df |> dplyr::distinct(id, date, .keep_all = TRUE)
-        } else {
-            pop_df <- pop_df |> dplyr::distinct(id, .keep_all = TRUE)
+        # 3. Add Covariates
+        if (!is.null(covariates)) {
+            for (cov in covariates) {
+                if (cov %in% names(export_df)) {
+                    pop_df[[cov]] <- export_df[[cov]]
+                }
+                # No warning here as we already warned above if missing
+            }
         }
+
+        # Deduplicate
+        # We must deduplicate based on ALL stratification variables (ID, Date, Covariates)
+        distinct_cols <- c("id")
+        if ("date" %in% names(pop_df)) distinct_cols <- c(distinct_cols, "date")
+        if (!is.null(covariates)) {
+            # Only include covariates that actually made it into the DF
+            valid_covs <- intersect(covariates, names(pop_df))
+            distinct_cols <- c(distinct_cols, valid_covs)
+        }
+
+        pop_df <- pop_df |> dplyr::distinct(dplyr::pick(dplyr::all_of(distinct_cols)), .keep_all = TRUE)
 
         utils::write.table(pop_df, pop_file,
             row.names = FALSE, col.names = FALSE, quote = FALSE

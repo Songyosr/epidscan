@@ -9,7 +9,8 @@ write_satscan_files(
   export_df,
   work_dir,
   project_name = "epid",
-  time_precision = 3L
+  time_precision = 3L,
+  covariates = NULL
 )
 }
 \arguments{

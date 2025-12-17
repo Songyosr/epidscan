@@ -12,6 +12,8 @@
 #' @param id_col Column containing unique location IDs (unquoted). If missing, row numbers used.
 #' @param lat_col Column containing latitude (unquoted, required if data is not sf).
 #' @param long_col Column containing longitude (unquoted, required if data is not sf).
+#' @param covariates Character vector of column names to adjust for (covariates).
+#'   Must exist in the data provider.
 #' @param type Analysis type. One of:
 #'   \itemize{
 #'     \item "purely-spatial" (1)
@@ -132,6 +134,7 @@ epid_satscan <- function(data,
                          work_dir = NULL,
                          output_dir = NULL,
                          merge_time_series = FALSE,
+                         covariates = NULL,
                          verbose = FALSE,
                          ...) {
   # 1. Capture quosures
@@ -211,7 +214,7 @@ epid_satscan <- function(data,
   }
 
   # 7. Write input files (Now using time_prec)
-  files <- write_satscan_files(geo_df, export_df, work_dir, time_precision = time_prec)
+  files <- write_satscan_files(geo_df, export_df, work_dir, time_precision = time_prec, covariates = covariates)
 
   # 8. Build options
   opts <- build_satscan_options(files, export_df, time_prec, type, model, geo_type, start_date, end_date, monitor_mode, prospective_start_date)
