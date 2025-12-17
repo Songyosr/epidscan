@@ -1,0 +1,171 @@
+# PRM File Utilities
+# Functions for reading and managing SaTScan parameter files
+
+#' Read a SaTScan PRM File
+#'
+#' Parses a SaTScan `.prm` parameter file into a named R list.
+#' This allows you to inspect, modify, or use existing SaTScan configurations.
+#'
+#' @param path Path to a `.prm` file.
+#' @return A named list of SaTScan parameters (e.g., `list(AnalysisType = "3", ...)`).
+#'   Values are returned as character strings; numeric conversion is left to the caller.
+#' @examples
+#' \dontrun{
+#' prm <- read_prm("path/to/analysis.prm")
+#' prm$AnalysisType
+#' # [1] "3"
+#' }
+#' @export
+read_prm <- function(path) {
+    if (!file.exists(path)) {
+        stop("PRM file not found: ", path)
+    }
+
+    lines <- readLines(path, warn = FALSE)
+
+    # Keep only true "key=value" lines:
+    # - ignore empty/whitespace-only lines
+    # - ignore section headers like [Input]
+    # - ignore comment lines that start with ';' (allow leading whitespace)
+    # - require at least one '=' somewhere after a non-empty key
+    lines_trim <- trimws(lines)
+    is_param <- nzchar(lines_trim) &
+        !grepl("^\\s*\\[", lines) &
+        !grepl("^\\s*;", lines) &
+        grepl("=", lines, fixed = TRUE)
+
+    param_lines <- lines[is_param]
+
+    # Vectorized parse on the FIRST '=' only
+    x <- trimws(param_lines)
+    pos <- regexpr("=", x, fixed = TRUE)
+    has_eq <- pos > 0
+    x <- x[has_eq]
+    pos <- pos[has_eq]
+
+    key <- trimws(substr(x, 1, pos - 1))
+    val <- trimws(substr(x, pos + 1, nchar(x)))
+
+    # drop empty keys (defensive)
+    ok <- nzchar(key)
+    key <- key[ok]
+    val <- val[ok]
+
+    # Named list; duplicates overwrite earlier ones ("last wins"), matching your loop behavior
+    as.list(setNames(val, key))
+}
+
+
+#' Set SaTScan Options with Hierarchical Override
+#'
+#' A convenience wrapper around \code{rsatscan::ss.options()} that applies
+#' parameters in a controlled hierarchy: base template first, then user overrides.
+#'
+#' @param ... Named SaTScan parameters to set (e.g., \code{AnalysisType = 3}).
+#' @param .base Optional named list of base parameters (e.g., from \code{read_prm()}).
+#'   Applied before \code{...}.
+#' @param .reset If TRUE (default), resets \code{ss.options()} to defaults before applying.
+#' @return Invisibly returns the final parameter vector from \code{ss.options()}.
+#' @examples
+#' \dontrun{
+#' # Start fresh and set a few params
+#' set_satscan_opts(AnalysisType = 1, ModelType = 0)
+#'
+#' # Use a PRM template and override one param
+#' base <- read_prm("template.prm")
+#' set_satscan_opts(MonteCarloReps = 999, .base = base)
+#' }
+#' @export
+set_satscan_opts <- function(..., .base = NULL, .reset = TRUE) {
+    if (.reset) {
+        rsatscan::ss.options(reset = TRUE)
+    }
+
+    # Apply base template first
+
+    if (!is.null(.base)) {
+        if (!is.list(.base)) stop(".base must be a named list")
+        rsatscan::ss.options(.base)
+    }
+
+    # Apply user overrides
+    user_opts <- list(...)
+    if (length(user_opts) > 0) {
+        rsatscan::ss.options(user_opts)
+    }
+
+    invisible(rsatscan::ss.options())
+}
+
+#' Infer Dates from Data
+#'
+#' Helper to infer StartDate and EndDate from the case data if missing from options.
+#'
+#' @param current_opts List of current SaTScan options
+#' @param cas_data Case data frame (must have a 'time' column)
+#' @param time_precision_char Character string: "day", "month", or "year"
+#' @param verbose Logical, print messages
+#' @return Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
+#' @keywords internal
+infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, verbose = FALSE) {
+    # Check if dates are already present
+    # Use [ ] to be safe if named vector
+    val_start <- current_opts["StartDate"]
+    val_end <- current_opts["EndDate"]
+
+    need_start <- is.na(val_start) || is.null(val_start) || val_start == ""
+    need_end <- is.na(val_end) || is.null(val_end) || val_end == ""
+
+    if (!need_start && !need_end) {
+        return(NULL)
+    }
+
+    if (is.null(cas_data) || is.null(cas_data$time)) {
+        return(NULL)
+    }
+
+    # Parse based on precision
+    d_vals <- NULL
+    if (time_precision_char == "day") {
+        d_vals <- as.Date(cas_data$time, format = "%Y/%m/%d")
+    } else if (time_precision_char == "month") {
+        d_vals <- as.Date(paste0(cas_data$time, "/01"), format = "%Y/%m/%d")
+    } else if (time_precision_char == "year") {
+        d_vals <- as.Date(paste0(cas_data$time, "/01/01"), format = "%Y/%m/%d")
+    }
+
+    if (is.null(d_vals) || all(is.na(d_vals))) {
+        return(NULL)
+    }
+
+    min_d <- min(d_vals, na.rm = TRUE)
+    max_d <- max(d_vals, na.rm = TRUE)
+
+    inferred <- list()
+    if (need_start) {
+        if (time_precision_char == "year") {
+            inferred$StartDate <- format(min_d, "%Y/01/01")
+        } else if (time_precision_char == "month") {
+            inferred$StartDate <- format(min_d, "%Y/%m/01")
+        } else {
+            inferred$StartDate <- format(min_d, "%Y/%m/%d")
+        }
+    }
+    if (need_end) {
+        if (time_precision_char == "year") {
+            inferred$EndDate <- format(max_d, "%Y/12/31")
+        } else if (time_precision_char == "month") {
+            # End of month
+            d_next <- seq(max_d, by = "month", length.out = 2)[2]
+            inferred$EndDate <- format(d_next - 1, "%Y/%m/%d")
+        } else {
+            inferred$EndDate <- format(max_d, "%Y/%m/%d")
+        }
+    }
+
+    if (length(inferred) > 0) {
+        if (verbose) message("Inferring missing dates from data: ", paste(names(inferred), collapse = ", "))
+    }
+    
+    inferred
+}

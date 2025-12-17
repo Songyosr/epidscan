@@ -54,6 +54,7 @@ detect_time_precision <- function(date_values, user_precision = NULL) {
 build_satscan_options <- function(files, export_df, time_precision, type, model,
                                   geo_type = "latlong", start_date = NULL, end_date = NULL,
                                   monitor_mode = "retrospective", prospective_start_date = NULL) {
+    .Deprecated("satscanr", msg = "build_satscan_options is deprecated. Use ss.options directly or via set_satscan_opts().")
     # helper for checking if a value is effectively an integer
     as_int_or_val <- function(x) {
         if (is.numeric(x) && x %% 1 == 0) {
@@ -225,6 +226,7 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
 #' @return Merged options list
 #' @keywords internal
 apply_user_overrides <- function(opts, user_opts) {
+    .Deprecated("set_satscan_opts")
     if (length(user_opts) == 0) {
         return(opts)
     }

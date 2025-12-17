@@ -138,19 +138,17 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
 
     # Join GIS results (LOC_ID) to our Location IDs (id)
     # ss_results$gis contains: LOC_ID, CLUSTER, OBSERVED, EXPECTED, ODE, etc.
-    # LOC_ID in GIS matches our internal numeric ID if we generated one,
-    # or the user provided ID if we passed that (currently epid_satscan passes numeric sequential ID usually or user ID?)
-    # logic in epid_satscan:
-    # id_vec <- as.character(dplyr::pull(data, !!id_quo))
-    # geo_df$id <- id_vec
-    # And write_satscan_files writes these IDs to .geo and .cas
-    # So LOC_ID in SatScan output SHOULD be the user's ID (as char).
+    # Check if we have GIS results (might be NULL or FALSE if no clusters/output)
+    if (is.data.frame(ss_results$gis)) {
+        gis_df <- ss_results$gis |>
+            dplyr::mutate(LOC_ID = as.character(LOC_ID))
 
-    gis_df <- ss_results$gis |>
-        dplyr::mutate(LOC_ID = as.character(LOC_ID))
-
-    location_summary <- loc_geo |>
-        dplyr::left_join(gis_df, by = c("id" = "LOC_ID"))
+        location_summary <- loc_geo |>
+            dplyr::left_join(gis_df, by = c("id" = "LOC_ID"))
+    } else {
+        # No GIS results - just return location info with NAs for stats
+        location_summary <- loc_geo
+    }
 
     # Restore sf if input was sf
     if (is_sf_input) {
@@ -202,7 +200,9 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
 print.satscan_result <- function(x, ...) {
     n_locs <- if (is.null(x$location_summary)) 0 else nrow(x$location_summary)
     n_clusters <- if (is.null(x$cluster_summary)) 0 else nrow(x$cluster_summary)
-    sig_clusters <- if (n_clusters > 0) sum(x$cluster_summary$P_VALUE < 0.05, na.rm = TRUE) else 0
+    # Check if P_VALUE exists in cluster_summary before subsetting
+    has_p <- !is.null(x$cluster_summary) && "P_VALUE" %in% names(x$cluster_summary)
+    sig_clusters <- if (n_clusters > 0 && has_p) sum(x$cluster_summary$P_VALUE < 0.05, na.rm = TRUE) else 0
 
     cat("SatScan Analysis Result\n")
     cat("=======================\n")

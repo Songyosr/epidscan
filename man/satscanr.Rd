@@ -10,51 +10,67 @@ satscanr(
   geo,
   ctl = NULL,
   grd = NULL,
-  type = "space-time",
-  model = "poisson",
-  prm = list(),
-  dir = NULL,
-  keep_files = FALSE,
-  work_dir = NULL,
+  prm_path = NULL,
+  output_dir = NULL,
   verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{cas}{Case table (satscan_table)}
+\item{cas}{Case table (\code{satscan_table}).}
 
-\item{pop}{Population table (satscan_table, optional)}
+\item{pop}{Population table (\code{satscan_table}, optional).}
 
-\item{geo}{Geometry table (satscan_table)}
+\item{geo}{Geometry table (\code{satscan_table}).}
 
-\item{ctl}{Control table (satscan_table, optional)}
+\item{ctl}{Control table (\code{satscan_table}, optional).}
 
-\item{grd}{Grid table (satscan_table, optional)}
+\item{grd}{Grid table (\code{satscan_table}, optional).}
 
-\item{type}{Analysis type (default "space-time")}
+\item{prm_path}{Path to a template .prm file to load configuration from (Level 3).}
 
-\item{model}{Model type (default "poisson")}
+\item{output_dir}{Directory to copy final results to. If NULL, results remain in temp.}
 
-\item{prm}{List of raw SaTScan parameters to override defaults}
+\item{verbose}{Logical. Print progress and debug info.}
 
-\item{dir}{Directory containing files (optional). if provided, we skip file generation.}
-
-\item{keep_files}{Logical. If TRUE, temp files are not deleted (or copied to output?).
-rsatscan usually keeps them in the created object or we can leave them in temp.}
-
-\item{work_dir}{Directory for intermediate files. Defaults to tempdir().}
-
-\item{verbose}{Logical}
-
-\item{...}{Additional arguments passed to rsatscan setup}
+\item{...}{Additional SaTScan parameters (Level 2 Tweaks).
+See \code{\link{satscan_options}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).}
 }
 \value{
-rsatscan object
+A \code{satscan_result} object containing:
+  \item{main}{Main text output lines}
+  \item{col}{Column definition data}
+  \item{rr}{Relative Risk data}
+  \item{gis}{GIS/Cluster information}
+  \item{cluster_summary}{Tidy summary of clusters found}
+  \item{location_summary}{Tidy summary of locations}
+  \item{shapefile}{Result shapefile (sf) if available}
+  \item{prm}{Final parameters used}
+  \item{work_dir}{Path to working directory}
 }
 \description{
-Logic:
-1. Check if 'dir' is provided. If so, assumes files are ready and runs.
-2. If no 'dir', validates inputs, writes files to temp dir.
-3. Generates PRM file.
-4. Runs rsatscan.
+Orchestrates the SaTScan analysis by managing inputs, configuring parameters
+via a strictly defined hierarchy, execution, and result parsing.
 }
+\section{Parameter Hierarchy (The "Smart Tweak" Model)}{
+
+Parameters are resolved with the following precedence (Highest to Lowest):
+\enumerate{
+  \item \strong{Level 1: Data Integrity (Immutable)}
+  Derived directly from the input objects (\code{cas}, \code{geo}, etc.).
+  Includes filenames, time precision, and coordinate types.
+  \emph{User cannot override these.}
+
+  \item \strong{Level 2: User Tweaks}
+  Arguments explicitly passed to this function via \code{...}.
+  \emph{Overrides Level 3 templates.}
+
+  \item \strong{Level 3: Template PRM}
+  Settings loaded from \code{prm_path} if provided.
+  \emph{Overrides Level 4 defaults.}
+
+  \item \strong{Level 4: Implicit Defaults}
+  SaTScan's internal defaults (via \code{ss.options(reset=TRUE)}).
+}
+}
+
