@@ -103,18 +103,31 @@ prm_set <- function(prm, ..., .strict = TRUE) {
         return(prm)
     }
 
-    for (key in names(updates)) {
-        if (!key %in% names(prm)) {
-            msg <- sprintf("Parameter '%s' not found in prm_list.", key)
-            if (.strict) {
-                stop(msg, call. = FALSE)
-            } else {
-                warning(msg, call. = FALSE)
-                next
-            }
+    # Vectorized validation: find unknown keys
+    update_keys <- names(updates)
+    existing_keys <- names(prm)
+    unknown_keys <- setdiff(update_keys, existing_keys)
+
+    if (length(unknown_keys) > 0) {
+        msg <- sprintf(
+            "Parameter%s '%s' not found in prm_list.",
+            if (length(unknown_keys) > 1) "s" else "",
+            paste(unknown_keys, collapse = "', '")
+        )
+        if (.strict) {
+            stop(msg, call. = FALSE)
+        } else {
+            warning(msg, call. = FALSE)
+            # Filter out unknown keys
+            updates <- updates[update_keys %in% existing_keys]
         }
-        prm[[key]] <- as.character(updates[[key]])
     }
+
+    # Vectorized assignment: convert all values to character
+    updates <- lapply(updates, as.character)
+
+    # Use modifyList for efficient bulk update (preserves attributes)
+    prm[names(updates)] <- updates
 
     prm
 }
@@ -223,16 +236,38 @@ prm_write <- function(prm, path) {
         stop("prm_list has no skeleton attribute. Cannot write.", call. = FALSE)
     }
 
-    # Inject values into skeleton
+    # Use line_map for O(1) lookup instead of O(n) grep per key
+    line_map <- attr(prm, "line_map")
     output <- skeleton
-    for (key in names(prm)) {
-        # Find line that starts with "Key="
-        pattern <- paste0("^", key, "=")
-        idx <- grep(pattern, output)
 
-        if (length(idx) > 0) {
-            # Replace the value part
-            output[idx[1]] <- paste0(key, "=", prm[[key]])
+    if (!is.null(line_map) && length(line_map) > 0) {
+        # Fast path: use pre-computed line numbers
+        for (key in names(prm)) {
+            if (key %in% names(line_map)) {
+                idx <- line_map[[key]]
+                if (idx > 0 && idx <= length(output)) {
+                    output[idx] <- paste0(key, "=", prm[[key]])
+                }
+            }
+        }
+    } else {
+        # Fallback: build replacement patterns vectorized
+        # Create a lookup: key -> new_line
+        keys <- names(prm)
+        new_lines <- paste0(keys, "=", vapply(prm, as.character, character(1)))
+        names(new_lines) <- keys
+
+        # For each line, check if it's a Key= line and replace
+        for (i in seq_along(output)) {
+            line <- output[i]
+            # Quick check: skip non-assignment lines
+            eq_pos <- regexpr("=", line, fixed = TRUE)
+            if (eq_pos > 0) {
+                key <- trimws(substr(line, 1, eq_pos - 1))
+                if (key %in% keys) {
+                    output[i] <- new_lines[[key]]
+                }
+            }
         }
     }
 
