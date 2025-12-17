@@ -9,7 +9,6 @@ run_satscan(
   project_name = "epid",
   ss_location,
   ss_batch,
-  final_opts,
   verbose = FALSE
 )
 }
@@ -22,9 +21,9 @@ run_satscan(
 
 \item{ss_batch}{SatScan batch file name}
 
-\item{final_opts}{Options list for ss.options()}
-
 \item{verbose}{Print output?}
+
+\item{final_opts}{Options list for ss.options()}
 }
 \value{
 satscan result object

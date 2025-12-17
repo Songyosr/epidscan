@@ -84,8 +84,17 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     if (!is.null(prm_path)) {
         if (verbose) message("Loading Template: ", basename(prm_path))
         prm <- prm_parse(prm_path)
+
+        # Validate external PRM file
+        validation <- prm_validate(prm)
+        if (!validation$valid && verbose) {
+            message(
+                "  Warning: External PRM missing ", length(validation$missing),
+                " parameters (compared to v", validation$ref_version, " template)"
+            )
+        }
     } else {
-        if (verbose) message("Loading defaults from rsatscan")
+        if (verbose) message("Loading defaults from bundled templates")
         prm <- prm_defaults()
     }
 

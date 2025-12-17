@@ -7,10 +7,10 @@
 prm_defaults(version = NULL)
 }
 \arguments{
-\item{version}{Optional SaTScan version (e.g., "10.0"). If NULL, uses latest.}
+\item{version}{Optional SaTScan version (e.g., "10.3"). If NULL, uses latest (10.3).}
 }
 \value{
-A `prm_list` parsed from rsatscan's internal defaults.
+A `prm_list` parsed from bundled template files.
 }
 \description{
 Loads rsatscan's internal default parameters as a prm_list.
