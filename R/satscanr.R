@@ -78,20 +78,22 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     if (!is.null(f_ctl)) write_ss_file(ctl$data, f_ctl)
     if (!is.null(f_grd)) write_ss_file(grd$data, f_grd)
 
-    # 4. Parameter Setup (The Hierarchy)
+    # 4. Parameter Setup (The Hierarchy) - Using new prm_* system
 
-    # A. Base Template (Level 3)
-    base_opts <- NULL
+    # A. Base Template (Level 3/4)
     if (!is.null(prm_path)) {
-        if (verbose) message("Loading Level 3 Template: ", basename(prm_path))
-        base_opts <- read_prm(prm_path)
+        if (verbose) message("Loading Template: ", basename(prm_path))
+        prm <- prm_parse(prm_path)
+    } else {
+        if (verbose) message("Loading defaults from rsatscan")
+        prm <- prm_defaults()
     }
 
-    # B. Set Options (Level 4 + Level 3 + Level 2)
-    # - Reset to defaults (L4)
-    # - Apply Base (L3)
-    # - Apply Overrides (L2) from ...
-    set_satscan_opts(.base = base_opts, .reset = TRUE, ...)
+    # B. Apply User Overrides (Level 2) from ...
+    user_opts <- list(...)
+    if (length(user_opts) > 0) {
+        prm <- do.call(prm_set, c(list(prm, .strict = FALSE), user_opts))
+    }
 
     # C. Level 1 Data Integrity (Immutable Overrides)
 
@@ -100,47 +102,39 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     tp_char <- cas$spec$time_precision
     tp_int <- if (is.null(tp_char)) 0 else tp_map[[tp_char]]
 
-    # Critical Overrides
-    critical_overrides <- list(
+    # Critical Overrides - these always win (use .strict=FALSE for files missing some keys)
+    prm <- prm_set(prm,
         CaseFile = basename(f_cas),
         CoordinatesFile = basename(f_geo),
         CoordinatesType = if (geo$spec$coord_type == "cartesian") 0 else 1,
         PrecisionCaseTimes = tp_int,
-        TimeAggregationUnits = tp_int
+        TimeAggregationUnits = tp_int,
+        ResultsFile = "epid.txt",
+        .strict = FALSE
     )
-    if (!is.null(f_pop)) critical_overrides$PopulationFile <- basename(f_pop)
-    if (!is.null(f_ctl)) critical_overrides$ControlFile <- basename(f_ctl)
+
+    if (!is.null(f_pop)) prm <- prm_set(prm, PopulationFile = basename(f_pop), .strict = FALSE)
+    if (!is.null(f_ctl)) prm <- prm_set(prm, ControlFile = basename(f_ctl), .strict = FALSE)
     if (!is.null(f_grd)) {
-        critical_overrides$GridFile <- basename(f_grd)
-        # Ensure GridPosition is set if using grid file (default to LatLong/XY matching CoordsType)
-        # We check if it's already set by user; if not, default it.
-        curr <- rsatscan::ss.options()
-        if (is.null(curr$GridPosition)) critical_overrides$GridPosition <- 2
+        prm <- prm_set(prm, GridFile = basename(f_grd), UseGridFile = "y", .strict = FALSE)
     }
 
-    # Apply Critical Overrides
-    rsatscan::ss.options(critical_overrides)
-
     # D. Date Inference (Smart Defaults)
     # If StartDate/EndDate are NOT set by user/PRM, try to infer from data.
-    # D. Date Inference (Smart Defaults)
-    # If StartDate/EndDate are NOT set by user/PRM, try to infer from data.
-    current_opts <- rsatscan::ss.options()
-
     inferred_dates <- infer_dates_from_data(
-        current_opts = current_opts,
+        current_opts = prm, # Pass prm_list instead of ss.options()
         cas_data = cas$data,
         time_precision_char = tp_char,
         verbose = verbose
     )
 
     if (!is.null(inferred_dates)) {
-        rsatscan::ss.options(inferred_dates)
+        prm <- do.call(prm_set, c(list(prm, .strict = FALSE), as.list(inferred_dates)))
     }
 
     # 5. Execution
-    # Fetch final state for logging
-    final_opts <- rsatscan::ss.options()
+    # Write PRM using skeleton injection
+    prm_write(prm, file.path(work_dir, "epid.prm"))
 
     ss_full_path <- get_satscan_path()
     if (is.null(ss_full_path)) stop("SaTScan path not set")
@@ -151,7 +145,6 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
         project_name = "epid",
         ss_location = path_info$ss_location,
         ss_batch = path_info$ss_batch,
-        final_opts = final_opts,
         verbose = verbose
     )
 
@@ -182,8 +175,9 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     )
 
     res$work_dir <- if (!is.null(output_dir)) output_dir else work_dir
-    # Ensure prm is a list for consistent downstream usage
-    res$prm <- as.list(final_opts)
+
+    # Return the prm_list for reference
+    res$prm <- prm
 
     return(res)
 }

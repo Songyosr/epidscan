@@ -166,6 +166,60 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
     if (length(inferred) > 0) {
         if (verbose) message("Inferring missing dates from data: ", paste(names(inferred), collapse = ", "))
     }
-    
+
     inferred
+}
+
+#' Write a Safe SaTScan PRM File
+#'
+#' Writes SaTScan parameters to a file, ensuring that required section headers
+#' (e.g. `[Input]`, `[Analysis]`) are present. This guards against issues where
+#' internal defaults might be missing headers.
+#'
+#' @param params Character vector of parameters (from ss.options())
+#' @param path File path to write to
+#' @export
+write_prm_safe <- function(params, path) {
+    if (length(params) == 0) {
+        writeLines(character(0), path)
+        return(invisible())
+    }
+
+    out <- params
+
+    # 1. Ensure headers exist (simple injection if missing)
+    ensure_header <- function(lines, header, trigger_pattern) {
+        if (any(grepl(paste0("^\\Q", header, "\\E"), lines))) {
+            return(lines)
+        }
+        idx <- grep(trigger_pattern, lines)
+        if (length(idx) > 0) append(lines, header, after = idx[1] - 1) else lines
+    }
+
+    out <- ensure_header(out, "[Input]", "^CaseFile=")
+    out <- ensure_header(out, "[Analysis]", "^AnalysisType=")
+    out <- ensure_header(out, "[Output]", "^ResultsFile=")
+    out <- ensure_header(out, "[Power Simulations]", "^SimulatedDataMethodType=")
+    out <- ensure_header(out, "[Run Options]", "^NumberParallelProcesses=")
+    out <- ensure_header(out, "[System]", "^Version=")
+
+    # 2. Critical: Ensure [Input] is the VERY FIRST line.
+    # We must MOVE it to the top, not just splice from it (which deletes earlier params like AnalysisType!)
+
+    input_idx <- grep("^\\[Input\\]", out)
+
+    if (length(input_idx) > 0) {
+        # Remove existing [Input] lines
+        out <- out[-input_idx]
+        # Prepend one [Input]
+        out <- c("[Input]", out)
+    } else {
+        # If missing, just prepend
+        out <- c("[Input]", out)
+    }
+
+    # 3. Clean up potential double headers if injection was sloppy?
+    # No, the removal above handles it.
+
+    writeLines(out, path)
 }

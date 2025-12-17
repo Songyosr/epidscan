@@ -17,17 +17,11 @@ utils::globalVariables(c("LOC_ID", "CLUSTER", "P_VALUE", "REL_RISK", "CLU_RR", "
 #' @return satscan result object
 #' @keywords internal
 run_satscan <- function(work_dir, project_name = "epid",
-                        ss_location, ss_batch, final_opts, verbose = FALSE) {
-    if (verbose) message("Running SatScan via rsatscan...")
+                        ss_location, ss_batch, verbose = FALSE) {
+    if (verbose) message("Running SatScan...")
 
-    # Set options in rsatscan environment
-    rsatscan::ss.options(reset = TRUE)
-    rsatscan::ss.options(final_opts)
-
-    # Write PRM file
-    rsatscan::write.ss.prm(work_dir, project_name)
-
-    # Execute
+    # PRM file is already written by prm_write() in satscanr
+    # Just execute SaTScan
     tryCatch(
         {
             rsatscan::satscan(
@@ -139,15 +133,38 @@ parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = 
     # Join GIS results (LOC_ID) to our Location IDs (id)
     # ss_results$gis contains: LOC_ID, CLUSTER, OBSERVED, EXPECTED, ODE, etc.
     # Check if we have GIS results (might be NULL or FALSE if no clusters/output)
+
     if (is.data.frame(ss_results$gis)) {
         gis_df <- ss_results$gis |>
             dplyr::mutate(LOC_ID = as.character(LOC_ID))
 
         location_summary <- loc_geo |>
             dplyr::left_join(gis_df, by = c("id" = "LOC_ID"))
+
+        # Define cluster_summary here when GIS results are present
+        if (!is.null(ss_results$col)) {
+            cluster_summary <- ss_results$col
+            # Ensure standardized column names for REL_RISK (handling variation in SatScan versions)
+            if ("RR" %in% names(cluster_summary) && !"REL_RISK" %in% names(cluster_summary)) {
+                cluster_summary <- dplyr::rename(cluster_summary, REL_RISK = RR)
+            }
+        } else {
+            # Fallback: Extract from GIS if COL file is missing
+            if (verbose) message("No .col file found - extracting cluster summary from GIS data")
+            cluster_summary <- ss_results$gis |>
+                dplyr::select(CLUSTER, P_VALUE, REL_RISK = CLU_RR, ODE = CLU_ODE) |>
+                dplyr::distinct(CLUSTER, .keep_all = TRUE) |>
+                dplyr::arrange(CLUSTER)
+        }
     } else {
         # No GIS results - just return location info with NAs for stats
         location_summary <- loc_geo
+        # Return empty DF with expected columns to satisfy tests/API
+        cluster_summary <- data.frame(
+            CLUSTER = integer(),
+            P_VALUE = numeric(),
+            stringsAsFactors = FALSE
+        )
     }
 
     # Restore sf if input was sf
