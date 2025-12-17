@@ -36,3 +36,6 @@ SaTScan_Users_Guide.md
 
 # Agent Guidelines
 AGENT_GUIDELINES.md
+
+# Local tests (user data)
+tests/testthat/test-real_data_new_api.R

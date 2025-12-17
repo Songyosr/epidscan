@@ -134,8 +134,30 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
     fmt_date <- function(d, prec, is_end = FALSE) {
         # 1. If Date/POSIXt, standard formatting
         if (inherits(d, "Date") || inherits(d, "POSIXt")) {
-            # SaTScan StartDate/EndDate parameters generally accept YYYY/MM/DD
-            return(format(d, "%Y/%m/%d"))
+            d_date <- as.Date(d)
+            if (is_end) {
+                # If Year precision (1), ensure 12/31
+                if (prec == 1L) {
+                    # Create date for Dec 31 of that year
+                    d_date <- as.Date(paste0(format(d_date, "%Y"), "-12-31"))
+                } else if (prec == 2L) {
+                    # If Month precision (2), ensure last day of month
+                    # ceiling_date logic without lubridate:
+                    # Next month 1st minus 1 day
+                    d_next <- seq(d_date, by = "month", length.out = 2)[2]
+                    d_date <- d_next - 1
+                }
+            } else {
+                # Start Date logic
+                if (prec == 1L) {
+                    # Year: Force 01/01
+                    d_date <- as.Date(paste0(format(d_date, "%Y"), "-01-01"))
+                } else if (prec == 2L) {
+                    # Month: Force 01
+                    d_date <- as.Date(paste0(format(d_date, "%Y-%m"), "-01"))
+                }
+            }
+            return(format(d_date, "%Y/%m/%d"))
         }
 
         # 2. If Character/Numeric Year (e.g. "2024" or 2024)
@@ -145,6 +167,18 @@ build_satscan_options <- function(files, export_df, time_precision, type, model,
                 return(paste0(d_str, "/12/31"))
             } else {
                 return(paste0(d_str, "/01/01"))
+            }
+        }
+
+        # 3. If "YYYY/MM" string (Month precision)
+        if (grepl("^\\d{4}/\\d{2}$", d_str)) {
+            if (is_end) {
+                # Parse and find EOM
+                d_date <- as.Date(paste0(d_str, "/01"))
+                d_next <- seq(d_date, by = "month", length.out = 2)[2]
+                return(format(d_next - 1, "%Y/%m/%d"))
+            } else {
+                return(paste0(d_str, "/01"))
             }
         }
 
