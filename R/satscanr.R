@@ -32,7 +32,7 @@
 #' @param output_dir Directory to copy final results to. If NULL, results remain in temp.
 #' @param verbose Logical. Print progress and debug info.
 #' @param ... Additional SaTScan parameters (Level 2 Tweaks).
-#'   See \code{\link{satscan_options}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).
+#'   See \code{\link{satscan_parameters}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).
 #' @return A \code{satscan_result} object containing:
 #'   \item{main}{Main text output lines}
 #'   \item{col}{Column definition data}

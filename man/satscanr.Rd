@@ -34,7 +34,7 @@ satscanr(
 \item{verbose}{Logical. Print progress and debug info.}
 
 \item{...}{Additional SaTScan parameters (Level 2 Tweaks).
-See \code{\link{satscan_options}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).}
+See \code{\link{satscan_parameters}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).}
 }
 \value{
 A \code{satscan_result} object containing:

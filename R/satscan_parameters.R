@@ -1,0 +1,480 @@
+#' SaTScan Parameter Reference
+#'
+#' A comprehensive reference for all SaTScan parameters available via \code{rsatscan}.
+#' Use these parameters in a \code{.prm} template file or as overrides in \code{satscanr(...)}.
+#'
+#' @details
+#' SaTScan is a free software for spatial, temporal and space-time scan statistics,
+#' developed by Martin Kulldorff. It can detect clusters and evaluate their statistical significance.
+#'
+#' For full methodology and examples, see the \href{http://www.satscan.org/}{SaTScan website}.
+#'
+#' \strong{How to Use These Parameters:}
+#' \enumerate{
+#'   \item \strong{Template File}: Create a \code{.prm} file and pass to \code{satscanr(prm_path = "your.prm")}.
+#'   \item \strong{Direct Override}: Pass as named arguments: \code{satscanr(..., AnalysisType = 1)}.
+#' }
+#'
+#' @section Input:
+#' These parameters define the data files required for SaTScan.
+#' \describe{
+#'   \item{CaseFile}{Path to the case file. Contains location IDs, case counts, and optionally time and covariates.}
+#'   \item{ControlFile}{Path to the control file (required for Bernoulli model). Contains location IDs and control counts.}
+#'   \item{PopulationFile}{Path to the population file (required for Poisson model). Contains location IDs, time, population counts, and optional covariates.}
+#'   \item{CoordinatesFile}{Path to the coordinates file. Contains location IDs with X/Y or Lat/Long coordinates.}
+#'   \item{PrecisionCaseTimes}{Time precision of case data:
+#'     \itemize{
+#'       \item 0 = None (purely spatial analysis)
+#'       \item 1 = Year
+#'       \item 2 = Month
+#'       \item 3 = Day
+#'       \item 4 = Generic (arbitrary numeric units)
+#'     }
+#'   }
+#'   \item{StartDate}{Study period start date (format: YYYY/MM/DD).}
+#'   \item{EndDate}{Study period end date (format: YYYY/MM/DD).}
+#'   \item{UseGridFile}{Use custom grid file instead of using case locations as centers? (y/n)}
+#'   \item{GridFile}{Path to the grid file. Optional file specifying alternative cluster center points.}
+#'   \item{CoordinatesType}{Coordinate system used:
+#'     \itemize{
+#'       \item 0 = Cartesian (X, Y in arbitrary units like meters)
+#'       \item 1 = Latitude/Longitude (geodetic, requires WGS84-like coordinates)
+#'     }
+#'   }
+#' }
+#'
+#' @section Analysis:
+#' Core analysis settings including type and model.
+#' \describe{
+#'   \item{AnalysisType}{Type of scan statistic:
+#'     \itemize{
+#'       \item 1 = Purely Spatial: Finds geographic clusters ignoring time.
+#'       \item 2 = Purely Temporal: Finds time clusters ignoring geography.
+#'       \item 3 = Retrospective Space-Time: Finds space-time clusters in historical data.
+#'       \item 4 = Prospective Space-Time: Surveillance mode, clusters must include the current time.
+#'       \item 5 = Spatial Variation in Temporal Trends: Finds areas with different time trends (Poisson only).
+#'       \item 6 = Prospective Purely Temporal: Temporal surveillance, cluster must end at current time.
+#'       \item 7 = Seasonal Temporal: Finds recurring seasonal patterns (Dec 31 wraps to Jan 1).
+#'     }
+#'   }
+#'   \item{ModelType}{Probability model:
+#'     \itemize{
+#'       \item 0 = Discrete Poisson: For count data with a known background population. Fast.
+#'       \item 1 = Bernoulli: For case/control data (0/1). Requires control file.
+#'       \item 2 = Space-Time Permutation: Case-only data, adjusts for purely spatial/temporal patterns.
+#'       \item 3 = Ordinal: For ordered categorical outcomes (e.g., cancer stage I/II/III).
+#'       \item 4 = Exponential: For survival time data (with censoring).
+#'       \item 5 = Normal: For continuous data (e.g., birth weight). Sensitive to outliers.
+#'       \item 6 = Continuous Poisson: For point process data where observations can occur anywhere.
+#'       \item 7 = Multinomial: For unordered categorical outcomes (e.g., disease subtypes).
+#'       \item 8 = Rank: Non-parametric rank-based model.
+#'       \item 9 = UniformTime: Uniform temporal model.
+#'       \item 10 = Batched: For batched data analysis.
+#'     }
+#'   }
+#'   \item{ScanAreas}{Cluster types to detect:
+#'     \itemize{
+#'       \item 1 = High Rates (Poisson/Bernoulli/STP), High Values (Ordinal/Normal), Short Survival (Exponential)
+#'       \item 2 = Low Rates/Values, Long Survival
+#'       \item 3 = Both High and Low (recommended for unbiased analysis)
+#'     }
+#'   }
+#'   \item{TimeAggregationUnits}{Units for aggregating time (0=None, 1=Year, 2=Month, 3=Day, 4=Generic).}
+#'   \item{TimeAggregationLength}{Number of time units per aggregation period (positive integer).}
+#' }
+#'
+#' @section Output:
+#' Control which output files are generated.
+#' \describe{
+#'   \item{ResultsFile}{Base filename for results (e.g., "analysis.txt").}
+#'   \item{OutputGoogleEarthKML}{Generate Google Earth KML file? (y/n)}
+#'   \item{OutputShapefiles}{Generate ESRI shapefiles of clusters? (y/n)}
+#'   \item{OutputCartesianGraph}{Output cartesian graph file? (y/n)}
+#'   \item{MostLikelyClusterEachCentroidASCII}{Output cluster info in ASCII format? (y/n)}
+#'   \item{MostLikelyClusterEachCentroidDBase}{Output cluster info in dBase format? (y/n)}
+#'   \item{MostLikelyClusterCaseInfoEachCentroidASCII}{Output cluster case info in ASCII format? (y/n)}
+#'   \item{MostLikelyClusterCaseInfoEachCentroidDBase}{Output cluster case info (.col) in dBase format? (y/n)}
+#'   \item{CensusAreasReportedClustersASCII}{Output location info in ASCII format? (y/n)}
+#'   \item{CensusAreasReportedClustersDBase}{Output location info (.gis) in dBase format? (y/n)}
+#'   \item{IncludeRelativeRisksCensusAreasASCII}{Output risk estimates in ASCII format? (y/n)}
+#'   \item{IncludeRelativeRisksCensusAreasDBase}{Output risk estimates (.rr) in dBase format? (y/n)}
+#'   \item{SaveSimLLRsASCII}{Output simulated log likelihood ratios in ASCII format? (y/n)}
+#'   \item{SaveSimLLRsDBase}{Output simulated log likelihood ratios in dBase format? (y/n)}
+#'   \item{OutputGoogleMaps}{Generate Google Maps HTML output? (y/n)}
+#' }
+#'
+#' @section Multiple Data Sets:
+#' Settings for multivariate or covariate-adjusted analyses.
+#' \describe{
+#'   \item{MultipleDataSetsPurposeType}{Purpose of multiple data sets:
+#'     \itemize{
+#'       \item 0 = Multivariate (analyze multiple outcomes)
+#'       \item 1 = Adjustment (covariate adjustment)
+#'     }
+#'   }
+#'   \item{DataSet1-Name}{Name for data set 1 (default: "Data Set #1").}
+#' }
+#'
+#' @section Data Checking:
+#' Validation settings for input data.
+#' \describe{
+#'   \item{StudyPeriodCheckType}{Date range checking:
+#'     \itemize{
+#'       \item 0 = Strict (error if data outside study period)
+#'       \item 1 = Relaxed (allow data outside study period)
+#'     }
+#'   }
+#'   \item{GeographicalCoordinatesCheckType}{Coordinate validation:
+#'     \itemize{
+#'       \item 0 = Strict (error on invalid coordinates)
+#'       \item 1 = Relaxed (skip invalid coordinates)
+#'     }
+#'   }
+#' }
+#'
+#' @section Locations Network:
+#' For network-based distance calculations.
+#' \describe{
+#'   \item{LocationsNetworkFilename}{Path to network file.}
+#'   \item{UseLocationsNetworkFile}{Use network file for distance calculations? (y/n)}
+#' }
+#'
+#' @section Spatial Neighbors:
+#' For non-Euclidean spatial relationships.
+#' \describe{
+#'   \item{UseNeighborsFile}{Use non-Euclidean neighbors file? (y/n)}
+#'   \item{NeighborsFilename}{Path to neighbors file.}
+#'   \item{UseMetaLocationsFile}{Use meta-locations (grouped locations)? (y/n)}
+#'   \item{MetaLocationsFilename}{Path to meta-locations file.}
+#'   \item{MultipleCoordinatesType}{How to handle multiple coordinates per location:
+#'     \itemize{
+#'       \item 0 = Only one location
+#'       \item 1 = At least one location
+#'       \item 2 = All locations
+#'     }
+#'   }
+#'   \item{MultipleLocationsFile}{Filename for multiple locations per group.}
+#' }
+#'
+#' @section Spatial Window:
+#' Shape and size constraints on the spatial scanning window.
+#' \describe{
+#'   \item{MaxSpatialSizeInPopulationAtRisk}{Maximum cluster size as percent of population at risk (0-50). Default: 50.}
+#'   \item{UseMaxCirclePopulationFileOption}{Restrict max spatial size using max circle population file? (y/n)}
+#'   \item{MaxSpatialSizeInMaxCirclePopulationFile}{Max spatial size in max circle population file (<=50\%).}
+#'   \item{MaxCirclePopulationFile}{Path to maximum circle population file.}
+#'   \item{UseDistanceFromCenterOption}{Restrict cluster size by distance? (y/n)}
+#'   \item{MaxSpatialSizeInDistanceFromCenter}{Maximum radius in distance units (positive integer).}
+#'   \item{IncludePurelyTemporal}{Include purely temporal clusters in space-time analysis? (y/n)}
+#'   \item{SpatialWindowShapeType}{Window shape:
+#'     \itemize{
+#'       \item 0 = Circular (default, fastest)
+#'       \item 1 = Elliptic (higher power for elongated clusters, slower)
+#'     }
+#'   }
+#'   \item{NonCompactnessPenalty}{Penalty for non-compact ellipses:
+#'     \itemize{
+#'       \item 0 = No Penalty
+#'       \item 1 = Medium Penalty (default)
+#'       \item 2 = Strong Penalty
+#'     }
+#'   }
+#'   \item{IsotonicScan}{Isotonic scan type:
+#'     \itemize{
+#'       \item 0 = Standard
+#'       \item 1 = Monotone
+#'     }
+#'   }
+#' }
+#'
+#' @section Temporal Window:
+#' Size constraints on the temporal scanning window.
+#' \describe{
+#'   \item{MinimumTemporalClusterSize}{Minimum cluster duration in time aggregation units.}
+#'   \item{MaxTemporalSizeInterpretation}{How to interpret max temporal size:
+#'     \itemize{
+#'       \item 0 = Percentage of study period
+#'       \item 1 = Absolute time units
+#'     }
+#'   }
+#'   \item{MaxTemporalSize}{Maximum temporal cluster size (0-90 percent, or time units).}
+#'   \item{IncludePurelySpatial}{Include purely spatial clusters in space-time analysis? (y/n)}
+#'   \item{IncludeClusters}{Which temporal clusters to evaluate:
+#'     \itemize{
+#'       \item 0 = All clusters
+#'       \item 1 = Alive clusters (ending at study end)
+#'       \item 2 = Flexible window (specify ranges below)
+#'     }
+#'   }
+#'   \item{IntervalStartRange}{Start date range for flexible window (YYYY/MM/DD,YYYY/MM/DD).}
+#'   \item{IntervalEndRange}{End date range for flexible window (YYYY/MM/DD,YYYY/MM/DD).}
+#' }
+#'
+#' @section Cluster Restrictions:
+#' Minimum requirements for reporting clusters.
+#' \describe{
+#'   \item{RiskLimitHighClusters}{Apply risk threshold for high clusters? (y/n)}
+#'   \item{RiskThresholdHighClusters}{Minimum relative risk for high clusters (>=1.0).}
+#'   \item{RiskLimitLowClusters}{Apply risk threshold for low clusters? (y/n)}
+#'   \item{RiskThresholdLowClusters}{Maximum relative risk for low clusters (0-1).}
+#'   \item{MinimumCasesInLowRateClusters}{Minimum cases required to report a low-rate cluster.}
+#'   \item{MinimumCasesInHighRateClusters}{Minimum cases required to report a high-rate cluster.}
+#' }
+#'
+#' @section Space and Time Adjustments:
+#' Controls for confounding and trend adjustment.
+#' \describe{
+#'   \item{TimeTrendAdjustmentType}{Time trend adjustment:
+#'     \itemize{
+#'       \item 0 = None
+#'       \item 2 = Log-linear with user-specified percentage
+#'       \item 3 = Calculated log-linear
+#'       \item 4 = Time-stratified randomization
+#'       \item 5 = Calculated quadratic
+#'     }
+#'   }
+#'   \item{TimeTrendPercentage}{Adjustment percentage (for type 2). Can be negative (>-100).}
+#'   \item{TimeStratifiedAdjLength}{Length in time units for stratified adjustment (positive integer).}
+#'   \item{TimeTrendType}{Time trend type for SVTT only:
+#'     \itemize{
+#'       \item 0 = Linear
+#'       \item 1 = Quadratic
+#'     }
+#'   }
+#'   \item{AdjustForWeeklyTrends}{Adjust for day-of-week effects (nonparametric)? (y/n)}
+#'   \item{SpatialAdjustmentType}{Spatial adjustment:
+#'     \itemize{
+#'       \item 0 = None
+#'       \item 1 = Spatially-stratified randomization
+#'       \item 2 = Spatial nonparametric
+#'     }
+#'   }
+#'   \item{UseAdjustmentsByRRFile}{Use adjustments by known relative risks file? (y/n)}
+#'   \item{AdjustmentsByKnownRelativeRisksFilename}{Path to known relative risks file.}
+#' }
+#'
+#' @section Inference:
+#' Monte Carlo simulation and p-value calculation.
+#' \describe{
+#'   \item{PValueReportType}{P-value calculation method:
+#'     \itemize{
+#'       \item 0 = Default p-value
+#'       \item 1 = Standard Monte Carlo
+#'       \item 2 = Early Termination (faster for non-significant clusters)
+#'       \item 3 = Gumbel p-value
+#'     }
+#'   }
+#'   \item{EarlyTerminationThreshold}{Threshold for early termination (default: 50).}
+#'   \item{ReportGumbel}{Report Gumbel p-values? (y/n)}
+#'   \item{MonteCarloReps}{Number of Monte Carlo replications (0, 9, 999, n999). More = more precise p-values.}
+#'   \item{AdjustForEarlierAnalyses}{Adjust for multiple testing across repeated prospective analyses? (y/n)}
+#'   \item{ProspectiveStartDate}{For prospective analyses, the start date of surveillance (YYYY/MM/DD).}
+#'   \item{IterativeScan}{Remove detected clusters and re-scan? (y/n)}
+#'   \item{IterativeScanMaxIterations}{Maximum iterations for iterative scan (0-32000).}
+#'   \item{IterativeScanMaxPValue}{Stop iterative scan when cluster p-value exceeds this (0.0-1.0).}
+#' }
+#'
+#' @section Cluster Drilldown:
+#' Settings for drilling down into detected clusters.
+#' \describe{
+#'   \item{PerformStandardDrilldown}{Perform standard drilldown on detected clusters? (y/n)}
+#'   \item{PerformBernoulliDrilldown}{Perform Bernoulli drilldown on detected clusters? (y/n)}
+#'   \item{DrilldownMinimumClusterLocations}{Minimum locations in cluster to perform drilldown (positive integer).}
+#'   \item{DrilldownMinimumClusterCases}{Minimum cases in cluster to perform drilldown (positive integer).}
+#'   \item{DrilldownClusterCutoff}{P-value cutoff for drilldown (0.0-1.0 for retrospective, >0 for prospective).}
+#'   \item{DrilldownAdjustForWeeklyTrends}{Adjust for weekly trends in purely spatial Bernoulli drilldown? (y/n)}
+#' }
+#'
+#' @section Miscellaneous Analysis:
+#' Additional analysis options.
+#' \describe{
+#'   \item{CalculateOliveira}{Calculate Oliveira's F statistic? (y/n)}
+#'   \item{NumBootstrapReplications}{Number of bootstrap replications for Oliveira calculation (minimum=100, multiple of 100).}
+#'   \item{OliveiraPvalueCutoff}{P-value cutoff for clusters in Oliveira calculation (0.0-1.0).}
+#'   \item{ProspectiveFrequencyType}{Frequency type for prospective analyses:
+#'     \itemize{
+#'       \item 0 = Same as time aggregation
+#'       \item 1 = Daily
+#'       \item 2 = Weekly
+#'       \item 3 = Monthly
+#'       \item 4 = Quarterly
+#'       \item 5 = Yearly
+#'     }
+#'   }
+#'   \item{ProspectiveFrequency}{Frequency of prospective analyses (positive integer).}
+#' }
+#'
+#' @section Power Evaluation:
+#' Estimate statistical power of the analysis.
+#' \describe{
+#'   \item{PerformPowerEvaluation}{Run power analysis? (y/n, Poisson only)}
+#'   \item{PowerEvaluationsMethod}{Power evaluation method:
+#'     \itemize{
+#'       \item 0 = Analysis and power evaluation together
+#'       \item 1 = Power evaluation with case file only
+#'       \item 2 = Power evaluation with defined total cases
+#'     }
+#'   }
+#'   \item{PowerEvaluationTotalCases}{Total cases for power calculation.}
+#'   \item{CriticalValueType}{Critical value type:
+#'     \itemize{
+#'       \item 0 = Monte Carlo
+#'       \item 1 = Gumbel
+#'       \item 2 = User Specified Values
+#'     }
+#'   }
+#'   \item{CriticalValue05}{Critical value for p=0.05 (>0).}
+#'   \item{CriticalValue01}{Critical value for p=0.01 (>0).}
+#'   \item{CriticalValue001}{Critical value for p=0.001 (>0).}
+#'   \item{PowerEstimationType}{Power estimation type:
+#'     \itemize{
+#'       \item 0 = Monte Carlo
+#'       \item 1 = Gumbel
+#'     }
+#'   }
+#'   \item{NumberPowerReplications}{Number of simulations for power estimation.}
+#'   \item{AlternativeHypothesisFilename}{File defining alternative hypothesis for power.}
+#'   \item{PowerEvaluationsSimulationMethod}{Simulation method for power step:
+#'     \itemize{
+#'       \item 0 = Null Randomization
+#'       \item 2 = File Import
+#'     }
+#'   }
+#'   \item{PowerEvaluationsSimulationSourceFilename}{Input file for power simulation.}
+#'   \item{ReportPowerEvaluationSimulationData}{Report power evaluation simulation data? (y/n)}
+#'   \item{PowerEvaluationsSimulationOutputFilename}{Output file for power simulation data.}
+#' }
+#'
+#' @section Spatial Output:
+#' Settings for spatial output and cluster reporting.
+#' \describe{
+#'   \item{LaunchMapViewer}{Automatically launch map viewer (GUI only)? (y/n)}
+#'   \item{CompressKMLtoKMZ}{Create compressed KMZ file instead of KML? (y/n)}
+#'   \item{IncludeClusterLocationsKML}{Include cluster locations in KML output? (y/n)}
+#'   \item{ThresholdLocationsSeparateKML}{Threshold for generating separate KML files for cluster locations (positive integer).}
+#'   \item{ReportHierarchicalClusters}{Report hierarchical structure of overlapping clusters? (y/n)}
+#'   \item{CriteriaForReportingSecondaryClusters}{Overlap criteria for secondary clusters:
+#'     \itemize{
+#'       \item 0 = No Geographic Overlap (most restrictive)
+#'       \item 1 = No Centers in Other Cluster
+#'       \item 2 = No Centers in Most Likely Cluster
+#'       \item 3 = No Centers in Less Likely Cluster
+#'       \item 4 = No Pair of Centers in Each Other
+#'       \item 5 = No Restrictions (report all)
+#'     }
+#'   }
+#'   \item{ReportGiniClusters}{Report Gini clusters? (y/n)}
+#'   \item{GiniIndexClusterReportingType}{Gini cluster reporting:
+#'     \itemize{
+#'       \item 0 = Optimal index only
+#'       \item 1 = All values
+#'     }
+#'   }
+#'   \item{SpatialMaxima}{Spatial window maxima stops, comma-separated percentages (e.g., "1,2,3,4,5,6,8,10,12,15,20,25,30,40,50").}
+#'   \item{GiniIndexClustersPValueCutOff}{Max p-value for clusters used in Gini coefficient calculation (0.0-1.0).}
+#'   \item{ReportGiniIndexCoefficents}{Report Gini index coefficients to results file? (y/n)}
+#'   \item{UseReportOnlySmallerClusters}{Restrict reported clusters to maximum geographical size? (y/n)}
+#'   \item{MaxSpatialSizeInPopulationAtRisk_Reported}{Maximum reported spatial size in population at risk (<=50\%).}
+#'   \item{UseMaxCirclePopulationFileOption_Reported}{Restrict max reported size using max circle file? (y/n)}
+#'   \item{MaxSizeInMaxCirclePopulationFile_Reported}{Max reported size in max circle population file (<=50\%).}
+#'   \item{UseDistanceFromCenterOption_Reported}{Restrict max reported size by distance? (y/n)}
+#'   \item{MaxSpatialSizeInDistanceFromCenter_Reported}{Maximum reported spatial size in distance (positive integer).}
+#' }
+#'
+#' @section Temporal Output:
+#' Settings for temporal graph output.
+#' \describe{
+#'   \item{OutputTemporalGraphHTML}{Output temporal graph HTML file? (y/n)}
+#'   \item{TemporalGraphReportType}{Temporal graph cluster reporting:
+#'     \itemize{
+#'       \item 0 = Only most likely cluster
+#'       \item 1 = X most likely clusters
+#'       \item 2 = Only significant clusters
+#'     }
+#'   }
+#'   \item{TemporalGraphMostMLC}{Number of most likely clusters to report in temporal graph (positive integer).}
+#'   \item{TemporalGraphSignificanceCutoff}{P-value cutoff for significant clusters in temporal graph (0.0-1.0).}
+#' }
+#'
+#' @section Other Output:
+#' Additional output settings.
+#' \describe{
+#'   \item{CriticalValue}{Report critical values for 0.01 and 0.05? (y/n)}
+#'   \item{ReportClusterRank}{Report cluster rank? (y/n)}
+#'   \item{PrintAsciiColumnHeaders}{Print ASCII column headers in output files? (y/n)}
+#'   \item{ResultsTitle}{User-defined title for results file.}
+#'   \item{CutoffClusterLinelistCSV}{P-value cutoff for clusters in line list CSV (0.0-1.0 for retrospective, >0 for prospective).}
+#' }
+#'
+#' @section Line List:
+#' Settings for line list caching.
+#' \describe{
+#'   \item{LineListIndividualCache}{Filename for line list individuals cache.}
+#' }
+#'
+#' @section Notifications:
+#' Email notification settings.
+#' \describe{
+#'   \item{EmailAlwaysSummary}{Always email results summary? (y/n)}
+#'   \item{EmailAlwaysRecipients}{Recipients for always emails (comma-separated list).}
+#'   \item{EmailCutoffSummary}{Email results summary per cluster meeting cutoff? (y/n)}
+#'   \item{EmailCutoffRecipients}{Recipients for cutoff emails (comma-separated list).}
+#'   \item{EmailCutoffValue}{P-value cutoff to email results (0.0-1.0 for retrospective, >0 for prospective).}
+#'   \item{EmailAttachResults}{Attach results to email? (y/n)}
+#'   \item{EmailIncludeResults}{Include results/directory path in email? (y/n)}
+#'   \item{CustomEmail}{Use custom email format? (y/n)}
+#'   \item{CustomEmailSubjectLine}{Custom email subject line (use <results-name> placeholder).}
+#'   \item{CustomEmailMessageBody}{Custom email message body (use <summary-paragraph>, <location-paragraph>, <footer-paragraph>, <linebreak> placeholders).}
+#' }
+#'
+#' @section Elliptic Scan:
+#' Settings when using elliptic scanning window (SpatialWindowShapeType=1).
+#' \describe{
+#'   \item{EllipseShapes}{Ellipse shape ratios, comma-separated (e.g., "1.5,2,3,4,5").}
+#'   \item{EllipseAngles}{Number of angles per ellipse, comma-separated (e.g., "4,6,9,12,15").}
+#' }
+#'
+#' @section Power Simulations:
+#' Settings for simulation data in power analysis.
+#' \describe{
+#'   \item{SimulatedDataMethodType}{Simulation method:
+#'     \itemize{
+#'       \item 0 = Null Randomization
+#'       \item 2 = File Import
+#'     }
+#'   }
+#'   \item{SimulatedDataInputFilename}{Input file for simulated data (with File Import=2).}
+#'   \item{PrintSimulatedDataToFile}{Print simulated data to file? (y/n)}
+#'   \item{SimulatedDataOutputFilename}{Output filename for simulated data.}
+#' }
+#'
+#' @section Run Options:
+#' Performance and execution settings.
+#' \describe{
+#'   \item{NumberParallelProcesses}{Number of parallel processes (0 = all available CPUs).}
+#'   \item{SuppressWarnings}{Suppress warning messages? (y/n)}
+#'   \item{LogRunToHistoryFile}{Log run to history file? (y/n)}
+#'   \item{ExecutionType}{Execution method:
+#'     \itemize{
+#'       \item 0 = Automatic
+#'       \item 1 = Successively
+#'       \item 2 = Centrically
+#'     }
+#'   }
+#' }
+#'
+#' @section System:
+#' \describe{
+#'   \item{Version}{SaTScan version (read-only, do not modify).}
+#' }
+#'
+#' @references
+#' Kulldorff M. A spatial scan statistic. Communications in Statistics: Theory and Methods. 1997;26:1481-1496.
+#'
+#' Kulldorff M, et al. A space-time permutation scan statistic for disease outbreak detection. PLoS Medicine. 2005;2:e59.
+#'
+#' @seealso \code{\link{satscanr}} for running the analysis.
+#'
+#' @name satscan_parameters
+#' @docType data
+NULL
