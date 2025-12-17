@@ -33,3 +33,6 @@ docs/
 
 # Documentation to ignore
 SaTScan_Users_Guide.md
+
+# Agent Guidelines
+AGENT_GUIDELINES.md
