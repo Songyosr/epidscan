@@ -174,6 +174,16 @@ epid_satscan <- function(data,
     export_df$date <- rlang::eval_tidy(date_quo, data)
   }
 
+  if (!is.null(covariates)) {
+    for (cov in covariates) {
+      if (cov %in% names(data)) {
+        export_df[[cov]] <- data[[cov]]
+      } else {
+        stop(sprintf("Covariate '%s' not found in input data.", cov))
+      }
+    }
+  }
+
   # 5. Setup directories
   # Use provided work_dir or default to tempdir (for intermediate files)
   if (is.null(work_dir)) work_dir <- tempdir()
