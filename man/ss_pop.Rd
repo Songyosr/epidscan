@@ -23,10 +23,15 @@ ss_pop(data, loc_id, time, population, covars = NULL, time_precision = NULL)
 An \code{ss_tbl} object of type "pop".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "pop" (Population File).
+Creates an \code{ss_tbl} object of type \code{"pop"} (SaTScan Population File).
+A population file provides the population-at-risk by location and time and
+is used as the denominator for Poisson-based scan statistics. If multiple
+time points are supplied, SaTScan may interpolate population size between
+time anchors depending on the analysis setup.
+
+This constructor records the mappings for location ID, time, population, and
+optional covariate strata without changing the input data. Any time formatting
+is deferred to \code{write_satscan()}, using \code{time_precision} if provided.
 }
 \section{SaTScan File Specification}{
 

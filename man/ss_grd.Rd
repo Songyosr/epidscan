@@ -39,10 +39,15 @@ ss_grd(
 An \code{ss_tbl} object of type "grd".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "grd" (Grid File).
+Creates an \code{ss_tbl} object of type \code{"grd"} (SaTScan Grid File).
+A grid file specifies the set of candidate centroids at which SaTScan
+evaluates potential clusters. When a grid is supplied, SaTScan scans only
+at these grid points (rather than at every observed location), which can
+reduce computation and enforce a user-defined scanning lattice.
+
+This constructor records the coordinate columns (and optional constraints)
+without modifying the input data. Coordinate ordering rules match \code{ss_geo}
+and are applied by the writer when producing the SaTScan ASCII file.
 }
 \section{SaTScan File Specification}{
 

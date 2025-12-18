@@ -21,10 +21,17 @@ ss_nwk(data, loc_id, neighbor_id, distance = NULL, distance_units = NULL)
 An \code{ss_tbl} object of type "nwk".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "nwk" (Network File).
+Creates an \code{ss_tbl} object of type \code{"nwk"} (SaTScan Network File).
+A network file defines adjacency between locations as an edge list,
+optionally with a distance or weight for each connection. SaTScan can use
+this structure to define cluster expansion on a network (rather than by
+Euclidean distance), making it suitable for road networks or other
+connectivity-based proximity.
+
+This constructor records which columns define the source location, the
+neighbor location, and the optional distance/weight. It does not compute
+distances or alter the network; those decisions are deferred to SaTScan
+and the analysis configuration.
 }
 \section{SaTScan File Specification}{
 

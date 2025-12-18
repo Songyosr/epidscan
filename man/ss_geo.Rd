@@ -30,11 +30,19 @@ ss_geo(
 An \code{ss_tbl} object of type "geo".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "geo" (Coordinates File).
-Automatically handles \code{sf} objects by extracting centroids and detecting coordinate types.
+Creates an \code{ss_tbl} object of type \code{"geo"} (SaTScan Coordinates File).
+A coordinates file defines the spatial location of each analysis unit,
+and SaTScan uses these locations to compute distances and to construct
+circular/elliptic scanning windows. Coordinates may be provided in
+latitude/longitude or Cartesian units; the required output column order
+differs between these coordinate types.
+
+If \code{data} is an \code{sf} object, this function extracts feature centroids and
+maps them to SaTScan’s expected coordinate order (Lat, Long for lat/long
+CRS; X, Y for projected CRS). If \code{data} is a plain data frame, it records
+the user-supplied coordinate columns and (when \code{coord_type = "auto"})
+applies a simple heuristic to infer lat/long vs Cartesian. No projection
+or coordinate transformation is performed.
 }
 \section{SaTScan File Specification}{
 

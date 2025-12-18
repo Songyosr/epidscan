@@ -78,7 +78,9 @@ ss_schema <- function() {
 
 #' Create a SaTScan Table
 #'
-#' `r lifecycle::badge("stable")`
+#'
+#' @description
+#' Creates a new `ss_tbl` object, which is a `vctrs` subclass of `data.frame` tailored for SaTScan data.
 #'
 #' @param data A data.frame.
 #' @param type type string (e.g. "cas", "geo").
@@ -216,15 +218,21 @@ print.ss_tbl <- function(x, ...) {
     invisible(x)
 }
 
-
 # ---- User-Facing Coercers ----
 
 #' Coerce Data to SaTScan Case Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"cas"` (SaTScan Case File).
+#' A case file provides the observed case counts by location and, optionally,
+#' by time and covariate strata. SaTScan uses these counts as the primary
+#' numerator when evaluating candidate spatial/temporal clusters against the
+#' null model.
 #'
-#' Creates an `ss_tbl` object of type "cas" (Case File).
-#' Enforces strict sparsity (no zero-case rows) and handles time precision formatting.
+#' This constructor does not alter the input data. It records which columns
+#' represent the required SaTScan fields (location ID, case count, and optional
+#' time/covariates). Any time formatting is deferred to write-time via
+#' `write_satscan()` (and `format_satscan_time()`), based on `time_precision`.
 #'
 #' @section SaTScan File Specification:
 #' The Case File has the following structure:
@@ -272,9 +280,16 @@ ss_cas <- function(data, loc_id, cases, time = NULL, covars = NULL,
 
 #' Coerce Data to SaTScan Control Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"ctl"` (SaTScan Control File).
+#' A control file provides the number of controls by location and, optionally,
+#' by time and covariate strata. When used with a case file (Bernoulli models),
+#' SaTScan compares the spatial/temporal concentration of cases against the
+#' background distribution implied by controls.
 #'
-#' Creates an `ss_tbl` object of type "ctl" (Control File) for Bernoulli models.
+#' This constructor preserves the original data and stores column role mappings.
+#' Time precision is not enforced here; if `time` is provided, it will be formatted
+#' at write-time (via `write_satscan()`), using `time_precision` if supplied.
 #'
 #' @section SaTScan File Specification:
 #' The Control File has the following structure:
@@ -311,9 +326,16 @@ ss_ctl <- function(data, loc_id, controls, time = NULL, covars = NULL,
 
 #' Coerce Data to SaTScan Population Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"pop"` (SaTScan Population File).
+#' A population file provides the population-at-risk by location and time and
+#' is used as the denominator for Poisson-based scan statistics. If multiple
+#' time points are supplied, SaTScan may interpolate population size between
+#' time anchors depending on the analysis setup.
 #'
-#' Creates an `ss_tbl` object of type "pop" (Population File).
+#' This constructor records the mappings for location ID, time, population, and
+#' optional covariate strata without changing the input data. Any time formatting
+#' is deferred to `write_satscan()`, using `time_precision` if provided.
 #'
 #' @section SaTScan File Specification:
 #' The Population File has the following structure:
@@ -350,10 +372,20 @@ ss_pop <- function(data, loc_id, time, population, covars = NULL,
 
 #' Coerce Data to SaTScan Coordinates Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"geo"` (SaTScan Coordinates File).
+#' A coordinates file defines the spatial location of each analysis unit,
+#' and SaTScan uses these locations to compute distances and to construct
+#' circular/elliptic scanning windows. Coordinates may be provided in
+#' latitude/longitude or Cartesian units; the required output column order
+#' differs between these coordinate types.
 #'
-#' Creates an `ss_tbl` object of type "geo" (Coordinates File).
-#' Automatically handles `sf` objects by extracting centroids and detecting coordinate types.
+#' If `data` is an `sf` object, this function extracts feature centroids and
+#' maps them to SaTScan’s expected coordinate order (Lat, Long for lat/long
+#' CRS; X, Y for projected CRS). If `data` is a plain data frame, it records
+#' the user-supplied coordinate columns and (when `coord_type = "auto"`)
+#' applies a simple heuristic to infer lat/long vs Cartesian. No projection
+#' or coordinate transformation is performed.
 #'
 #' @section SaTScan File Specification:
 #' The Coordinates File has the following structure:
@@ -491,9 +523,16 @@ ss_geo <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
 
 #' Coerce Data to SaTScan Grid Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"grd"` (SaTScan Grid File).
+#' A grid file specifies the set of candidate centroids at which SaTScan
+#' evaluates potential clusters. When a grid is supplied, SaTScan scans only
+#' at these grid points (rather than at every observed location), which can
+#' reduce computation and enforce a user-defined scanning lattice.
 #'
-#' Creates an `ss_tbl` object of type "grd" (Grid File).
+#' This constructor records the coordinate columns (and optional constraints)
+#' without modifying the input data. Coordinate ordering rules match `ss_geo`
+#' and are applied by the writer when producing the SaTScan ASCII file.
 #'
 #' @section SaTScan File Specification:
 #' The Grid File has the same structure as the Coordinates File:
@@ -536,9 +575,18 @@ ss_grd <- function(data, coord1, coord2, z = NULL,
 
 #' Coerce Data to SaTScan Network Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"nwk"` (SaTScan Network File).
+#' A network file defines adjacency between locations as an edge list,
+#' optionally with a distance or weight for each connection. SaTScan can use
+#' this structure to define cluster expansion on a network (rather than by
+#' Euclidean distance), making it suitable for road networks or other
+#' connectivity-based proximity.
 #'
-#' Creates an `ss_tbl` object of type "nwk" (Network File).
+#' This constructor records which columns define the source location, the
+#' neighbor location, and the optional distance/weight. It does not compute
+#' distances or alter the network; those decisions are deferred to SaTScan
+#' and the analysis configuration.
 #'
 #' @section SaTScan File Specification:
 #' The Network File has the following structure:
@@ -572,9 +620,17 @@ ss_nwk <- function(data, loc_id, neighbor_id, distance = NULL,
 
 #' Coerce Data to SaTScan Neighbors Table
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"nbr"` (SaTScan Non-Euclidean Neighbors File).
+#' A neighbors file defines, for each centroid location, an ordered list of
+#' neighboring locations ranked by closeness. SaTScan constructs candidate
+#' clusters by progressively expanding each row (centroid, then centroid + first
+#' neighbor, then + second neighbor, etc.) until the row ends.
 #'
-#' Creates an `ss_tbl` object of type "nbr" (Neighbors File).
+#' This constructor expects neighbors in a wide format (one row per centroid,
+#' multiple neighbor columns in rank order). It preserves the input data and
+#' records `neighbor_cols` so the writer can emit the correct SaTScan ASCII
+#' structure without reshaping user data.
 #'
 #' @section SaTScan File Specification:
 #' The Neighbors File has the following structure:
@@ -608,9 +664,16 @@ ss_nbr <- function(data, loc_id, neighbor_cols) {
 
 #' Coerce Data to SaTScan Meta Locations
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Creates an `ss_tbl` object of type `"met"` (SaTScan Meta Locations File).
+#' A meta locations file defines groupings of multiple locations into a single
+#' meta-location (e.g., aggregating tracts into counties). SaTScan uses these
+#' groupings to treat members as belonging to the same higher-level unit when
+#' a meta-location analysis is requested.
 #'
-#' Creates an `ss_tbl` object of type "met" (Meta Population File).
+#' This constructor expects a wide representation (one row per meta-location,
+#' with one or more member columns). It preserves the input data and records
+#' `member_cols` so the writer can output the correct SaTScan ASCII format.
 #'
 #' @section SaTScan File Specification:
 #' The Meta Locations File has the following structure:

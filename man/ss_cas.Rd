@@ -23,11 +23,16 @@ ss_cas(data, loc_id, cases, time = NULL, covars = NULL, time_precision = NULL)
 An \code{ss_tbl} object of type "cas".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "cas" (Case File).
-Enforces strict sparsity (no zero-case rows) and handles time precision formatting.
+Creates an \code{ss_tbl} object of type \code{"cas"} (SaTScan Case File).
+A case file provides the observed case counts by location and, optionally,
+by time and covariate strata. SaTScan uses these counts as the primary
+numerator when evaluating candidate spatial/temporal clusters against the
+null model.
+
+This constructor does not alter the input data. It records which columns
+represent the required SaTScan fields (location ID, case count, and optional
+time/covariates). Any time formatting is deferred to write-time via
+\code{write_satscan()} (and \code{format_satscan_time()}), based on \code{time_precision}.
 }
 \section{SaTScan File Specification}{
 

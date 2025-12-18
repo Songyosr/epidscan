@@ -90,93 +90,63 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 
 #' Run SaTScan Analysis
 #'
-#' `r lifecycle::badge("stable")`
+#' @description
+#' Runs a SaTScan session end-to-end: writes required SaTScan ASCII inputs
+#' (\code{.cas}, \code{.geo}, and optionally \code{.pop}/\code{.ctl}/\code{.grd}),
+#' builds a final \code{.prm} configuration using a strict precedence hierarchy,
+#' executes the SaTScan command-line program, and parses outputs into an R result object.
 #'
-#' Orchestrates the SaTScan analysis by managing inputs, configuring parameters
-#' via a strictly defined hierarchy, execution, and result parsing.
+#' @details
+#' \strong{What SaTScan does (short):}
+#' SaTScan detects and evaluates clusters by scanning many candidate windows across space,
+#' time, or space-time. For each candidate window, it computes a \emph{probability-model-specific}
+#' likelihood ratio (or analogous test statistic) comparing the risk \emph{inside} the window
+#' versus \emph{outside}. The window with the maximum statistic is reported as the
+#' \strong{most likely cluster}. Statistical significance is typically assessed by Monte Carlo
+#' simulation under the null, repeating the same scan to obtain the null distribution of the
+#' maximum statistic.
 #'
-#' @section Statistical Methodology:
-#' The scan statistic detects and evaluates clusters by gradually scanning a window
-#' across space and/or time. At each location, the number of observed and expected
-#' cases inside the window is compared using a likelihood ratio test (Kulldorff, 1997).
+#' \strong{Probability models:}
+#' The likelihood/test statistic depends on \code{ModelType} (e.g., discrete Poisson, Bernoulli,
+#' space-time permutation, multinomial, ordinal, exponential, normal). This function delegates
+#' all inferential details to the SaTScan executable; this documentation only summarizes the
+#' general workflow.
 #'
-#' \strong{Likelihood Ratio Test (Poisson Model):}
-#' For a scanning window with \eqn{c} observed cases and \eqn{E[c]} expected cases
-#' (given total cases \eqn{C}), the likelihood is proportional to:
-#' \deqn{L = \left(\frac{c}{E[c]}\right)^c \left(\frac{C-c}{C-E[c]}\right)^{C-c} I()}
-#' where \eqn{I()} is an indicator function (1 if scanning for high rates and \eqn{c > E[c]}).
-#'
-#' The window with maximum likelihood is the \strong{most likely cluster}. Statistical
-#' significance is determined via Monte Carlo simulation: p-values are computed by
-#' comparing the observed maximum likelihood to those from randomly simulated datasets
-#' under the null hypothesis of spatial homogeneity.
-#'
-#' \strong{Probability Models:}
-#' \itemize{
-#'   \item \strong{Discrete Poisson}: Cases are Poisson-distributed proportional to
-#'     population. Requires case and population files.
-#'   \item \strong{Bernoulli}: Binary 0/1 data (cases/controls). Requires case and
-#'     control files.
-#'   \item \strong{Space-Time Permutation}: Uses only case data; compares observed
-#'     space-time distribution against expected under independence of space and time.
+#' \strong{Example (discrete Poisson; high-rate scanning):}
+#' Let \eqn{C} be total cases, \eqn{c} observed cases inside a window, and \eqn{E} the expected
+#' cases inside that window under the null (possibly covariate-adjusted). A commonly reported
+#' likelihood ratio form is proportional to:
+#' \deqn{
+#' \Lambda
+#' =
+#' \left(\frac{c}{E}\right)^{c}
+#' \left(\frac{C-c}{C-E}\right)^{C-c}
+#' \cdot \mathbb{I}(c > E)
 #' }
+#' where \eqn{\mathbb{I}(c > E)} enforces the “high-rate” constraint. (For low-rate or two-sided
+#' scanning, the indicator rule differs; see the SaTScan User Guide.)
 #'
-#' \strong{Scanning Windows:}
-#' \itemize{
-#'   \item \strong{Purely Spatial}: Circular or elliptic window scanning across space.
-#'   \item \strong{Purely Temporal}: Interval scanning across time.
-#'   \item \strong{Space-Time}: Cylindrical window (circular base in space, height in time).
-#' }
+#' \strong{Example (Bernoulli; high-rate scanning):}
+#' Let \eqn{C} be total cases, \eqn{c} cases inside the window, \eqn{N} total observations
+#' (cases + controls), and \eqn{n} observations inside the window. SaTScan uses an analogous
+#' likelihood ratio based on the in-window vs out-of-window case proportions.
 #'
-#' For full methodological details, see the SaTScan User Guide (Kulldorff, 2022)
-#' and the original methodology paper: Kulldorff M. (1997). A spatial scan statistic.
-#' Communications in Statistics: Theory and Methods, 26:1481-1496.
+#' \strong{User guide:}
+#' For full details on model-specific likelihoods, scanning windows, and parameter definitions,
+#' see the SaTScan technical documentation (includes the User Guide PDF):
+#' \url{https://www.satscan.org/techdoc.html}
 #'
 #' @section Parameter Hierarchy (The "Smart Tweak" Model):
 #' Parameters are resolved with the following precedence (highest to lowest):
-#'
 #' \enumerate{
-#'   \item \strong{Level 1: Data Integrity (Immutable)}
-#'
-#'   Derived directly from the input table objects (\code{cas}, \code{geo}, etc.).
-#'   These are \emph{automatically set} based on your data and cannot be overridden:
-#'   \itemize{
-#'     \item \code{CaseFile}, \code{CoordinatesFile}, \code{PopulationFile} (filenames)
-#'     \item \code{CoordinatesType} (from \code{geo$spec$coord_type})
-#'     \item \code{PrecisionCaseTimes}, \code{TimeAggregationUnits} (from \code{cas$spec$time_precision})
-#'     \item \code{StartDate}, \code{EndDate} (inferred from case data if not specified)
-#'   }
-#'
-#'   \item \strong{Level 2: User Tweaks}
-#'
-#'   Arguments passed explicitly via \code{...}. These override template settings.
-#'   Example: \code{satscanr(..., AnalysisType = 3, MonteCarloReps = 999)}
-#'
-#'   \item \strong{Level 3: Template PRM}
-#'
-#'   Settings loaded from an external \code{.prm} file via \code{prm_path}.
-#'   Use this to reuse configurations from previous SaTScan sessions.
-#'
-#'   \item \strong{Level 4: Package Defaults}
-#'
-#'   Bundled default templates (SaTScan v10.3 defaults from \code{prm_defaults()}).
-#'   These provide sensible starting values when no template is specified.
-#' }
-#'
-#' @section Parameter Management:
-#' This function uses the native \code{prm_*} system for parameter management,
-#' which directly manipulates PRM files without depending on external package internals.
-#' Key functions include:
-#' \itemize{
-#'   \item \code{\link{prm_parse}}: Parse a \code{.prm} file into an R list
-#'   \item \code{\link{prm_set}}: Modify parameter values
-#'   \item \code{\link{prm_write}}: Write parameters back to a PRM file
-#'   \item \code{\link{prm_defaults}}: Load bundled default templates
-#'   \item \code{\link{prm_validate}}: Validate parameters against a reference version
+#'   \item \strong{Level 1: Data Integrity (Immutable)} derived from the input tables (file names,
+#'         coordinate type, time precision, and optionally inferred study dates).
+#'   \item \strong{Level 2: User Tweaks} passed via \code{...}.
+#'   \item \strong{Level 3: Template PRM} loaded from \code{prm_path}.
+#'   \item \strong{Level 4: Package Defaults} from \code{prm_defaults()}.
 #' }
 #'
 #' @param cas Case table (\code{satscan_table} of kind "cas") or \code{ss_tbl} of type "cas".
-
 #' @param pop Population table (\code{satscan_table} of kind "pop", optional).
 #'   Required for Poisson model. Created via \code{\link{prep_pop}}.
 #' @param geo Geometry table (\code{satscan_table} of kind "geo"). Created via \code{\link{prep_geo}}.

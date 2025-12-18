@@ -17,10 +17,16 @@ ss_nbr(data, loc_id, neighbor_cols)
 An \code{ss_tbl} object of type "nbr".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "nbr" (Neighbors File).
+Creates an \code{ss_tbl} object of type \code{"nbr"} (SaTScan Non-Euclidean Neighbors File).
+A neighbors file defines, for each centroid location, an ordered list of
+neighboring locations ranked by closeness. SaTScan constructs candidate
+clusters by progressively expanding each row (centroid, then centroid + first
+neighbor, then + second neighbor, etc.) until the row ends.
+
+This constructor expects neighbors in a wide format (one row per centroid,
+multiple neighbor columns in rank order). It preserves the input data and
+records \code{neighbor_cols} so the writer can emit the correct SaTScan ASCII
+structure without reshaping user data.
 }
 \section{SaTScan File Specification}{
 

@@ -30,10 +30,15 @@ ss_ctl(
 An \code{ss_tbl} object of type "ctl".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "ctl" (Control File) for Bernoulli models.
+Creates an \code{ss_tbl} object of type \code{"ctl"} (SaTScan Control File).
+A control file provides the number of controls by location and, optionally,
+by time and covariate strata. When used with a case file (Bernoulli models),
+SaTScan compares the spatial/temporal concentration of cases against the
+background distribution implied by controls.
+
+This constructor preserves the original data and stores column role mappings.
+Time precision is not enforced here; if \code{time} is provided, it will be formatted
+at write-time (via \code{write_satscan()}), using \code{time_precision} if supplied.
 }
 \section{SaTScan File Specification}{
 

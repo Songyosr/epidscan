@@ -17,10 +17,15 @@ ss_met(data, meta_loc_id, member_cols)
 An \code{ss_tbl} object of type "met".
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
-}
-\details{
-Creates an \code{ss_tbl} object of type "met" (Meta Population File).
+Creates an \code{ss_tbl} object of type \code{"met"} (SaTScan Meta Locations File).
+A meta locations file defines groupings of multiple locations into a single
+meta-location (e.g., aggregating tracts into counties). SaTScan uses these
+groupings to treat members as belonging to the same higher-level unit when
+a meta-location analysis is requested.
+
+This constructor expects a wide representation (one row per meta-location,
+with one or more member columns). It preserves the input data and records
+\code{member_cols} so the writer can output the correct SaTScan ASCII format.
 }
 \section{SaTScan File Specification}{
 

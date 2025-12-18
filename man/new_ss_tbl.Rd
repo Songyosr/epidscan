@@ -16,5 +16,5 @@ new_ss_tbl(data, type, roles, spec = list())
 \item{spec}{List of additional specifications.}
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+Creates a new \code{ss_tbl} object, which is a \code{vctrs} subclass of \code{data.frame} tailored for SaTScan data.
 }
