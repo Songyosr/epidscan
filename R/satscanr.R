@@ -16,12 +16,19 @@
 #' @return Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
 #' @keywords internal
 infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, verbose = FALSE) {
-    # Check if dates are already present
-    val_start <- current_opts["StartDate"]
-    val_end <- current_opts["EndDate"]
+    # Check if dates are already present and NOT placeholder values
+    # The default template has StartDate=2000/1/1 and EndDate=2000/12/31 as placeholders
+    val_start <- current_opts[["StartDate"]]
+    val_end <- current_opts[["EndDate"]]
 
-    need_start <- is.na(val_start) || is.null(val_start) || val_start == ""
-    need_end <- is.na(val_end) || is.null(val_end) || val_end == ""
+    # Placeholder detection: default template values that should be overridden
+    is_placeholder_start <- is.null(val_start) || is.na(val_start) || val_start == "" ||
+        grepl("^2000/", val_start) || grepl("^2000-", val_start)
+    is_placeholder_end <- is.null(val_end) || is.na(val_end) || val_end == "" ||
+        grepl("^2000/", val_end) || grepl("^2000-", val_end)
+
+    need_start <- is_placeholder_start
+    need_end <- is_placeholder_end
 
     if (!need_start && !need_end) {
         return(NULL)
