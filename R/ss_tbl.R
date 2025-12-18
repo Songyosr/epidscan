@@ -423,5 +423,4 @@ write_satscan <- function(x, file, sep = " ", na = "", quote = FALSE) {
     invisible(file)
 }
 
-# Helper
-`%||%` <- function(a, b) if (!is.null(a)) a else b
+# Helper `%||%` is now in utils_ss.R

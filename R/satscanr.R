@@ -258,16 +258,8 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     if (verbose) message("Working directory: ", work_dir)
 
     # 2. Input Validation (Level 1 Check)
-    # Helper to validate input type
-    check_ss_input <- function(obj, kind) {
-        if (inherits(obj, "ss_tbl")) {
-            return(ss_type(obj) == kind)
-        }
-        if (inherits(obj, "satscan_table")) {
-            return(obj$kind == kind)
-        }
-        FALSE
-    }
+    # Using internal helper check_ss_input
+
 
     if (!check_ss_input(cas, "cas")) stop("cas input must be a satscan_table of kind 'cas' or ss_tbl of type 'cas'")
     if (!check_ss_input(geo, "geo")) stop("geo input must be a satscan_table of kind 'geo' or ss_tbl of type 'geo'")
@@ -283,20 +275,11 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     f_ctl <- if (!is.null(ctl)) file.path(work_dir, "epid.ctl") else NULL
     f_grd <- if (!is.null(grd)) file.path(work_dir, "epid.grd") else NULL
 
-    write_ss_file <- function(obj, path) {
-        if (inherits(obj, "ss_tbl")) {
-            # Use the new writer which handles ordering and time formatting
-            write_satscan(obj, path, quote = FALSE)
-        } else {
-            # Legacy writer
-            utils::write.table(obj$data, path, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = " ")
-        }
-    }
-    write_ss_file(cas, f_cas)
-    write_ss_file(geo, f_geo)
-    if (!is.null(f_pop)) write_ss_file(pop, f_pop)
-    if (!is.null(f_ctl)) write_ss_file(ctl, f_ctl)
-    if (!is.null(f_grd)) write_ss_file(grd, f_grd)
+    write_ss_file_wrapper(cas, f_cas)
+    write_ss_file_wrapper(geo, f_geo)
+    if (!is.null(f_pop)) write_ss_file_wrapper(pop, f_pop)
+    if (!is.null(f_ctl)) write_ss_file_wrapper(ctl, f_ctl)
+    if (!is.null(f_grd)) write_ss_file_wrapper(grd, f_grd)
 
 
     # 4. Parameter Setup (The Hierarchy) - Using new prm_* system
@@ -326,14 +309,8 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     }
 
     # C. Level 1 Data Integrity (Immutable Overrides)
+    # Using internal helpers get_ss_spec, get_ss_data
 
-    # Helpers for property access
-    get_ss_spec <- function(obj, key) {
-        if (inherits(obj, "ss_tbl")) ss_spec(obj)[[key]] else obj$spec[[key]]
-    }
-    get_ss_data <- function(obj) {
-        if (inherits(obj, "ss_tbl")) as.data.frame(obj) else obj$data
-    }
 
     # Determine Time Precision
     tp_map <- list(generic = 0, year = 1, month = 2, day = 3)
