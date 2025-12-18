@@ -173,7 +173,8 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 #'   \item \code{\link{prm_validate}}: Validate parameters against a reference version
 #' }
 #'
-#' @param cas Case table (\code{satscan_table} of kind "cas"). Created via \code{\link{prep_cas}}.
+#' @param cas Case table (\code{satscan_table} of kind "cas") or \code{ss_tbl} of type "cas".
+
 #' @param pop Population table (\code{satscan_table} of kind "pop", optional).
 #'   Required for Poisson model. Created via \code{\link{prep_pop}}.
 #' @param geo Geometry table (\code{satscan_table} of kind "geo"). Created via \code{\link{prep_geo}}.
@@ -257,11 +258,23 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     if (verbose) message("Working directory: ", work_dir)
 
     # 2. Input Validation (Level 1 Check)
-    if (!inherits(cas, "satscan_table") || cas$kind != "cas") stop("cas input must be a satscan_table of kind 'cas'")
-    if (!inherits(geo, "satscan_table") || geo$kind != "geo") stop("geo input must be a satscan_table of kind 'geo'")
-    if (!is.null(pop)) {
-        if (!inherits(pop, "satscan_table") || pop$kind != "pop") stop("pop input must be class satscan_table kind 'pop'")
+    # Helper to validate input type
+    check_ss_input <- function(obj, kind) {
+        if (inherits(obj, "ss_tbl")) {
+            return(ss_type(obj) == kind)
+        }
+        if (inherits(obj, "satscan_table")) {
+            return(obj$kind == kind)
+        }
+        FALSE
     }
+
+    if (!check_ss_input(cas, "cas")) stop("cas input must be a satscan_table of kind 'cas' or ss_tbl of type 'cas'")
+    if (!check_ss_input(geo, "geo")) stop("geo input must be a satscan_table of kind 'geo' or ss_tbl of type 'geo'")
+    if (!is.null(pop)) {
+        if (!check_ss_input(pop, "pop")) stop("pop input must be a satscan_table of kind 'pop' or ss_tbl of type 'pop'")
+    }
+
 
     # 3. Write Files (Level 1 Physical Basis)
     f_cas <- file.path(work_dir, "epid.cas")
@@ -270,14 +283,21 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     f_ctl <- if (!is.null(ctl)) file.path(work_dir, "epid.ctl") else NULL
     f_grd <- if (!is.null(grd)) file.path(work_dir, "epid.grd") else NULL
 
-    write_ss_file <- function(df, path) {
-        utils::write.table(df, path, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = " ")
+    write_ss_file <- function(obj, path) {
+        if (inherits(obj, "ss_tbl")) {
+            # Use the new writer which handles ordering and time formatting
+            write_satscan(obj, path, quote = FALSE)
+        } else {
+            # Legacy writer
+            utils::write.table(obj$data, path, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = " ")
+        }
     }
-    write_ss_file(cas$data, f_cas)
-    write_ss_file(geo$data, f_geo)
-    if (!is.null(f_pop)) write_ss_file(pop$data, f_pop)
-    if (!is.null(f_ctl)) write_ss_file(ctl$data, f_ctl)
-    if (!is.null(f_grd)) write_ss_file(grd$data, f_grd)
+    write_ss_file(cas, f_cas)
+    write_ss_file(geo, f_geo)
+    if (!is.null(f_pop)) write_ss_file(pop, f_pop)
+    if (!is.null(f_ctl)) write_ss_file(ctl, f_ctl)
+    if (!is.null(f_grd)) write_ss_file(grd, f_grd)
+
 
     # 4. Parameter Setup (The Hierarchy) - Using new prm_* system
 
@@ -307,16 +327,24 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
 
     # C. Level 1 Data Integrity (Immutable Overrides)
 
+    # Helpers for property access
+    get_ss_spec <- function(obj, key) {
+        if (inherits(obj, "ss_tbl")) ss_spec(obj)[[key]] else obj$spec[[key]]
+    }
+    get_ss_data <- function(obj) {
+        if (inherits(obj, "ss_tbl")) as.data.frame(obj) else obj$data
+    }
+
     # Determine Time Precision
     tp_map <- list(generic = 0, year = 1, month = 2, day = 3)
-    tp_char <- cas$spec$time_precision
+    tp_char <- get_ss_spec(cas, "time_precision")
     tp_int <- if (is.null(tp_char)) 0 else tp_map[[tp_char]]
 
     # Critical Overrides - these always win (use .strict=FALSE for files missing some keys)
     prm <- prm_set(prm,
         CaseFile = basename(f_cas),
         CoordinatesFile = basename(f_geo),
-        CoordinatesType = if (geo$spec$coord_type == "cartesian") 0 else 1,
+        CoordinatesType = if (get_ss_spec(geo, "coord_type") == "cartesian") 0 else 1,
         PrecisionCaseTimes = tp_int,
         TimeAggregationUnits = tp_int,
         ResultsFile = "epid.txt",
@@ -340,7 +368,7 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     # If StartDate/EndDate are NOT set by user/PRM, try to infer from data.
     inferred_dates <- infer_dates_from_data(
         current_opts = prm, # Pass prm_list instead of ss.options()
-        cas_data = cas$data,
+        cas_data = get_ss_data(cas),
         time_precision_char = tp_char,
         verbose = verbose
     )
@@ -375,18 +403,38 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     }
 
     # 7. Parse & Return
-    geo_for_parse <- geo$data |> dplyr::rename(id = loc_id)
-    if (geo$spec$coord_type == "latlong") {
-        geo_for_parse <- geo_for_parse |> dplyr::rename(lat = coord1, long = coord2)
+    geo_df <- get_ss_data(geo)
+    geo_spec_coord <- get_ss_spec(geo, "coord_type")
+
+    if (inherits(geo, "ss_tbl")) {
+        # ss_tbl has user columns, map them using roles
+        id_col <- ss_roles(geo)[["loc_id"]]
+        c1_col <- ss_roles(geo)[["coord1"]]
+        c2_col <- ss_roles(geo)[["coord2"]]
+
+        geo_for_parse <- geo_df |> dplyr::rename(id = !!rlang::sym(id_col))
+
+        if (geo_spec_coord == "latlong") {
+            geo_for_parse <- geo_for_parse |> dplyr::rename(lat = !!rlang::sym(c1_col), long = !!rlang::sym(c2_col))
+        } else {
+            geo_for_parse <- geo_for_parse |> dplyr::rename(x = !!rlang::sym(c1_col), y = !!rlang::sym(c2_col))
+        }
     } else {
-        geo_for_parse <- geo_for_parse |> dplyr::rename(x = coord1, y = coord2)
+        # Legacy satscan_table has normalized 'loc_id', 'coord1', 'coord2'
+        geo_for_parse <- geo_df |> dplyr::rename(id = loc_id)
+        if (geo_spec_coord == "latlong") {
+            geo_for_parse <- geo_for_parse |> dplyr::rename(lat = coord1, long = coord2)
+        } else {
+            geo_for_parse <- geo_for_parse |> dplyr::rename(x = coord1, y = coord2)
+        }
     }
+
 
     res <- parse_satscan_output(
         ss_results = ss_res,
-        data = cas$data,
+        data = get_ss_data(cas),
         geo_df = geo_for_parse,
-        id_quo = rlang::quo(loc_id),
+        id_quo = if (inherits(cas, "ss_tbl")) rlang::sym(ss_roles(cas)[["loc_id"]]) else rlang::quo(loc_id),
         output_dir = if (!is.null(output_dir)) output_dir else work_dir,
         verbose = verbose
     )
