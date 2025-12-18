@@ -224,6 +224,25 @@ print.ss_tbl <- function(x, ...) {
 #' `r lifecycle::badge("stable")`
 #'
 #' Creates an `ss_tbl` object of type "cas" (Case File).
+#' Enforces strict sparsity (no zero-case rows) and handles time precision formatting.
+#'
+#' @section SaTScan File Specification:
+#' The Case File has the following structure:
+#' \code{<LocationID> <NoCases> <Date> <Covariate1> ...}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Character or numeric identifier. Matching ID must exist in Geo file.
+#'   \item \strong{NoCases}: Number of cases. For "casewise" style without a count column, this is set to 1.
+#'     Zero-case rows are removed (implicit zeros).
+#'   \item \strong{Date}: Formatted according to \code{time_precision}:
+#'     \itemize{
+#'       \item "day": \code{YYYY/MM/DD}
+#'       \item "month": \code{YYYY/MM}
+#'       \item "year": \code{YYYY}
+#'       \item "generic": Time string/number
+#'     }
+#'   \item \strong{Covariates}: Optional categorical variables.
+#' }
 #'
 #' @param data A data frame containing case data.
 #' @param loc_id Column name for location ID (character or numeric).
@@ -236,11 +255,11 @@ print.ss_tbl <- function(x, ...) {
 #'
 #' @examples
 #' df <- data.frame(id = c("A", "B"), count = c(10, 5), year = 2020)
-#' ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year", time_precision = "year")
+#' ss_cas_obj <- ss_cas(df, loc_id = "id", cases = "count", time = "year", time_precision = "year")
 #'
 #' @export
-as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL,
-                            time_precision = NULL) {
+ss_cas <- function(data, loc_id, cases, time = NULL, covars = NULL,
+                   time_precision = NULL) {
     roles <- c(loc_id = loc_id, cases = cases)
     if (!is.null(time)) roles <- c(roles, time = time)
 
@@ -257,6 +276,17 @@ as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL,
 #'
 #' Creates an `ss_tbl` object of type "ctl" (Control File) for Bernoulli models.
 #'
+#' @section SaTScan File Specification:
+#' The Control File has the following structure:
+#' \code{<LocationID> <NoControls> <Date> <Covariate1> ...}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Identifier matching Case/Geo files.
+#'   \item \strong{NoControls}: Number of controls.
+#'   \item \strong{Date}: Required for Space-Time Bernoulli. Same format rules as Case file.
+#'   \item \strong{Covariates}: Optional.
+#' }
+#'
 #' @param data A data frame containing control data.
 #' @param loc_id Column name for location ID.
 #' @param controls Column name for control counts.
@@ -267,8 +297,8 @@ as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL,
 #' @return An `ss_tbl` object of type "ctl".
 #'
 #' @export
-as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NULL,
-                               time_precision = NULL) {
+ss_ctl <- function(data, loc_id, controls, time = NULL, covars = NULL,
+                   time_precision = NULL) {
     roles <- c(loc_id = loc_id, controls = controls)
     if (!is.null(time)) roles <- c(roles, time = time)
 
@@ -285,6 +315,18 @@ as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NUL
 #'
 #' Creates an `ss_tbl` object of type "pop" (Population File).
 #'
+#' @section SaTScan File Specification:
+#' The Population File has the following structure:
+#' \code{<LocationID> <Year/Time> <Population> <Covariate1> ...}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Character or numeric identifier. Match cases and geo.
+#'   \item \strong{Year/Time}: The "census year" or time point. For daily analysis, you can still use
+#'     yearly population anchors (e.g. 2023, 2024). SaTScan interpolates linearly.
+#'   \item \strong{Population}: The count of people at risk.
+#'   \item \strong{Covariates}: Optional. If used, population must be stratified by these covariates.
+#' }
+#'
 #' @param data A data frame containing population data.
 #' @param loc_id Column name for location ID.
 #' @param time Column name for time (census year/time).
@@ -295,8 +337,8 @@ as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NUL
 #' @return An `ss_tbl` object of type "pop".
 #'
 #' @export
-as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
-                                  time_precision = NULL) {
+ss_pop <- function(data, loc_id, time, population, covars = NULL,
+                   time_precision = NULL) {
     roles <- c(loc_id = loc_id, time = time, population = population)
 
     spec <- list()
@@ -313,6 +355,27 @@ as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
 #' Creates an `ss_tbl` object of type "geo" (Coordinates File).
 #' Automatically handles `sf` objects by extracting centroids and detecting coordinate types.
 #'
+#' @section SaTScan File Specification:
+#' The Coordinates File has the following structure:
+#' \code{<LocationID> <Latitude/Y> <Longitude/X>}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Unique identifier matching Case/Population files.
+#'   \item \strong{Coordinate Order}:
+#'     \itemize{
+#'       \item \strong{Lat/Long}: SaTScan expects \code{Latitude} first, then \code{Longitude}.
+#'       \item \strong{Cartesian}: SaTScan expects \code{X} first, then \code{Y}.
+#'     }
+#' }
+#'
+#' \strong{Note on Coordinate Ordering}:
+#' This function automatically handles the swapping for you:
+#' \itemize{
+#'   \item If \code{sf} object (Lat/Long crs) -> Swaps to \code{Lat, Long}.
+#'   \item If \code{data.frame} (Lat/Long detected) -> Swaps to \code{Lat, Long}.
+#'   \item If \code{data.frame} (Cartesian detected) -> Keeps as \code{X, Y}.
+#' }
+#'
 #' @param data A data frame or `sf` object containing coordinate data.
 #' @param loc_id Column name for location ID.
 #' @param coord1 Column name for the first coordinate (X/Longitude), required if `data` is not `sf`.
@@ -323,8 +386,8 @@ as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
 #' @return An `ss_tbl` object of type "geo".
 #'
 #' @export
-as_satscan_coordinates <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
-                                   coord_type = c("auto", "latlong", "cartesian")) {
+ss_geo <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
+                   coord_type = c("auto", "latlong", "cartesian")) {
     coord_type <- match.arg(coord_type)
 
     # SF Handling
@@ -432,6 +495,15 @@ as_satscan_coordinates <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z
 #'
 #' Creates an `ss_tbl` object of type "grd" (Grid File).
 #'
+#' @section SaTScan File Specification:
+#' The Grid File has the same structure as the Coordinates File:
+#' \code{<LocationID> <Latitude/Y> <Longitude/X>}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Unique identifier for the grid point.
+#'   \item \strong{Coordinates}: Same rules as \code{ss_geo} (Lat/Long order vs X/Y order).
+#' }
+#'
 #' @param data A data frame containing grid locations.
 #' @param coord1 Column name for the first coordinate.
 #' @param coord2 Column name for the second coordinate.
@@ -445,16 +517,15 @@ as_satscan_coordinates <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z
 #' @return An `ss_tbl` object of type "grd".
 #'
 #' @export
-as_satscan_grid <- function(data, coord1, coord2, z = NULL,
-                            earliest_start = NULL, latest_start = NULL,
-                            earliest_end = NULL, latest_end = NULL,
-                            grid_variant = "basic") {
+ss_grd <- function(data, coord1, coord2, z = NULL,
+                   earliest_start = NULL, latest_start = NULL,
+                   earliest_end = NULL, latest_end = NULL,
+                   grid_variant = "basic") {
     roles <- c(coord1 = coord1, coord2 = coord2)
     spec <- list(grid_variant = grid_variant)
 
-    if (!is.null(z)) spec$z <- z # Z is often just handled via optional mapping if needed? Schema says 'z' is optional role.
-    # Wait, new_ss_tbl maps roles. We should map it if column provided.
-    if (!is.null(z)) roles <- c(roles, z = z) # Schema has z as optional role
+    if (!is.null(z)) spec$z <- z
+    if (!is.null(z)) roles <- c(roles, z = z)
 
     if (!is.null(earliest_start)) roles <- c(roles, earliest_start = earliest_start)
     if (!is.null(latest_start)) roles <- c(roles, latest_start = latest_start)
@@ -469,6 +540,16 @@ as_satscan_grid <- function(data, coord1, coord2, z = NULL,
 #'
 #' Creates an `ss_tbl` object of type "nwk" (Network File).
 #'
+#' @section SaTScan File Specification:
+#' The Network File has the following structure:
+#' \code{<LocationID> <NeighborID> <Distance>}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Identifier for the source location.
+#'   \item \strong{NeighborID}: Identifier for the connected neighbor location.
+#'   \item \strong{Distance}: Optional. Numeric distance or weight between the two locations.
+#' }
+#'
 #' @param data A data frame containing network edges.
 #' @param loc_id Column name for the source location ID.
 #' @param neighbor_id Column name for the connected neighbor ID.
@@ -478,8 +559,8 @@ as_satscan_grid <- function(data, coord1, coord2, z = NULL,
 #' @return An `ss_tbl` object of type "nwk".
 #'
 #' @export
-as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL,
-                               distance_units = NULL) {
+ss_nwk <- function(data, loc_id, neighbor_id, distance = NULL,
+                   distance_units = NULL) {
     roles <- c(loc_id = loc_id, neighbor_id = neighbor_id)
     if (!is.null(distance)) roles <- c(roles, distance = distance)
 
@@ -495,6 +576,16 @@ as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL,
 #'
 #' Creates an `ss_tbl` object of type "nbr" (Neighbors File).
 #'
+#' @section SaTScan File Specification:
+#' The Neighbors File has the following structure:
+#' \code{<LocationID> <Neighbor1ID> <Neighbor2ID> ...}
+#'
+#' \itemize{
+#'   \item \strong{LocationID}: Identifier for the location.
+#'   \item \strong{NeighborIDs}: One or more columns, each representing a neighbor of the \code{LocationID}.
+#'     The order of these columns matters for SaTScan's interpretation of neighbor hierarchy.
+#' }
+#'
 #' @param data A data frame containing neighbor lists.
 #' @param loc_id Column name for the location ID.
 #' @param neighbor_cols Character vector of column names representing neighbors.
@@ -502,7 +593,7 @@ as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL,
 #' @return An `ss_tbl` object of type "nbr".
 #'
 #' @export
-as_satscan_neighbors <- function(data, loc_id, neighbor_cols) {
+ss_nbr <- function(data, loc_id, neighbor_cols) {
     # neighbor_cols: character vector of column names providing neighbors in order
     roles <- c(loc_id = loc_id)
     spec <- list(neighbor_cols = neighbor_cols)
@@ -521,6 +612,16 @@ as_satscan_neighbors <- function(data, loc_id, neighbor_cols) {
 #'
 #' Creates an `ss_tbl` object of type "met" (Meta Population File).
 #'
+#' @section SaTScan File Specification:
+#' The Meta Locations File has the following structure:
+#' \code{<MetaLocationID> <Member1ID> <Member2ID> ...}
+#'
+#' \itemize{
+#'   \item \strong{MetaLocationID}: Identifier for the meta-location (e.g., a county).
+#'   \item \strong{MemberIDs}: One or more columns, each representing a member location (e.g., a census tract)
+#'     that belongs to the \code{MetaLocationID}.
+#' }
+#'
 #' @param data A data frame containing meta-location definitions.
 #' @param meta_loc_id Column name for the meta-location ID.
 #' @param member_cols Character vector of column names representing member locations.
@@ -528,7 +629,7 @@ as_satscan_neighbors <- function(data, loc_id, neighbor_cols) {
 #' @return An `ss_tbl` object of type "met".
 #'
 #' @export
-as_satscan_meta_locations <- function(data, meta_loc_id, member_cols) {
+ss_met <- function(data, meta_loc_id, member_cols) {
     roles <- c(meta_loc_id = meta_loc_id)
     spec <- list(member_cols = member_cols)
     missing <- setdiff(member_cols, names(data))

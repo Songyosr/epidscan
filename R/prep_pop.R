@@ -5,7 +5,7 @@
 #' Prepares a population file for SaTScan, used as the denominator for Poisson models.
 #' Population data is treated as "census anchors" - SaTScan interpolates between these time points.
 #'
-#' @seealso [as_satscan_population()] for the new `ss_tbl` interface.
+#' @seealso [ss_pop()] for the new `ss_tbl` interface.
 #'
 #' @section SaTScan File Specification:
 #' The Population File has the following structure:

@@ -10,8 +10,8 @@ test_that("satscanr accepts ss_tbl inputs and generates correct files", {
     cas_df <- data.frame(id = "A", cases = 10, date = as.Date("2021-01-01"))
     geo_df <- data.frame(id = "A", lat = 10, long = 20)
 
-    ss_cas <- as_satscan_case(cas_df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
-    ss_geo <- as_satscan_coordinates(geo_df, loc_id = "id", coord1 = "lat", coord2 = "long", coord_type = "latlong")
+    ss_cas <- ss_cas(cas_df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
+    ss_geo <- ss_geo(geo_df, loc_id = "id", coord1 = "lat", coord2 = "long", coord_type = "latlong")
 
     # 2. Mocking
     # We'll use a temporary directory for output
@@ -91,7 +91,7 @@ test_that("satscanr accepts ss_tbl inputs and generates correct files", {
 
 test_that("satscanr rejects mismatched ss_tbl types", {
     cas_df <- data.frame(id = "A", cases = 10)
-    ss_bad <- as_satscan_coordinates(cas_df, loc_id = "id", coord1 = "cases", coord2 = "cases")
+    ss_bad <- ss_geo(cas_df, loc_id = "id", coord1 = "cases", coord2 = "cases")
 
     expect_error(
         satscanr(cas = ss_bad, geo = ss_bad),

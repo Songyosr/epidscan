@@ -62,5 +62,5 @@ pop_obj2 <- prep_pop(pop_strat, loc_id = county, time = year, pop = pop, covars 
 }
 }
 \seealso{
-\code{\link[=as_satscan_population]{as_satscan_population()}} for the new \code{ss_tbl} interface.
+\code{\link[=ss_pop]{ss_pop()}} for the new \code{ss_tbl} interface.
 }

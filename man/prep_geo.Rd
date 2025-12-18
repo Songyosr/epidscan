@@ -78,5 +78,5 @@ geo_obj3 <- prep_geo(df_cart, loc_id = id, coords = c("x", "y"), coord_type = "c
 }
 }
 \seealso{
-\code{\link[=as_satscan_coordinates]{as_satscan_coordinates()}} for the new \code{ss_tbl} interface.
+\code{\link[=ss_geo]{ss_geo()}} for the new \code{ss_tbl} interface.
 }

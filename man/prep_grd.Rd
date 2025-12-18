@@ -44,5 +44,5 @@ grd_obj <- prep_grd(grid_sf, loc_id = id)
 }
 }
 \seealso{
-\code{\link[=as_satscan_grid]{as_satscan_grid()}} for the new \code{ss_tbl} interface.
+\code{\link[=ss_grd]{ss_grd()}} for the new \code{ss_tbl} interface.
 }

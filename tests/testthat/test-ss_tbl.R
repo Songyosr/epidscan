@@ -24,7 +24,7 @@ test_that("as_satscan_case creates valid objects", {
         age = c(1, 2)
     )
 
-    ss <- as_satscan_case(df, loc_id = "county", cases = "cases", time = "date", covars = "age")
+    ss <- ss_cas(df, loc_id = "county", cases = "cases", time = "date", covars = "age")
 
     expect_s3_class(ss, "ss_tbl")
     expect_equal(ss_type(ss), "cas")
@@ -40,7 +40,7 @@ test_that("as_satscan_neighbors handles wide columns correctly", {
         n2 = c(3, 3)
     )
 
-    ss <- as_satscan_neighbors(df, loc_id = "id", neighbor_cols = c("n1", "n2"))
+    ss <- ss_nbr(df, loc_id = "id", neighbor_cols = c("n1", "n2"))
 
     expect_equal(ss_type(ss), "nbr")
     expect_equal(ss_spec(ss)$neighbor_cols, c("n1", "n2"))
@@ -119,7 +119,7 @@ test_that("write_satscan formats time at write-time", {
     )
 
     # Specifying month precision
-    ss <- as_satscan_case(df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
+    ss <- ss_cas(df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
     write_satscan(ss, tmp)
 
     res <- read.table(tmp)
@@ -128,7 +128,7 @@ test_that("write_satscan formats time at write-time", {
     expect_equal(res$V3, "2021/01")
 })
 
-test_that("as_satscan_coordinates handles sf objects", {
+test_that("ss_geo handles sf objects", {
     skip_if_not_installed("sf")
 
     # Create a simple SF object

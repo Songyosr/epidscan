@@ -5,7 +5,7 @@
 #' Prepares a control file for Bernoulli models.
 #' Similar to \code{prep_cas}, but for controls (non-cases).
 #'
-#' @seealso [as_satscan_control()] for the new `ss_tbl` interface.
+#' @seealso [ss_ctl()] for the new `ss_tbl` interface.
 #'
 #' @section SaTScan File Specification:
 #' The Control File has the following structure:

@@ -5,7 +5,7 @@
 #' Prepares a coordinate file for SaTScan.
 #' Handles \code{sf} objects (extracting centroids) or plain data frames.
 #'
-#' @seealso [as_satscan_coordinates()] for the new `ss_tbl` interface.
+#' @seealso [ss_geo()] for the new `ss_tbl` interface.
 #'
 #' @section SaTScan File Specification:
 #' The Coordinates File has the following structure:

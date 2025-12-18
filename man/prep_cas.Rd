@@ -88,5 +88,5 @@ cas_obj2 <- prep_cas(my_cases,
 }
 }
 \seealso{
-\code{\link[=as_satscan_case]{as_satscan_case()}} for the new \code{ss_tbl} interface.
+\code{\link[=ss_cas]{ss_cas()}} for the new \code{ss_tbl} interface.
 }
