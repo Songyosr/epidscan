@@ -8,13 +8,15 @@ prm_parse(source)
 }
 \arguments{
 \item{source}{Either a file path (character of length 1) or a character vector
-of PRM lines (e.g., from `readLines()` or `ssenv$.ss.params.defaults`).}
+of PRM lines (e.g., from \code{readLines()} or \code{ssenv$.ss.params.defaults}).}
 }
 \value{
 A named list of parameter values. Attributes:
-  - `skeleton`: Original text vector
-  - `sections`: Named character vector mapping param names to section names
-  - `line_map`: Named integer vector mapping param names to line numbers
+\itemize{
+\item \code{skeleton}: Original text vector
+\item \code{sections}: Named character vector mapping param names to section names
+\item \code{line_map}: Named integer vector mapping param names to line numbers
+}
 }
 \description{
 Converts a PRM file or character vector into a structured R list.

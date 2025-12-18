@@ -28,6 +28,6 @@ satscan result object
 }
 \description{
 Executes SatScan by calling the binary directly and parsing the output files.
-Use `satscanr()` as the main entry point.
+Use \code{satscanr()} as the main entry point.
 }
 \keyword{internal}

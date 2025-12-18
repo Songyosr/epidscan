@@ -17,6 +17,9 @@ prep_grd(x, loc_id = NULL, coords = NULL)
 A \code{satscan_table} object of kind "grd".
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+}
+\details{
 Prepares a grid file for SaTScan, which defines the centers of the scanning windows.
 Leverages \code{prep_geo} logic for coordinate extraction and formatting.
 }
@@ -26,8 +29,8 @@ The Grid File has the same structure as the Coordinates File:
 \code{<LocationID> <Latitude/Y> <Longitude/X>}
 
 \itemize{
-  \item \strong{LocationID}: Unique identifier for the grid point.
-  \item \strong{Coordinates}: Same rules as \code{prep_geo} (Lat/Long order vs X/Y order).
+\item \strong{LocationID}: Unique identifier for the grid point.
+\item \strong{Coordinates}: Same rules as \code{prep_geo} (Lat/Long order vs X/Y order).
 }
 }
 
@@ -39,4 +42,7 @@ grid_sf$id <- 1:nrow(grid_sf)
 
 grd_obj <- prep_grd(grid_sf, loc_id = id)
 }
+}
+\seealso{
+\code{\link[=as_satscan_grid]{as_satscan_grid()}} for the new \code{ss_tbl} interface.
 }

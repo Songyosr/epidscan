@@ -90,6 +90,8 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 
 #' Run SaTScan Analysis
 #'
+#' `r lifecycle::badge("stable")`
+#'
 #' Orchestrates the SaTScan analysis by managing inputs, configuring parameters
 #' via a strictly defined hierarchy, execution, and result parsing.
 #'

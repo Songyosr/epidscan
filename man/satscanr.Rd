@@ -17,7 +17,7 @@ satscanr(
 )
 }
 \arguments{
-\item{cas}{Case table (\code{satscan_table} of kind "cas"). Created via \code{\link{prep_cas}}.}
+\item{cas}{Case table (\code{satscan_table} of kind "cas") or \code{ss_tbl} of type "cas".}
 
 \item{pop}{Population table (\code{satscan_table} of kind "pop", optional).
 Required for Poisson model. Created via \code{\link{prep_pop}}.}
@@ -40,25 +40,28 @@ If NULL, uses bundled defaults.}
 \item{...}{Additional SaTScan parameters (Level 2 Tweaks).
 See \code{\link{satscan_parameters}} for a full list. Common parameters include:
 \itemize{
-  \item \code{AnalysisType}: 1=Purely Spatial, 2=Purely Temporal, 3=Retrospective Space-Time,
-    4=Prospective Space-Time, 5=Spatial Variation in Temporal Trends
-  \item \code{ModelType}: 0=Discrete Poisson, 1=Bernoulli, 2=Space-Time Permutation
-  \item \code{ScanAreas}: 1=High Rates, 2=Low Rates, 3=Both
-  \item \code{MonteCarloReps}: Number of Monte Carlo replications (e.g., 999, 9999)
+\item \code{AnalysisType}: 1=Purely Spatial, 2=Purely Temporal, 3=Retrospective Space-Time,
+4=Prospective Space-Time, 5=Spatial Variation in Temporal Trends
+\item \code{ModelType}: 0=Discrete Poisson, 1=Bernoulli, 2=Space-Time Permutation
+\item \code{ScanAreas}: 1=High Rates, 2=Low Rates, 3=Both
+\item \code{MonteCarloReps}: Number of Monte Carlo replications (e.g., 999, 9999)
 }}
 }
 \value{
 A \code{satscan_result} object containing:
-  \itemize{
-    \item \code{cluster_summary}: Data frame of detected clusters with p-values and relative risks
-    \item \code{location_summary}: Data frame of all locations with cluster assignments
-    \item \code{main_results}: Full time-series data merged with results (if \code{merge_time_series=TRUE})
-    \item \code{raw_output}: Raw SaTScan output (col, gis, rr, shapefile, etc.)
-    \item \code{prm}: Final \code{prm_list} object with all parameters used
-    \item \code{work_dir}: Path to output directory
-  }
+\itemize{
+\item \code{cluster_summary}: Data frame of detected clusters with p-values and relative risks
+\item \code{location_summary}: Data frame of all locations with cluster assignments
+\item \code{main_results}: Full time-series data merged with results (if \code{merge_time_series=TRUE})
+\item \code{raw_output}: Raw SaTScan output (col, gis, rr, shapefile, etc.)
+\item \code{prm}: Final \code{prm_list} object with all parameters used
+\item \code{work_dir}: Path to output directory
+}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+}
+\details{
 Orchestrates the SaTScan analysis by managing inputs, configuring parameters
 via a strictly defined hierarchy, execution, and result parsing.
 }
@@ -81,19 +84,19 @@ under the null hypothesis of spatial homogeneity.
 
 \strong{Probability Models:}
 \itemize{
-  \item \strong{Discrete Poisson}: Cases are Poisson-distributed proportional to
-    population. Requires case and population files.
-  \item \strong{Bernoulli}: Binary 0/1 data (cases/controls). Requires case and
-    control files.
-  \item \strong{Space-Time Permutation}: Uses only case data; compares observed
-    space-time distribution against expected under independence of space and time.
+\item \strong{Discrete Poisson}: Cases are Poisson-distributed proportional to
+population. Requires case and population files.
+\item \strong{Bernoulli}: Binary 0/1 data (cases/controls). Requires case and
+control files.
+\item \strong{Space-Time Permutation}: Uses only case data; compares observed
+space-time distribution against expected under independence of space and time.
 }
 
 \strong{Scanning Windows:}
 \itemize{
-  \item \strong{Purely Spatial}: Circular or elliptic window scanning across space.
-  \item \strong{Purely Temporal}: Interval scanning across time.
-  \item \strong{Space-Time}: Cylindrical window (circular base in space, height in time).
+\item \strong{Purely Spatial}: Circular or elliptic window scanning across space.
+\item \strong{Purely Temporal}: Interval scanning across time.
+\item \strong{Space-Time}: Cylindrical window (circular base in space, height in time).
 }
 
 For full methodological details, see the SaTScan User Guide (Kulldorff, 2022)
@@ -106,31 +109,31 @@ Communications in Statistics: Theory and Methods, 26:1481-1496.
 Parameters are resolved with the following precedence (highest to lowest):
 
 \enumerate{
-  \item \strong{Level 1: Data Integrity (Immutable)}
+\item \strong{Level 1: Data Integrity (Immutable)}
 
-  Derived directly from the input table objects (\code{cas}, \code{geo}, etc.).
-  These are \emph{automatically set} based on your data and cannot be overridden:
-  \itemize{
-    \item \code{CaseFile}, \code{CoordinatesFile}, \code{PopulationFile} (filenames)
-    \item \code{CoordinatesType} (from \code{geo$spec$coord_type})
-    \item \code{PrecisionCaseTimes}, \code{TimeAggregationUnits} (from \code{cas$spec$time_precision})
-    \item \code{StartDate}, \code{EndDate} (inferred from case data if not specified)
-  }
+Derived directly from the input table objects (\code{cas}, \code{geo}, etc.).
+These are \emph{automatically set} based on your data and cannot be overridden:
+\itemize{
+\item \code{CaseFile}, \code{CoordinatesFile}, \code{PopulationFile} (filenames)
+\item \code{CoordinatesType} (from \code{geo$spec$coord_type})
+\item \code{PrecisionCaseTimes}, \code{TimeAggregationUnits} (from \code{cas$spec$time_precision})
+\item \code{StartDate}, \code{EndDate} (inferred from case data if not specified)
+}
 
-  \item \strong{Level 2: User Tweaks}
+\item \strong{Level 2: User Tweaks}
 
-  Arguments passed explicitly via \code{...}. These override template settings.
-  Example: \code{satscanr(..., AnalysisType = 3, MonteCarloReps = 999)}
+Arguments passed explicitly via \code{...}. These override template settings.
+Example: \code{satscanr(..., AnalysisType = 3, MonteCarloReps = 999)}
 
-  \item \strong{Level 3: Template PRM}
+\item \strong{Level 3: Template PRM}
 
-  Settings loaded from an external \code{.prm} file via \code{prm_path}.
-  Use this to reuse configurations from previous SaTScan sessions.
+Settings loaded from an external \code{.prm} file via \code{prm_path}.
+Use this to reuse configurations from previous SaTScan sessions.
 
-  \item \strong{Level 4: Package Defaults}
+\item \strong{Level 4: Package Defaults}
 
-  Bundled default templates (SaTScan v10.3 defaults from \code{prm_defaults()}).
-  These provide sensible starting values when no template is specified.
+Bundled default templates (SaTScan v10.3 defaults from \code{prm_defaults()}).
+These provide sensible starting values when no template is specified.
 }
 }
 
@@ -140,11 +143,11 @@ This function uses the native \code{prm_*} system for parameter management,
 which directly manipulates PRM files without depending on external package internals.
 Key functions include:
 \itemize{
-  \item \code{\link{prm_parse}}: Parse a \code{.prm} file into an R list
-  \item \code{\link{prm_set}}: Modify parameter values
-  \item \code{\link{prm_write}}: Write parameters back to a PRM file
-  \item \code{\link{prm_defaults}}: Load bundled default templates
-  \item \code{\link{prm_validate}}: Validate parameters against a reference version
+\item \code{\link{prm_parse}}: Parse a \code{.prm} file into an R list
+\item \code{\link{prm_set}}: Modify parameter values
+\item \code{\link{prm_write}}: Write parameters back to a PRM file
+\item \code{\link{prm_defaults}}: Load bundled default templates
+\item \code{\link{prm_validate}}: Validate parameters against a reference version
 }
 }
 

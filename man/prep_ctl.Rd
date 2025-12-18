@@ -33,6 +33,9 @@ prep_ctl(
 A \code{satscan_table} object of kind "ctl".
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+}
+\details{
 Prepares a control file for Bernoulli models.
 Similar to \code{prep_cas}, but for controls (non-cases).
 }
@@ -42,10 +45,13 @@ The Control File has the following structure:
 \code{<LocationID> <NoControls> <Date> <Covariate1> ...}
 
 \itemize{
-  \item \strong{LocationID}: Identifier matching Case/Geo files.
-  \item \strong{NoControls}: Number of controls.
-  \item \strong{Date}: Required for Space-Time Bernoulli. Same format rules as Case file.
-  \item \strong{Covariates}: Optional.
+\item \strong{LocationID}: Identifier matching Case/Geo files.
+\item \strong{NoControls}: Number of controls.
+\item \strong{Date}: Required for Space-Time Bernoulli. Same format rules as Case file.
+\item \strong{Covariates}: Optional.
 }
 }
 
+\seealso{
+\code{\link[=as_satscan_control]{as_satscan_control()}} for the new \code{ss_tbl} interface.
+}

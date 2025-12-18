@@ -7,20 +7,20 @@
 prm_validate(prm, version = NULL)
 }
 \arguments{
-\item{prm}{A `prm_list` object (from prm_parse).}
+\item{prm}{A \code{prm_list} object (from prm_parse).}
 
 \item{version}{Version to compare against (e.g., "10.3"). If NULL, uses
 the prm's version attribute or defaults to "10.3".}
 }
 \value{
 A list with:
-  \itemize{
-    \item \code{valid}: TRUE if no critical issues found
-    \item \code{missing}: Character vector of keys in reference but not in prm
-    \item \code{extra}: Character vector of keys in prm but not in reference
-    \item \code{prm_version}: Version found in prm (or NULL)
-    \item \code{ref_version}: Reference version used for comparison
-  }
+\itemize{
+\item \code{valid}: TRUE if no critical issues found
+\item \code{missing}: Character vector of keys in reference but not in prm
+\item \code{extra}: Character vector of keys in prm but not in reference
+\item \code{prm_version}: Version found in prm (or NULL)
+\item \code{ref_version}: Reference version used for comparison
+}
 }
 \description{
 Validates a parsed PRM against a known version template. Useful for

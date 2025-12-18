@@ -7,7 +7,7 @@
 prm_write(prm, path)
 }
 \arguments{
-\item{prm}{A `prm_list` object.}
+\item{prm}{A \code{prm_list} object.}
 
 \item{path}{Output file path.}
 }

@@ -27,8 +27,8 @@ prep_cas(
 
 \item{style}{Case input style:
 \itemize{
-  \item "casewise": Each row is a single case (cases=1).
-  \item "aggregated": Rows represent counts.
+\item "casewise": Each row is a single case (cases=1).
+\item "aggregated": Rows represent counts.
 }}
 
 \item{time_precision}{Time resolution for formatting: "day", "month", "year", or "generic".}
@@ -37,6 +37,9 @@ prep_cas(
 A \code{satscan_table} object of kind "cas".
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+}
+\details{
 Prepares a case file for SaTScan, enforcing strict sparsity (no zero-case rows)
 and handling time precision formatting.
 }
@@ -46,17 +49,17 @@ The Case File has the following structure:
 \code{<LocationID> <NoCases> <Date> <Covariate1> ...}
 
 \itemize{
-  \item \strong{LocationID}: Character or numeric identifier. Matching ID must exist in Geo file.
-  \item \strong{NoCases}: Number of cases. For "casewise" style without a count column, this is set to 1.
-    Zero-case rows are removed (implicit zeros).
-  \item \strong{Date}: Formatted according to \code{time_precision}:
-    \itemize{
-      \item "day": \code{YYYY/MM/DD}
-      \item "month": \code{YYYY/MM}
-      \item "year": \code{YYYY}
-      \item "generic": Time string/number
-    }
-  \item \strong{Covariates}: Optional categorical variables.
+\item \strong{LocationID}: Character or numeric identifier. Matching ID must exist in Geo file.
+\item \strong{NoCases}: Number of cases. For "casewise" style without a count column, this is set to 1.
+Zero-case rows are removed (implicit zeros).
+\item \strong{Date}: Formatted according to \code{time_precision}:
+\itemize{
+\item "day": \code{YYYY/MM/DD}
+\item "month": \code{YYYY/MM}
+\item "year": \code{YYYY}
+\item "generic": Time string/number
+}
+\item \strong{Covariates}: Optional categorical variables.
 }
 }
 
@@ -80,4 +83,7 @@ head(my_cases)
 
 cas_obj2 <- prep_cas(my_cases, loc_id = id, time = diagnosis_date, style = "casewise", time_precision = "day")
 }
+}
+\seealso{
+\code{\link[=as_satscan_case]{as_satscan_case()}} for the new \code{ss_tbl} interface.
 }

@@ -7,7 +7,7 @@
 prm_add(prm, key, value, section, info = NULL)
 }
 \arguments{
-\item{prm}{A `prm_list` object.}
+\item{prm}{A \code{prm_list} object.}
 
 \item{key}{Parameter name (character).}
 
@@ -18,9 +18,9 @@ prm_add(prm, key, value, section, info = NULL)
 \item{info}{Optional comment line (without leading semicolon).}
 }
 \value{
-Expanded `prm_list` with updated skeleton.
+Expanded \code{prm_list} with updated skeleton.
 }
 \description{
 Adds a new parameter to a prm_list. Creates the section if it doesn't exist.
-Errors if the parameter already exists (use `prm_set` for that).
+Errors if the parameter already exists (use \code{prm_set} for that).
 }

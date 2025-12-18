@@ -11,25 +11,25 @@ satscan_table(data, kind, spec = list())
 
 \item{kind}{Character. Type of SaTScan file:
 \itemize{
-  \item \code{"cas"}: Case file
-  \item \code{"pop"}: Population file
-  \item \code{"geo"}: Coordinates/geometry file
-  \item \code{"ctl"}: Control file (Bernoulli model)
-  \item \code{"grd"}: Grid file (custom scan centers)
+\item \code{"cas"}: Case file
+\item \code{"pop"}: Population file
+\item \code{"geo"}: Coordinates/geometry file
+\item \code{"ctl"}: Control file (Bernoulli model)
+\item \code{"grd"}: Grid file (custom scan centers)
 }}
 
 \item{spec}{List of metadata about the table (e.g., time_precision, coord_type).}
 }
 \value{
-A validated `satscan_table` object with components:
-  \itemize{
-    \item \code{data}: The input data.frame
-    \item \code{kind}: The table type
-    \item \code{spec}: Metadata list
-  }
+A validated \code{satscan_table} object with components:
+\itemize{
+\item \code{data}: The input data.frame
+\item \code{kind}: The table type
+\item \code{spec}: Metadata list
+}
 }
 \description{
-Constructs a validated `satscan_table` object from a data frame.
+Constructs a validated \code{satscan_table} object from a data frame.
 These objects are used as inputs to \code{\link{satscanr}}.
 }
 \details{

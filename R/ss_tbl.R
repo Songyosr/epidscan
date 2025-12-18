@@ -78,6 +78,8 @@ ss_schema <- function() {
 
 #' Create a SaTScan Table
 #'
+#' `r lifecycle::badge("stable")`
+#'
 #' @param data A data.frame.
 #' @param type type string (e.g. "cas", "geo").
 #' @param roles Named character vector mapping schema roles to data columns.

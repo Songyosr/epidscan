@@ -13,9 +13,13 @@ Imports:
     sf,
     dplyr,
     rlang,
-    utils
+    utils,
+    lifecycle,
+    vctrs
 Suggests:
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    rsatscan
 RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)

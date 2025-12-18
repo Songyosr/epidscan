@@ -10,7 +10,7 @@ prm_defaults(version = NULL)
 \item{version}{Optional SaTScan version (e.g., "10.3"). If NULL, uses latest (10.3).}
 }
 \value{
-A `prm_list` parsed from bundled template files.
+A \code{prm_list} parsed from bundled template files.
 }
 \description{
 Loads internal default parameters as a prm_list.

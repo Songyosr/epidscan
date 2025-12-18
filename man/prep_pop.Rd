@@ -21,6 +21,9 @@ prep_pop(df, loc_id, time, pop, covars = NULL)
 A \code{satscan_table} object of kind "pop".
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+}
+\details{
 Prepares a population file for SaTScan, used as the denominator for Poisson models.
 Population data is treated as "census anchors" - SaTScan interpolates between these time points.
 }
@@ -30,12 +33,12 @@ The Population File has the following structure:
 \code{<LocationID> <Year/Time> <Population> <Covariate1> ...}
 
 \itemize{
-  \item \strong{LocationID}: Character or numeric identifier. Match cases and geo.
-  \item \strong{Year/Time}: The "census year" or time point. For daily analysis, you can still use
-    yearly population anchors (e.g. 2023, 2024). SaTScan interpolates linearly.
-  \item \strong{Population}: The count of people at risk.
-  \item \strong{Covariates}: Optional. If used, population must be stratified by these covariates
-    (i.e., you need a row for every combination of Location, Time, and Covariate levels).
+\item \strong{LocationID}: Character or numeric identifier. Match cases and geo.
+\item \strong{Year/Time}: The "census year" or time point. For daily analysis, you can still use
+yearly population anchors (e.g. 2023, 2024). SaTScan interpolates linearly.
+\item \strong{Population}: The count of people at risk.
+\item \strong{Covariates}: Optional. If used, population must be stratified by these covariates
+(i.e., you need a row for every combination of Location, Time, and Covariate levels).
 }
 }
 
@@ -57,4 +60,7 @@ head(pop_strat)
 
 pop_obj2 <- prep_pop(pop_strat, loc_id = county, time = year, pop = pop, covars = "sex")
 }
+}
+\seealso{
+\code{\link[=as_satscan_population]{as_satscan_population()}} for the new \code{ss_tbl} interface.
 }

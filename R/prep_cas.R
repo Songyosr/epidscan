@@ -1,7 +1,11 @@
 #' Prepare SaTScan Case File
 #'
+#' `r lifecycle::badge("superseded")`
+#'
 #' Prepares a case file for SaTScan, enforcing strict sparsity (no zero-case rows)
 #' and handling time precision formatting.
+#'
+#' @seealso [as_satscan_case()] for the new `ss_tbl` interface.
 #'
 #' @section SaTScan File Specification:
 #' The Case File has the following structure:

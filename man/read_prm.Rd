@@ -7,16 +7,16 @@
 read_prm(path)
 }
 \arguments{
-\item{path}{Path to a `.prm` file.}
+\item{path}{Path to a \code{.prm} file.}
 }
 \value{
-A named list of SaTScan parameters (e.g., `list(AnalysisType = "3", ...)`).
-  Values are returned as character strings; numeric conversion is left to the caller.
+A named list of SaTScan parameters (e.g., \code{list(AnalysisType = "3", ...)}).
+Values are returned as character strings; numeric conversion is left to the caller.
 }
 \description{
-Parses a SaTScan `.prm` parameter file into a plain named R list.
-This is a simpler alternative to `prm_parse()` that returns a plain list
-instead of a `prm_list` object with metadata.
+Parses a SaTScan \code{.prm} parameter file into a plain named R list.
+This is a simpler alternative to \code{prm_parse()} that returns a plain list
+instead of a \code{prm_list} object with metadata.
 }
 \examples{
 \dontrun{

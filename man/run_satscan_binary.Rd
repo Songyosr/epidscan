@@ -18,6 +18,6 @@ Invisible TRUE on success. Stops on failure.
 }
 \description{
 Executes the SaTScan binary directly using system commands.
-Replaces the reliance on `rsatscan::satscan()`.
+Replaces the reliance on \code{rsatscan::satscan()}.
 }
 \keyword{internal}

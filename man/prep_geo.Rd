@@ -4,22 +4,37 @@
 \alias{prep_geo}
 \title{Prepare SaTScan Geometry File}
 \usage{
-prep_geo(x, loc_id, coords = NULL, geometry = NULL)
+prep_geo(
+  x,
+  loc_id,
+  coords = NULL,
+  geometry = NULL,
+  coord_type = c("auto", "latlong", "cartesian")
+)
 }
 \arguments{
 \item{x}{Input object. Can be an \code{sf} object or a \code{data.frame}.}
 
 \item{loc_id}{Column name for location ID (unquoted).}
 
-\item{coords}{Character vector of length 2 specifying coordinate columns if x is a data.frame.
-Order should be \code{c("long", "lat")} or \code{c("x", "y")}.}
+\item{coords}{Character vector of length 2 specifying coordinate columns if x is a data.frame.}
 
 \item{geometry}{Column name for geometry if x is sf and not active geometry (optional).}
+
+\item{coord_type}{Coordinate system: "auto" (default), "latlong", or "cartesian".
+\itemize{
+\item "auto": Attempts to detect from data range or CRS.
+\item "latlong": Forces interpretation as Latitude/Longitude.
+\item "cartesian": Forces interpretation as Cartesian (X/Y).
+}}
 }
 \value{
 A \code{satscan_table} object of kind "geo".
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+}
+\details{
 Prepares a coordinate file for SaTScan.
 Handles \code{sf} objects (extracting centroids) or plain data frames.
 }
@@ -29,20 +44,20 @@ The Coordinates File has the following structure:
 \code{<LocationID> <Latitude/Y> <Longitude/X>}
 
 \itemize{
-  \item \strong{LocationID}: Unique identifier matching Case/Population files.
-  \item \strong{Coordinate Order}:
-    \itemize{
-      \item \strong{Lat/Long}: SaTScan expects \code{Latitude} first, then \code{Longitude}.
-      \item \strong{Cartesian}: SaTScan expects \code{X} first, then \code{Y}.
-    }
+\item \strong{LocationID}: Unique identifier matching Case/Population files.
+\item \strong{Coordinate Order}:
+\itemize{
+\item \strong{Lat/Long}: SaTScan expects \code{Latitude} first, then \code{Longitude}.
+\item \strong{Cartesian}: SaTScan expects \code{X} first, then \code{Y}.
+}
 }
 
 \strong{Note on Coordinate Ordering}:
 This function automatically handles the swapping for you:
 \itemize{
-  \item If \code{sf} object (Lat/Long crs) -> Swaps to \code{Lat, Long}.
-  \item If \code{data.frame} (Lat/Long detected) -> Swaps to \code{Lat, Long}.
-  \item If \code{data.frame} (Cartesian detected) -> Keeps as \code{X, Y}.
+\item If \code{sf} object (Lat/Long crs) -> Swaps to \code{Lat, Long}.
+\item If \code{data.frame} (Lat/Long detected) -> Swaps to \code{Lat, Long}.
+\item If \code{data.frame} (Cartesian detected) -> Keeps as \code{X, Y}.
 }
 }
 
@@ -55,10 +70,13 @@ geo_obj <- prep_geo(my_shapes, loc_id = GEOID)
 
 # From data frame (Lat/Long)
 df <- data.frame(id = "A", lon = 100, lat = 13)
-geo_obj2 <- prep_geo(df, loc_id = id, coords = c("lon", "lat"))
+geo_obj2 <- prep_geo(df, loc_id = id, coords = c("lon", "lat"), coord_type = "latlong")
 
 # From data frame (Cartesian)
 df_cart <- data.frame(id = "A", x = 500000, y = 100000)
-geo_obj3 <- prep_geo(df_cart, loc_id = id, coords = c("x", "y"))
+geo_obj3 <- prep_geo(df_cart, loc_id = id, coords = c("x", "y"), coord_type = "cartesian")
 }
+}
+\seealso{
+\code{\link[=as_satscan_coordinates]{as_satscan_coordinates()}} for the new \code{ss_tbl} interface.
 }

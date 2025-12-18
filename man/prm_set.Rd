@@ -7,14 +7,14 @@
 prm_set(prm, ..., .strict = TRUE)
 }
 \arguments{
-\item{prm}{A `prm_list` object from `prm_parse()`.}
+\item{prm}{A \code{prm_list} object from \code{prm_parse()}.}
 
-\item{...}{Named parameters to modify (e.g., `CaseFile = "test.cas"`).}
+\item{...}{Named parameters to modify (e.g., \code{CaseFile = "test.cas"}).}
 
-\item{.strict}{If `TRUE` (default), errors on unknown keys. If `FALSE`, warns.}
+\item{.strict}{If \code{TRUE} (default), errors on unknown keys. If \code{FALSE}, warns.}
 }
 \value{
-Modified `prm_list`.
+Modified \code{prm_list}.
 }
 \description{
 Updates existing parameters in a prm_list. By default, errors if a parameter

@@ -1,7 +1,11 @@
 #' Prepare SaTScan Grid File
 #'
+#' `r lifecycle::badge("superseded")`
+#'
 #' Prepares a grid file for SaTScan, which defines the centers of the scanning windows.
 #' Leverages \code{prep_geo} logic for coordinate extraction and formatting.
+#'
+#' @seealso [as_satscan_grid()] for the new `ss_tbl` interface.
 #'
 #' @section SaTScan File Specification:
 #' The Grid File has the same structure as the Coordinates File:
