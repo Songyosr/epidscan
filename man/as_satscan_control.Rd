@@ -10,7 +10,7 @@ as_satscan_control(
   controls,
   time = NULL,
   covars = NULL,
-  spec = list()
+  time_precision = NULL
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ as_satscan_control(
 
 \item{covars}{Optional vector of column names for covariates.}
 
-\item{spec}{Additional specifications.}
+\item{time_precision}{User-specified time precision.}
 }
 \value{
 An \code{ss_tbl} object of type "ctl".

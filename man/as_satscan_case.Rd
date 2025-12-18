@@ -4,7 +4,14 @@
 \alias{as_satscan_case}
 \title{Coerce Data to SaTScan Case Table}
 \usage{
-as_satscan_case(data, loc_id, cases, time = NULL, covars = NULL, spec = list())
+as_satscan_case(
+  data,
+  loc_id,
+  cases,
+  time = NULL,
+  covars = NULL,
+  time_precision = NULL
+)
 }
 \arguments{
 \item{data}{A data frame containing case data.}
@@ -17,7 +24,7 @@ as_satscan_case(data, loc_id, cases, time = NULL, covars = NULL, spec = list())
 
 \item{covars}{Optional vector of column names for covariates.}
 
-\item{spec}{Additional specifications (e.g., time_precision).}
+\item{time_precision}{User-specified time precision ("day", "month", "year", "generic").}
 }
 \value{
 An \code{ss_tbl} object of type "cas".
@@ -30,6 +37,6 @@ Creates an \code{ss_tbl} object of type "cas" (Case File).
 }
 \examples{
 df <- data.frame(id = c("A", "B"), count = c(10, 5), year = 2020)
-ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year")
+ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year", time_precision = "year")
 
 }

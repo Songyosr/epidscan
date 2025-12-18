@@ -1,10 +1,11 @@
 Package: epidscan
 Type: Package
-Title: Modular SatScan Pipeline for Epidemiological Analysis
+Title: Modern, Stateless Interface for SaTScan Cluster Analysis
 Version: 0.2.0
-Author: Songyos Rajborirug <songyos.r@psu.ac.th>
-Maintainer: Songyos Rajborirug <songyos.r@psu.ac.th>
-Description: A modular pipeline for preparing data and running SatScan analyses for disease surveillance. Provides tools for processing geographic, population, and case data, generating SatScan input files, and post-processing results.
+Description: A modern, stateless R interface for the SaTScan spatial scan statistic. 
+    Provides a tidy, type-safe API for preparing data (`ss_tbl`), automatic parameter management, 
+    and native `sf` support for spatial data. Designed for reproducibility and robust 
+    epidemiological workflows without global state side-effects.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -23,3 +24,6 @@ Suggests:
     rsatscan
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
+Authors@R: 
+    person("Songyos", "Rajborirug", , "songyos.r@psu.ac.th", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5000-7409"))

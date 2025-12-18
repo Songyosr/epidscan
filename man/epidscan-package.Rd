@@ -4,8 +4,12 @@
 \name{epidscan-package}
 \alias{epidscan}
 \alias{epidscan-package}
-\title{epidscan: Modular SatScan Pipeline for Epidemiological Analysis}
+\title{epidscan: Modern, Stateless Interface for SaTScan Cluster Analysis}
 \description{
-A modular pipeline for preparing data and running SatScan analyses for disease surveillance. Provides tools for processing geographic, population, and case data, generating SatScan input files, and post-processing results.
+A modern, stateless R interface for the SaTScan spatial scan statistic. Provides a tidy, type-safe API for preparing data (`ss_tbl`), automatic parameter management, and native `sf` support for spatial data. Designed for reproducibility and robust epidemiological workflows without global state side-effects.
+}
+\author{
+\strong{Maintainer}: Songyos Rajborirug \email{songyos.r@psu.ac.th} (\href{https://orcid.org/0000-0002-5000-7409}{ORCID})
+
 }
 \keyword{internal}

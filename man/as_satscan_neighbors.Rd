@@ -4,7 +4,7 @@
 \alias{as_satscan_neighbors}
 \title{Coerce Data to SaTScan Neighbors Table}
 \usage{
-as_satscan_neighbors(data, loc_id, neighbor_cols, spec = list())
+as_satscan_neighbors(data, loc_id, neighbor_cols)
 }
 \arguments{
 \item{data}{A data frame containing neighbor lists.}
@@ -12,8 +12,6 @@ as_satscan_neighbors(data, loc_id, neighbor_cols, spec = list())
 \item{loc_id}{Column name for the location ID.}
 
 \item{neighbor_cols}{Character vector of column names representing neighbors.}
-
-\item{spec}{Additional specifications.}
 }
 \value{
 An \code{ss_tbl} object of type "nbr".

@@ -10,8 +10,8 @@ test_that("satscanr accepts ss_tbl inputs and generates correct files", {
     cas_df <- data.frame(id = "A", cases = 10, date = as.Date("2021-01-01"))
     geo_df <- data.frame(id = "A", lat = 10, long = 20)
 
-    ss_cas <- as_satscan_case(cas_df, loc_id = "id", cases = "cases", time = "date", spec = list(time_precision = "month"))
-    ss_geo <- as_satscan_coordinates(geo_df, loc_id = "id", coord1 = "lat", coord2 = "long", spec = list(coord_type = "latlong"))
+    ss_cas <- as_satscan_case(cas_df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
+    ss_geo <- as_satscan_coordinates(geo_df, loc_id = "id", coord1 = "lat", coord2 = "long", coord_type = "latlong")
 
     # 2. Mocking
     # We'll use a temporary directory for output

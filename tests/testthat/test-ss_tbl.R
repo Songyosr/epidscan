@@ -119,11 +119,43 @@ test_that("write_satscan formats time at write-time", {
     )
 
     # Specifying month precision
-    ss <- as_satscan_case(df, loc_id = "id", cases = "cases", time = "date", spec = list(time_precision = "month"))
+    ss <- as_satscan_case(df, loc_id = "id", cases = "cases", time = "date", time_precision = "month")
     write_satscan(ss, tmp)
 
     res <- read.table(tmp)
     # ID, Cases, Time
     expect_equal(names(res), c("V1", "V2", "V3"))
     expect_equal(res$V3, "2021/01")
+})
+
+test_that("as_satscan_coordinates handles sf objects", {
+    skip_if_not_installed("sf")
+
+    # Create a simple SF object
+    df <- data.frame(id = "A", lat = 10, long = 20)
+    # Mocking SF structure if sf not available (tough), or just use sf functions
+    # Assuming test environment has sf if it installed the package
+
+    # Create simple polygon or point
+    pt <- sf::st_sfc(sf::st_point(c(20, 10)), crs = 4326) # Long=20, Lat=10
+    sf_obj <- sf::st_sf(id = "A", geometry = pt)
+
+    # Convert
+    ss <- as_satscan_coordinates(sf_obj, loc_id = "id", coord_type = "latlong")
+
+    # Check structure
+    expect_equal(ss_type(ss), "geo")
+    # Should have extracted coords. Lat(10) -> coord1, Long(20) -> coord2 for 'latlong' type?
+    # Wait, my logic:
+    # if final_type == "latlong": roles = c(coord1 = "__ss_c2", coord2 = "__ss_c1")
+    # __ss_c2 is Lat (Y), __ss_c1 is Long (X)
+    # So coord1 (1st col in file) = Lat = 10
+    # coord2 (2nd col in file) = Long = 20
+
+    # Verify values by peeking at data
+    expect_equal(ss[["__ss_c2"]], 10)
+    expect_equal(ss[["__ss_c1"]], 20)
+
+    # Check spec
+    expect_equal(ss_spec(ss)$coord_type, "latlong")
 })

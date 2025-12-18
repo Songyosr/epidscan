@@ -230,19 +230,24 @@ print.ss_tbl <- function(x, ...) {
 #' @param cases Column name for case counts (numeric).
 #' @param time Optional column name for time (Date, numeric, or character).
 #' @param covars Optional vector of column names for covariates.
-#' @param spec Additional specifications (e.g., time_precision).
+#' @param time_precision User-specified time precision ("day", "month", "year", "generic").
 #'
 #' @return An `ss_tbl` object of type "cas".
 #'
 #' @examples
 #' df <- data.frame(id = c("A", "B"), count = c(10, 5), year = 2020)
-#' ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year")
+#' ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year", time_precision = "year")
 #'
 #' @export
-as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL, spec = list()) {
+as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL,
+                            time_precision = NULL) {
     roles <- c(loc_id = loc_id, cases = cases)
     if (!is.null(time)) roles <- c(roles, time = time)
+
+    spec <- list()
+    if (!is.null(time_precision)) spec$time_precision <- time_precision
     if (!is.null(covars)) spec$covars <- covars
+
     new_ss_tbl(data, "cas", roles, spec)
 }
 
@@ -257,15 +262,20 @@ as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL, spe
 #' @param controls Column name for control counts.
 #' @param time Optional column name for time.
 #' @param covars Optional vector of column names for covariates.
-#' @param spec Additional specifications.
+#' @param time_precision User-specified time precision.
 #'
 #' @return An `ss_tbl` object of type "ctl".
 #'
 #' @export
-as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NULL, spec = list()) {
+as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NULL,
+                               time_precision = NULL) {
     roles <- c(loc_id = loc_id, controls = controls)
     if (!is.null(time)) roles <- c(roles, time = time)
+
+    spec <- list()
+    if (!is.null(time_precision)) spec$time_precision <- time_precision
     if (!is.null(covars)) spec$covars <- covars
+
     new_ss_tbl(data, "ctl", roles, spec)
 }
 
@@ -280,14 +290,19 @@ as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NUL
 #' @param time Column name for time (census year/time).
 #' @param population Column name for population count.
 #' @param covars Optional vector of column names for covariates.
-#' @param spec Additional specifications.
+#' @param time_precision User-specified time precision (e.g. "year" to format Dates as YYYY).
 #'
 #' @return An `ss_tbl` object of type "pop".
 #'
 #' @export
-as_satscan_population <- function(data, loc_id, time, population, covars = NULL, spec = list()) {
+as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
+                                  time_precision = NULL) {
     roles <- c(loc_id = loc_id, time = time, population = population)
+
+    spec <- list()
+    if (!is.null(time_precision)) spec$time_precision <- time_precision
     if (!is.null(covars)) spec$covars <- covars
+
     new_ss_tbl(data, "pop", roles, spec)
 }
 
@@ -296,22 +311,119 @@ as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
 #' `r lifecycle::badge("stable")`
 #'
 #' Creates an `ss_tbl` object of type "geo" (Coordinates File).
+#' Automatically handles `sf` objects by extracting centroids and detecting coordinate types.
 #'
-#' @param data A data frame containing coordinate data.
+#' @param data A data frame or `sf` object containing coordinate data.
 #' @param loc_id Column name for location ID.
-#' @param coord1 Column name for the first coordinate (Latitude or Cartesian X).
-#' @param coord2 Column name for the second coordinate (Longitude or Cartesian Y).
+#' @param coord1 Column name for the first coordinate (X/Longitude), required if `data` is not `sf`.
+#' @param coord2 Column name for the second coordinate (Y/Latitude), required if `data` is not `sf`.
 #' @param z Optional column name for altitude/Z-coordinate.
-#' @param spec Additional specifications (e.g., `coord_type = "latlong"` or `"cartesian"`).
-#' Defaults to "auto".
+#' @param coord_type Coordinate system: "auto" (default), "latlong", or "cartesian".
 #'
 #' @return An `ss_tbl` object of type "geo".
 #'
 #' @export
-as_satscan_coordinates <- function(data, loc_id, coord1, coord2, z = NULL, spec = list(coord_type = "auto")) {
-    roles <- c(loc_id = loc_id, coord1 = coord1, coord2 = coord2)
-    if (!is.null(z)) spec$z <- z
-    new_ss_tbl(data, "geo", roles, spec)
+as_satscan_coordinates <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
+                                   coord_type = c("auto", "latlong", "cartesian")) {
+    coord_type <- match.arg(coord_type)
+
+    # SF Handling
+    if (inherits(data, "sf")) {
+        # Check CRS
+        is_ll <- sf::st_is_longlat(data)
+        crs <- sf::st_crs(data)
+
+        # Auto-detect type
+        final_type <- if (coord_type == "auto") {
+            if (isTRUE(is_ll)) "latlong" else "cartesian"
+        } else {
+            coord_type
+        }
+
+        # Validate forced types
+        if (coord_type == "latlong" && isFALSE(is_ll)) warning("Forcing 'latlong' on projected SF object.")
+        if (coord_type == "cartesian" && isTRUE(is_ll)) warning("Forcing 'cartesian' on lat/long SF object.")
+
+        # Extract centroids
+        suppressWarnings({
+            cents <- sf::st_centroid(sf::st_geometry(data))
+            coords_mat <- sf::st_coordinates(cents)
+        })
+
+        # Create plain dataframe
+        # ensure loc_id is preserved
+        if (!loc_id %in% names(data)) stop("loc_id '", loc_id, "' not found in sf object.")
+
+        df_out <- as.data.frame(data)
+        df_out <- df_out[, c(loc_id, setdiff(names(df_out), c(loc_id, attr(data, "sf_column")))), drop = FALSE]
+
+        # Add coords with standard internal names
+        # SF returns X (Long) then Y (Lat)
+        # We'll assign them to temporary names and map them later
+        df_out[["__ss_c1"]] <- coords_mat[, 1] # X / Long
+        df_out[["__ss_c2"]] <- coords_mat[, 2] # Y / Lat
+
+        # If latlong:  SaTScan wants Lat(Y), Long(X)
+        # If cartesian: SaTScan wants X, Y
+        # new_ss_tbl expects us to map roles 'coord1', 'coord2'.
+        # For 'geo' schema:
+        #  - coord1 is the first column in the file.
+        #  - coord2 is the second column in the file.
+
+        if (final_type == "latlong") {
+            # File: Map Lat(Y) -> coord1, Long(X) -> coord2
+            roles <- c(loc_id = loc_id, coord1 = "__ss_c2", coord2 = "__ss_c1")
+        } else {
+            # File: Map X -> coord1, Y -> coord2
+            roles <- c(loc_id = loc_id, coord1 = "__ss_c1", coord2 = "__ss_c2")
+        }
+
+        spec <- list(coord_type = final_type)
+        if (!is.null(z)) {
+            roles <- c(roles, z = z)
+            spec$z <- z
+        }
+
+        return(new_ss_tbl(df_out, "geo", roles, spec))
+    } else {
+        # Data Frame Handling
+        if (is.null(coord1) || is.null(coord2)) {
+            stop("Must provide 'coord1' and 'coord2' for non-sf data frames.")
+        }
+
+        c1_vals <- data[[coord1]]
+        c2_vals <- data[[coord2]]
+
+        final_type <- coord_type
+        if (coord_type == "auto") {
+            # Heuristic: -180...180, -90...90
+            is_valid_ll <- all(c1_vals >= -180 & c1_vals <= 180, na.rm = TRUE) &&
+                all(c2_vals >= -90 & c2_vals <= 90, na.rm = TRUE)
+            final_type <- if (is_valid_ll) "latlong" else "cartesian"
+        }
+
+        # Roles Mapping
+        # Assume user provided X/Long as coord1, Y/Lat as coord2 (Standard R/GIS convention)
+        # BUT SaTScan lat/long wants Y then X.
+
+        if (final_type == "latlong") {
+            # Swap: Map user's coord2 (Lat) -> file's coord1
+            #       Map user's coord1 (Long) -> file's coord2
+            roles <- c(loc_id = loc_id, coord1 = coord2, coord2 = coord1)
+        } else {
+            # Keep: Map user's coord1 (X) -> file's coord1
+            #       Map user's coord2 (Y) -> file's coord2
+            roles <- c(loc_id = loc_id, coord1 = coord1, coord2 = coord2)
+        }
+
+        spec <- list(coord_type = final_type)
+        if (!is.null(z)) {
+            roles <- c(roles, z = z) # Map Z role to column name z
+            spec$z <- z
+        }
+
+        return(new_ss_tbl(data, "geo", roles, spec))
+    }
 }
 
 #' Coerce Data to SaTScan Grid Table
@@ -328,7 +440,7 @@ as_satscan_coordinates <- function(data, loc_id, coord1, coord2, z = NULL, spec 
 #' @param latest_start Optional column for latest start time constraint.
 #' @param earliest_end Optional column for earliest end time constraint.
 #' @param latest_end Optional column for latest end time constraint.
-#' @param spec Additional specifications (e.g. `grid_variant`).
+#' @param grid_variant Variant of grid file ("basic", etc.).
 #'
 #' @return An `ss_tbl` object of type "grd".
 #'
@@ -336,9 +448,14 @@ as_satscan_coordinates <- function(data, loc_id, coord1, coord2, z = NULL, spec 
 as_satscan_grid <- function(data, coord1, coord2, z = NULL,
                             earliest_start = NULL, latest_start = NULL,
                             earliest_end = NULL, latest_end = NULL,
-                            spec = list(grid_variant = "basic")) {
+                            grid_variant = "basic") {
     roles <- c(coord1 = coord1, coord2 = coord2)
-    if (!is.null(z)) spec$z <- z
+    spec <- list(grid_variant = grid_variant)
+
+    if (!is.null(z)) spec$z <- z # Z is often just handled via optional mapping if needed? Schema says 'z' is optional role.
+    # Wait, new_ss_tbl maps roles. We should map it if column provided.
+    if (!is.null(z)) roles <- c(roles, z = z) # Schema has z as optional role
+
     if (!is.null(earliest_start)) roles <- c(roles, earliest_start = earliest_start)
     if (!is.null(latest_start)) roles <- c(roles, latest_start = latest_start)
     if (!is.null(earliest_end)) roles <- c(roles, earliest_end = earliest_end)
@@ -356,14 +473,19 @@ as_satscan_grid <- function(data, coord1, coord2, z = NULL,
 #' @param loc_id Column name for the source location ID.
 #' @param neighbor_id Column name for the connected neighbor ID.
 #' @param distance Optional column name for distance/weight for the connection.
-#' @param spec Additional specifications (e.g. `distance_units`).
+#' @param distance_units Units for distance (optional string).
 #'
 #' @return An `ss_tbl` object of type "nwk".
 #'
 #' @export
-as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL, spec = list(distance_units = NULL)) {
+as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL,
+                               distance_units = NULL) {
     roles <- c(loc_id = loc_id, neighbor_id = neighbor_id)
     if (!is.null(distance)) roles <- c(roles, distance = distance)
+
+    spec <- list()
+    if (!is.null(distance_units)) spec$distance_units <- distance_units
+
     new_ss_tbl(data, "nwk", roles, spec)
 }
 
@@ -376,15 +498,15 @@ as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL, spec 
 #' @param data A data frame containing neighbor lists.
 #' @param loc_id Column name for the location ID.
 #' @param neighbor_cols Character vector of column names representing neighbors.
-#' @param spec Additional specifications.
 #'
 #' @return An `ss_tbl` object of type "nbr".
 #'
 #' @export
-as_satscan_neighbors <- function(data, loc_id, neighbor_cols, spec = list()) {
+as_satscan_neighbors <- function(data, loc_id, neighbor_cols) {
     # neighbor_cols: character vector of column names providing neighbors in order
     roles <- c(loc_id = loc_id)
-    spec$neighbor_cols <- neighbor_cols
+    spec <- list(neighbor_cols = neighbor_cols)
+
     # We don't map individual neighbors to separate roles in 'roles' vector to avoid clutter,
     # but we MUST verify they exist.
     missing <- setdiff(neighbor_cols, names(data))
@@ -402,14 +524,13 @@ as_satscan_neighbors <- function(data, loc_id, neighbor_cols, spec = list()) {
 #' @param data A data frame containing meta-location definitions.
 #' @param meta_loc_id Column name for the meta-location ID.
 #' @param member_cols Character vector of column names representing member locations.
-#' @param spec Additional specifications.
 #'
 #' @return An `ss_tbl` object of type "met".
 #'
 #' @export
-as_satscan_meta_locations <- function(data, meta_loc_id, member_cols, spec = list()) {
+as_satscan_meta_locations <- function(data, meta_loc_id, member_cols) {
     roles <- c(meta_loc_id = meta_loc_id)
-    spec$member_cols <- member_cols
+    spec <- list(member_cols = member_cols)
     missing <- setdiff(member_cols, names(data))
     if (length(missing) > 0) stop("Missing member columns: ", paste(missing, collapse = ", "))
 

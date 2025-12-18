@@ -9,7 +9,7 @@ as_satscan_network(
   loc_id,
   neighbor_id,
   distance = NULL,
-  spec = list(distance_units = NULL)
+  distance_units = NULL
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ as_satscan_network(
 
 \item{distance}{Optional column name for distance/weight for the connection.}
 
-\item{spec}{Additional specifications (e.g. \code{distance_units}).}
+\item{distance_units}{Units for distance (optional string).}
 }
 \value{
 An \code{ss_tbl} object of type "nwk".

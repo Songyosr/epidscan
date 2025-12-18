@@ -1,20 +1,26 @@
 # epidscan 0.2.0
 
+## Major API Overhaul: The Stateless Era
+This release introduces a fundamental re-architecture of the package, moving away from global state management to a pure, functional design.
+
+### New Features
+*   **`ss_tbl` System**: New S3 classes for robust input handling.
+    *   `as_satscan_case()`: Create typesafe Case files.
+    *   `as_satscan_population()`: Create typesafe Population files.
+    *   `as_satscan_coordinates()`: Native support for `sf` objects and auto-detection of Coordinate systems.
+*   **`satscanr()`**: The new core engine. It is stateless (no `ssenv`), accepting `ss_tbl` inputs and returning parsed results directly.
+*   **Parameter Management**:
+    *   `prm_parse()` / `prm_write()`: New robust parser that preserves comments and structure of SaTScan parameter files.
+    *   `prm_validate()`: Validate your settings against official SaTScan templates before execution.
+
+### Improvements
+*   **Date Inference**: Automatically detects the time range from your data if `StartDate`/`EndDate` are missing.
+*   **Output Management**: Results are now generated in a `tempdir()` by default to keep your workspace clean. Use `output_dir` to save them explicitly.
+
+### Breaking Changes
+*   **Replaced**: `epid_satscan()` is superseded by the `as_satscan_*` + `satscanr` workflow.
+*   **Superseded**: `prep_cas`, `prep_geo` functions now point to the new `as_satscan_*` equivalents.
+
 # epidscan 0.1.0
 
-## New Features
-* **Tidy API**: New `epid_satscan()` function provides a pipe-friendly interface for SatScan.
-* **Simple Inputs**: Directly accepts data frames or `sf` objects. No manual file creation needed.
-* **Auto-Configuration**: 
-    * Automatically handles `CoordinatesType` (Lat/Long).
-    * Auto-detects `StartDate` and `EndDate` from data.
-    * Auto-infers `TimeAggregationUnits` from date column type.
-* **Result Integration**: Returns the input data joined with SatScan cluster results (`CLUSTER`, `P_VALUE`, `REL_RISK`).
-
-## Improvements
-* **Modular Architecture**: Core logic split into `satscan_data_prep.R`, `satscan_options.R`, and `satscan_results.R`.
-* **Robustness**: Improved error handling for missing columns and SatScan execution failures.
-* **Documentation**: Comprehensive roxygen2 documentation with examples.
-
-## Breaking Changes
-* Legacy functions (e.g., `process_cases`, `run_pipeline`) have been moved to `legacy/` and are no longer exported.
+* Initial Release

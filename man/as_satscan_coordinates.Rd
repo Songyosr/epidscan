@@ -7,25 +7,24 @@
 as_satscan_coordinates(
   data,
   loc_id,
-  coord1,
-  coord2,
+  coord1 = NULL,
+  coord2 = NULL,
   z = NULL,
-  spec = list(coord_type = "auto")
+  coord_type = c("auto", "latlong", "cartesian")
 )
 }
 \arguments{
-\item{data}{A data frame containing coordinate data.}
+\item{data}{A data frame or \code{sf} object containing coordinate data.}
 
 \item{loc_id}{Column name for location ID.}
 
-\item{coord1}{Column name for the first coordinate (Latitude or Cartesian X).}
+\item{coord1}{Column name for the first coordinate (X/Longitude), required if \code{data} is not \code{sf}.}
 
-\item{coord2}{Column name for the second coordinate (Longitude or Cartesian Y).}
+\item{coord2}{Column name for the second coordinate (Y/Latitude), required if \code{data} is not \code{sf}.}
 
 \item{z}{Optional column name for altitude/Z-coordinate.}
 
-\item{spec}{Additional specifications (e.g., \code{coord_type = "latlong"} or \code{"cartesian"}).
-Defaults to "auto".}
+\item{coord_type}{Coordinate system: "auto" (default), "latlong", or "cartesian".}
 }
 \value{
 An \code{ss_tbl} object of type "geo".
@@ -35,4 +34,5 @@ An \code{ss_tbl} object of type "geo".
 }
 \details{
 Creates an \code{ss_tbl} object of type "geo" (Coordinates File).
+Automatically handles \code{sf} objects by extracting centroids and detecting coordinate types.
 }

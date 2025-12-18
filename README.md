@@ -1,8 +1,22 @@
 # epidscan
 
-**Tidy Interface for SatScan Cluster Analysis**
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
 
-`epidscan` provides a pipe-friendly R wrapper for running SatScan spatial and space-time cluster analyses directly on data frames or sf objects.
+**Modern, Stateless Interface for SaTScan Cluster Analysis**
+
+`epidscan` is a robust R interface for the [SaTScan™](https://www.satscan.org/) spatial scan statistic. It is designed to be **stateless**, **type-safe**, and **pipe-friendly**, addressing the limitations of legacy wrappers like `rsatscan`.
+
+## Why `epidscan`?
+
+| Feature | `rsatscan` | `epidscan` |
+| :--- | :--- | :--- |
+| **Philosophy** | **Stateful**: Relies on hidden global environment (`ssenv`) | **Stateless**: Pure functions, no side-effects |
+| **Data Input** | Manual file prep or loose data frames | **Type-Safe**: Validated `ss_tbl` objects |
+| **Spatial** | Manual coordinates | **Native `sf`**: Auto-extracts centroids & CRS |
+| **Parameters** | Fragile `ss.options()` list | **Smart Hierarchy**: Immutable Data > User Tweaks > Templates |
+| **Reliability** | "Silent Failures" common | **Pre-flight Checks**: `prm_validate()` & Date Inference |
 
 ## Installation
 
@@ -11,89 +25,100 @@
 devtools::install_github("Songyosr/epidscan")
 ```
 
-**Requirements:** [SatScan](https://www.satscan.org/) must be installed on your system.
+**Requirements:** [SaTScan™](https://www.satscan.org/) must be installed on your system.
 
 ## Quick Start
 
+The workflow follows a clean **Prep -> Run -> Analyze** pattern.
+
+### 1. Setup (Once)
+
 ```r
 library(epidscan)
+library(dplyr)
 
-# 1. Set SatScan path (once per session)
-set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")  # macOS
-# set_satscan_path("C:/Program Files/SaTScan/SaTScan.exe")          # Windows
-
-# 2. Run analysis
-result <- my_data |>
-  epid_satscan(
-    obs_col = cases,
-    pop_col = population,
-    date_col = date,
-    id_col = location_id,
-    lat_col = latitude,
-    long_col = longitude
-  )
-
-# 3. Filter significant clusters
-clusters <- result |> 
-  dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
+# Set path to your SaTScan executable
+set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")
 ```
 
-## Features
+### 2. Prepare Data (`ss_tbl`)
 
-- **Tidy interface** - Works with pipes and data frames
-- **sf support** - Auto-extracts geometry from sf objects
-- **Auto-detection** - Infers time precision from Date columns
-- **Result joining** - Cluster info joined back to original data
-
-## Parameters
-
-| Parameter             | Description                                                    |
-| --------------------- | -------------------------------------------------------------- |
-| `obs_col`             | Observed case counts (required)                                |
-| `pop_col`             | Population counts (optional, for Poisson)                      |
-| `date_col`            | Date/time column (optional, for temporal)                      |
-| `id_col`              | Location IDs (optional, auto-generated if missing)             |
-| `lat_col`, `long_col` | Coordinates (required if not sf)                               |
-| `type`                | `"space-time"`, `"purely-spatial"`, `"space-time-permutation"` |
-| `model`               | `"poisson"`, `"bernoulli"`, `"space-time-permutation"`         |
-| `time_precision`      | `"day"`, `"month"`, `"year"`, `"generic"`, or `NULL` (auto)    |
-| `...`                 | Additional SaTScan arguments (e.g. `AnalysisType=1`)           |
-
-## Output
-
-Returns the original data with cluster columns added:
-
-| Column     | Description                          |
-| ---------- | ------------------------------------ |
-| `CLUSTER`  | Cluster ID (1 = most significant)    |
-| `P_VALUE`  | Statistical significance             |
-| `REL_RISK` | Relative risk vs. rest of study area |
-
-## Example: Leptospirosis Surveillance
+Use `as_satscan_*` functions to create strongly-typed inputs. These helpers validate your data and handle the complex formatting required by SaTScan (e.g., date formats, coordinate ordering).
 
 ```r
-# Load case data with location and population
-lepto_data <- readRDS("cases_with_pop.rds")
+# Case File: Zero-case rows are automatically handled
+cas <- as_satscan_case(
+  cases_df, 
+  loc_id = "zipcode", 
+  cases = "cases", 
+  time = "date"
+) 
 
-# Run space-time Poisson analysis
-result <- lepto_data |>
-  epid_satscan(
-    obs_col = cases,
-    pop_col = pop,
-    date_col = date,
-    id_col = tambon_code,
-    lat_col = lat,
-    long_col = long,
-    type = "space-time",
-    model = "poisson",
-    MonteCarloReps = 999
-  )
+# Geometry: Works directly with sf objects!
+# Auto-detects if you are using Lat/Long or Cartesian (Projected)
+geo <- as_satscan_coordinates(
+  shapefile_sf, 
+  loc_id = "zipcode"
+)
 
-# View detected clusters
-result |>
-  dplyr::filter(!is.na(CLUSTER)) |>
-  dplyr::distinct(CLUSTER, P_VALUE, REL_RISK)
+# Population (Optional)
+pop <- as_satscan_population(
+  pop_df, 
+  loc_id = "zipcode", 
+  time = "year", 
+  population = "pop_count"
+)
 ```
+
+### 3. Run Analysis (`satscanr`)
+
+The `satscanr` function is the pure engine. It takes your `ss_tbl` inputs and returns a structured result.
+
+```r
+res <- satscanr(
+  cas = cas, 
+  pop = pop, 
+  geo = geo, 
+  AnalysisType = 3,         # 3 = Space-Time
+  ModelType = 0,            # 0 = Poisson
+  MonteCarloReps = 999,
+  verbose = TRUE
+)
+```
+
+### 4. Explore Results
+
+The result object contains everything you need, already parsed and joined.
+
+```r
+# Tidy summary of clusters
+print(res$cluster_summary)
+
+# Join results back to your map for visualization
+library(ggplot2)
+res$shapefile |>
+  ggplot(aes(fill = factor(CLUSTER))) +
+  geom_sf() +
+  labs(title = "Detected Clusters")
+```
+
+## Advanced Features
+
+### Parameter Templates (The "Smart Tweak" Model)
+Instead of setting 50 parameters manually, use a template and tweak only what you need.
+
+```r
+# Load a template, but override the max cluster size
+res <- satscanr(cas, geo,
+  prm_path = "standard_analysis.prm",
+  MaxSpatialSizeInPopulationAtRisk = 25
+)
+```
+
+### Data Integrity
+`epidscan` protects you from common errors:
+*   **Time Precision**: If your data is daily but you asked for monthly aggregation, `epidscan` validates this before running.
+*   **Coordinate Systems**: It prevents sending Lat/Long data to a Cartesian model.
 
 ## License
 

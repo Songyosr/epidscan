@@ -10,7 +10,7 @@ as_satscan_population(
   time,
   population,
   covars = NULL,
-  spec = list()
+  time_precision = NULL
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ as_satscan_population(
 
 \item{covars}{Optional vector of column names for covariates.}
 
-\item{spec}{Additional specifications.}
+\item{time_precision}{User-specified time precision (e.g. "year" to format Dates as YYYY).}
 }
 \value{
 An \code{ss_tbl} object of type "pop".

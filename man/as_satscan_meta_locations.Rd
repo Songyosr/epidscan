@@ -4,7 +4,7 @@
 \alias{as_satscan_meta_locations}
 \title{Coerce Data to SaTScan Meta Locations}
 \usage{
-as_satscan_meta_locations(data, meta_loc_id, member_cols, spec = list())
+as_satscan_meta_locations(data, meta_loc_id, member_cols)
 }
 \arguments{
 \item{data}{A data frame containing meta-location definitions.}
@@ -12,8 +12,6 @@ as_satscan_meta_locations(data, meta_loc_id, member_cols, spec = list())
 \item{meta_loc_id}{Column name for the meta-location ID.}
 
 \item{member_cols}{Character vector of column names representing member locations.}
-
-\item{spec}{Additional specifications.}
 }
 \value{
 An \code{ss_tbl} object of type "met".

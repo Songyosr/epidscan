@@ -13,7 +13,7 @@ as_satscan_grid(
   latest_start = NULL,
   earliest_end = NULL,
   latest_end = NULL,
-  spec = list(grid_variant = "basic")
+  grid_variant = "basic"
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ as_satscan_grid(
 
 \item{latest_end}{Optional column for latest end time constraint.}
 
-\item{spec}{Additional specifications (e.g. \code{grid_variant}).}
+\item{grid_variant}{Variant of grid file ("basic", etc.).}
 }
 \value{
 An \code{ss_tbl} object of type "grd".
