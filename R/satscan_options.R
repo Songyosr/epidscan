@@ -1,5 +1,6 @@
 # Internal helpers for SatScan options configuration
-# These functions are NOT exported - used by epid_satscan()
+# DEPRECATED: These functions are only used by epid_satscan() which is deprecated.
+# Use the prm_* system instead.
 
 #' Detect Time Precision
 #'
@@ -10,7 +11,7 @@
 #' @return Integer: 0=Generic, 1=Year, 2=Month, 3=Day
 #' @keywords internal
 detect_time_precision <- function(date_values, user_precision = NULL) {
-    # User explicitly specified
+    .Deprecated("prep_cas", msg = "detect_time_precision() is deprecated. Use prep_cas() with time_precision argument instead.")
     if (!is.null(user_precision)) {
         if (is.character(user_precision)) {
             return(switch(tolower(user_precision),

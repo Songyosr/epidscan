@@ -58,8 +58,19 @@ read_prm <- function(path) {
 
 #' Set SaTScan Options with Hierarchical Override
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' A convenience wrapper around \code{rsatscan::ss.options()} that applies
 #' parameters in a controlled hierarchy: base template first, then user overrides.
+#'
+#' @details
+#' This function is deprecated. Use the new \code{prm_*} system instead:
+#' \itemize{
+#'   \item \code{\link{prm_defaults}()} to load default parameters
+#'   \item \code{\link{prm_set}()} to modify parameters
+#'   \item \code{\link{prm_write}()} to write PRM files
+#' }
 #'
 #' @param ... Named SaTScan parameters to set (e.g., \code{AnalysisType = 3}).
 #' @param .base Optional named list of base parameters (e.g., from \code{read_prm()}).
@@ -68,15 +79,13 @@ read_prm <- function(path) {
 #' @return Invisibly returns the final parameter vector from \code{ss.options()}.
 #' @examples
 #' \dontrun{
-#' # Start fresh and set a few params
-#' set_satscan_opts(AnalysisType = 1, ModelType = 0)
-#'
-#' # Use a PRM template and override one param
-#' base <- read_prm("template.prm")
-#' set_satscan_opts(MonteCarloReps = 999, .base = base)
+#' # DEPRECATED - use prm_* functions instead:
+#' prm <- prm_defaults()
+#' prm <- prm_set(prm, AnalysisType = 1, MonteCarloReps = 999)
 #' }
 #' @export
 set_satscan_opts <- function(..., .base = NULL, .reset = TRUE) {
+    .Deprecated("prm_set", msg = "set_satscan_opts() is deprecated. Use prm_defaults() + prm_set() instead.")
     if (.reset) {
         rsatscan::ss.options(reset = TRUE)
     }
@@ -172,14 +181,22 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 
 #' Write a Safe SaTScan PRM File
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' Writes SaTScan parameters to a file, ensuring that required section headers
 #' (e.g. `[Input]`, `[Analysis]`) are present. This guards against issues where
 #' internal defaults might be missing headers.
+#'
+#' @details
+#' This function is deprecated. Use \code{\link{prm_write}()} instead, which
+#' uses skeleton injection for more robust PRM file generation.
 #'
 #' @param params Character vector of parameters (from ss.options())
 #' @param path File path to write to
 #' @export
 write_prm_safe <- function(params, path) {
+    .Deprecated("prm_write", msg = "write_prm_safe() is deprecated. Use prm_write() instead.")
     if (length(params) == 0) {
         writeLines(character(0), path)
         return(invisible())

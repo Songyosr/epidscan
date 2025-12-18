@@ -12,7 +12,13 @@ write_prm_safe(params, path)
 \item{path}{File path to write to}
 }
 \description{
+`r lifecycle::badge("deprecated")`
+
 Writes SaTScan parameters to a file, ensuring that required section headers
 (e.g. `[Input]`, `[Analysis]`) are present. This guards against issues where
 internal defaults might be missing headers.
+}
+\details{
+This function is deprecated. Use \code{\link{prm_write}()} instead, which
+uses skeleton injection for more robust PRM file generation.
 }

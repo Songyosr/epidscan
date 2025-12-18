@@ -1,5 +1,6 @@
 # Internal helpers for SatScan data preparation
-# These functions are NOT exported - used by epid_satscan()
+# DEPRECATED: These functions are only used by epid_satscan() which is deprecated.
+# Use prep_cas(), prep_geo(), prep_pop() instead.
 
 # Suppress R CMD check notes for NSE columns
 utils::globalVariables(c("id", "lat", "long", "date"))
@@ -14,6 +15,7 @@ utils::globalVariables(c("id", "lat", "long", "date"))
 #' @return data.frame with lat, long columns
 #' @keywords internal
 extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL, geo_type = "latlong") {
+    .Deprecated("prep_geo", msg = "extract_geometry() is deprecated. Use prep_geo() instead.")
     is_sf <- inherits(data, "sf")
 
     if (is_sf) {
@@ -58,6 +60,7 @@ extract_geometry <- function(data, lat_quo = NULL, long_quo = NULL, geo_type = "
 #' @return List with file paths (cas_file, geo_file, pop_file)
 #' @keywords internal
 write_satscan_files <- function(geo_df, export_df, work_dir, project_name = "epid", time_precision = 3L, covariates = NULL) {
+    .Deprecated("satscanr", msg = "write_satscan_files() is deprecated. Use prep_cas() + prep_geo() + satscanr() instead.")
     cas_file <- file.path(work_dir, paste0(project_name, ".cas"))
     geo_file <- file.path(work_dir, paste0(project_name, ".geo"))
     pop_file <- file.path(work_dir, paste0(project_name, ".pop"))

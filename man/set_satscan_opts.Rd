@@ -18,16 +18,23 @@ Applied before \code{...}.}
 Invisibly returns the final parameter vector from \code{ss.options()}.
 }
 \description{
+`r lifecycle::badge("deprecated")`
+
 A convenience wrapper around \code{rsatscan::ss.options()} that applies
 parameters in a controlled hierarchy: base template first, then user overrides.
 }
+\details{
+This function is deprecated. Use the new \code{prm_*} system instead:
+\itemize{
+  \item \code{\link{prm_defaults}()} to load default parameters
+  \item \code{\link{prm_set}()} to modify parameters
+  \item \code{\link{prm_write}()} to write PRM files
+}
+}
 \examples{
 \dontrun{
-# Start fresh and set a few params
-set_satscan_opts(AnalysisType = 1, ModelType = 0)
-
-# Use a PRM template and override one param
-base <- read_prm("template.prm")
-set_satscan_opts(MonteCarloReps = 999, .base = base)
+# DEPRECATED - use prm_* functions instead:
+prm <- prm_defaults()
+prm <- prm_set(prm, AnalysisType = 1, MonteCarloReps = 999)
 }
 }

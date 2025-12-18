@@ -120,47 +120,35 @@ An S3 object of class \code{satscan_result} containing:
   Use \code{as.data.frame(x)} to extract the location summary (compatible with pipes).
 }
 \description{
+`r lifecycle::badge("deprecated")`
+
 A pipe-friendly wrapper for running SatScan spatial and space-time cluster analyses
 directly on data frames or sf objects. Handles file creation, parameter configuration,
 and result parsing automatically.
 }
 \details{
-This function requires SatScan to be installed on your system. Set the path using
-\code{set_satscan_path()}.
-
-The function internally:
+**This function is deprecated.** Use the new table-based workflow instead:
 \enumerate{
-  \item Extracts geometry from sf objects or lat/long columns
-  \item Writes .cas, .pop, and .geo files for SatScan
-  \item Configures parameters based on data and user options
-  \item Executes SatScan via rsatscan
-  \item Parses results into a tidy S3 object
+  \item Use \code{\link{prep_cas}()}, \code{\link{prep_pop}()}, \code{\link{prep_geo}()} to prepare data
+  \item Use \code{\link{satscanr}()} to run the analysis
 }
+
+See the migration example below.
 }
 \examples{
 \dontrun{
-# Basic space-time analysis
-set_satscan_path("/Applications/SaTScan.app/Contents/app/satscan")
+# DEPRECATED - use satscanr() instead:
+# Old API:
+# result <- my_data |> epid_satscan(obs_col = cases, ...)
 
-result <- my_data |>
-  epid_satscan(
-    obs_col = cases,
-    pop_col = population,
-    date_col = date,
-    id_col = location_id,
-    lat_col = latitude,
-    long_col = longitude
-  )
-
-# Print summary
-print(result)
-
-# Filter significant clusters from the location summary
-significant_locs <- as.data.frame(result) |>
-  dplyr::filter(!is.na(CLUSTER), P_VALUE < 0.05)
+# New API (recommended):
+cas <- prep_cas(my_data, loc_id = location_id, time = date, cases = cases)
+pop <- prep_pop(my_data, loc_id = location_id, time = date, pop = population)
+geo <- prep_geo(my_data, loc_id = location_id, coords = c("longitude", "latitude"))
+result <- satscanr(cas = cas, pop = pop, geo = geo)
 }
 
 }
 \seealso{
-\code{\link{set_satscan_path}}, \code{\link{get_satscan_path}}
+\code{\link{satscanr}}, \code{\link{prep_cas}}, \code{\link{prep_geo}}, \code{\link{prep_pop}}
 }
