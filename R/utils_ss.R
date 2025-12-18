@@ -34,6 +34,7 @@ write_ss_file_wrapper <- function(obj, path) {
     }
 }
 
-#' Internal Helper: Null Coalesce
+#' Null Coalesce
+#' @name null_coalesce
 #' @keywords internal
 `%||%` <- function(a, b) if (!is.null(a)) a else b

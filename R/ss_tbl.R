@@ -158,15 +158,38 @@ new_ss_tbl <- function(data, type, roles, spec = list()) {
     )
 }
 
+#' Check if Object is an ss_tbl
+#'
+#' @param x Object to check.
+#' @return Logical.
 #' @export
 is_ss_tbl <- function(x) inherits(x, "ss_tbl")
 
+#' Get ss_tbl Type
+#'
+#' @param x An `ss_tbl` object.
+#' @return Character string (e.g., "cas", "geo").
 #' @export
 ss_type <- function(x) attr(x, "ss_type", exact = TRUE)
+
+#' Get ss_tbl Roles
+#'
+#' @param x An `ss_tbl` object.
+#' @return Named character vector of role mappings.
 #' @export
 ss_roles <- function(x) attr(x, "ss_roles", exact = TRUE)
+
+#' Get ss_tbl Column Order
+#'
+#' @param x An `ss_tbl` object.
+#' @return Character vector of column names in SaTScan output order.
 #' @export
 ss_order <- function(x) attr(x, "ss_order", exact = TRUE)
+
+#' Get ss_tbl Specification
+#'
+#' @param x An `ss_tbl` object.
+#' @return List of specifications.
 #' @export
 ss_spec <- function(x) attr(x, "ss_spec", exact = TRUE)
 

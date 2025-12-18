@@ -81,7 +81,10 @@ head(my_cases)
 #      id diagnosis_date
 # 1 P001     2023-01-15
 
-cas_obj2 <- prep_cas(my_cases, loc_id = id, time = diagnosis_date, style = "casewise", time_precision = "day")
+cas_obj2 <- prep_cas(my_cases,
+    loc_id = id, time = diagnosis_date,
+    style = "casewise", time_precision = "day"
+)
 }
 }
 \seealso{
