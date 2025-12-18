@@ -12,7 +12,6 @@ Depends: R (>= 4.1.0)
 Imports:
     sf,
     dplyr,
-    rsatscan,
     rlang,
     utils
 Suggests:

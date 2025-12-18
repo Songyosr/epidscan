@@ -17,60 +17,176 @@ satscanr(
 )
 }
 \arguments{
-\item{cas}{Case table (\code{satscan_table}).}
+\item{cas}{Case table (\code{satscan_table} of kind "cas"). Created via \code{\link{prep_cas}}.}
 
-\item{pop}{Population table (\code{satscan_table}, optional).}
+\item{pop}{Population table (\code{satscan_table} of kind "pop", optional).
+Required for Poisson model. Created via \code{\link{prep_pop}}.}
 
-\item{geo}{Geometry table (\code{satscan_table}).}
+\item{geo}{Geometry table (\code{satscan_table} of kind "geo"). Created via \code{\link{prep_geo}}.}
 
-\item{ctl}{Control table (\code{satscan_table}, optional).}
+\item{ctl}{Control table (\code{satscan_table} of kind "ctl", optional).
+Required for Bernoulli model. Created via \code{\link{prep_ctl}}.}
 
-\item{grd}{Grid table (\code{satscan_table}, optional).}
+\item{grd}{Grid table (\code{satscan_table} of kind "grd", optional).
+Custom scan centers. Created via \code{\link{prep_grd}}.}
 
-\item{prm_path}{Path to a template .prm file to load configuration from (Level 3).}
+\item{prm_path}{Path to a template \code{.prm} file to load configuration from (Level 3).
+If NULL, uses bundled defaults.}
 
 \item{output_dir}{Directory to copy final results to. If NULL, results remain in temp.}
 
 \item{verbose}{Logical. Print progress and debug info.}
 
 \item{...}{Additional SaTScan parameters (Level 2 Tweaks).
-See \code{\link{satscan_parameters}} for a full list (e.g., \code{AnalysisType=1}, \code{ModelType=0}).}
+See \code{\link{satscan_parameters}} for a full list. Common parameters include:
+\itemize{
+  \item \code{AnalysisType}: 1=Purely Spatial, 2=Purely Temporal, 3=Retrospective Space-Time,
+    4=Prospective Space-Time, 5=Spatial Variation in Temporal Trends
+  \item \code{ModelType}: 0=Discrete Poisson, 1=Bernoulli, 2=Space-Time Permutation
+  \item \code{ScanAreas}: 1=High Rates, 2=Low Rates, 3=Both
+  \item \code{MonteCarloReps}: Number of Monte Carlo replications (e.g., 999, 9999)
+}}
 }
 \value{
 A \code{satscan_result} object containing:
-  \item{main}{Main text output lines}
-  \item{col}{Column definition data}
-  \item{rr}{Relative Risk data}
-  \item{gis}{GIS/Cluster information}
-  \item{cluster_summary}{Tidy summary of clusters found}
-  \item{location_summary}{Tidy summary of locations}
-  \item{shapefile}{Result shapefile (sf) if available}
-  \item{prm}{Final parameters used}
-  \item{work_dir}{Path to working directory}
+  \itemize{
+    \item \code{cluster_summary}: Data frame of detected clusters with p-values and relative risks
+    \item \code{location_summary}: Data frame of all locations with cluster assignments
+    \item \code{main_results}: Full time-series data merged with results (if \code{merge_time_series=TRUE})
+    \item \code{raw_output}: Raw SaTScan output (col, gis, rr, shapefile, etc.)
+    \item \code{prm}: Final \code{prm_list} object with all parameters used
+    \item \code{work_dir}: Path to output directory
+  }
 }
 \description{
 Orchestrates the SaTScan analysis by managing inputs, configuring parameters
 via a strictly defined hierarchy, execution, and result parsing.
 }
+\section{Statistical Methodology}{
+
+The scan statistic detects and evaluates clusters by gradually scanning a window
+across space and/or time. At each location, the number of observed and expected
+cases inside the window is compared using a likelihood ratio test (Kulldorff, 1997).
+
+\strong{Likelihood Ratio Test (Poisson Model):}
+For a scanning window with \eqn{c} observed cases and \eqn{E[c]} expected cases
+(given total cases \eqn{C}), the likelihood is proportional to:
+\deqn{L = \left(\frac{c}{E[c]}\right)^c \left(\frac{C-c}{C-E[c]}\right)^{C-c} I()}
+where \eqn{I()} is an indicator function (1 if scanning for high rates and \eqn{c > E[c]}).
+
+The window with maximum likelihood is the \strong{most likely cluster}. Statistical
+significance is determined via Monte Carlo simulation: p-values are computed by
+comparing the observed maximum likelihood to those from randomly simulated datasets
+under the null hypothesis of spatial homogeneity.
+
+\strong{Probability Models:}
+\itemize{
+  \item \strong{Discrete Poisson}: Cases are Poisson-distributed proportional to
+    population. Requires case and population files.
+  \item \strong{Bernoulli}: Binary 0/1 data (cases/controls). Requires case and
+    control files.
+  \item \strong{Space-Time Permutation}: Uses only case data; compares observed
+    space-time distribution against expected under independence of space and time.
+}
+
+\strong{Scanning Windows:}
+\itemize{
+  \item \strong{Purely Spatial}: Circular or elliptic window scanning across space.
+  \item \strong{Purely Temporal}: Interval scanning across time.
+  \item \strong{Space-Time}: Cylindrical window (circular base in space, height in time).
+}
+
+For full methodological details, see the SaTScan User Guide (Kulldorff, 2022)
+and the original methodology paper: Kulldorff M. (1997). A spatial scan statistic.
+Communications in Statistics: Theory and Methods, 26:1481-1496.
+}
+
 \section{Parameter Hierarchy (The "Smart Tweak" Model)}{
 
-Parameters are resolved with the following precedence (Highest to Lowest):
+Parameters are resolved with the following precedence (highest to lowest):
+
 \enumerate{
   \item \strong{Level 1: Data Integrity (Immutable)}
-  Derived directly from the input objects (\code{cas}, \code{geo}, etc.).
-  Includes filenames, time precision, and coordinate types.
-  \emph{User cannot override these.}
+
+  Derived directly from the input table objects (\code{cas}, \code{geo}, etc.).
+  These are \emph{automatically set} based on your data and cannot be overridden:
+  \itemize{
+    \item \code{CaseFile}, \code{CoordinatesFile}, \code{PopulationFile} (filenames)
+    \item \code{CoordinatesType} (from \code{geo$spec$coord_type})
+    \item \code{PrecisionCaseTimes}, \code{TimeAggregationUnits} (from \code{cas$spec$time_precision})
+    \item \code{StartDate}, \code{EndDate} (inferred from case data if not specified)
+  }
 
   \item \strong{Level 2: User Tweaks}
-  Arguments explicitly passed to this function via \code{...}.
-  \emph{Overrides Level 3 templates.}
+
+  Arguments passed explicitly via \code{...}. These override template settings.
+  Example: \code{satscanr(..., AnalysisType = 3, MonteCarloReps = 999)}
 
   \item \strong{Level 3: Template PRM}
-  Settings loaded from \code{prm_path} if provided.
-  \emph{Overrides Level 4 defaults.}
 
-  \item \strong{Level 4: Implicit Defaults}
-  SaTScan's internal defaults (via \code{ss.options(reset=TRUE)}).
+  Settings loaded from an external \code{.prm} file via \code{prm_path}.
+  Use this to reuse configurations from previous SaTScan sessions.
+
+  \item \strong{Level 4: Package Defaults}
+
+  Bundled default templates (SaTScan v10.3 defaults from \code{prm_defaults()}).
+  These provide sensible starting values when no template is specified.
 }
 }
 
+\section{Parameter Management}{
+
+This function uses the native \code{prm_*} system for parameter management,
+which directly manipulates PRM files without depending on external package internals.
+Key functions include:
+\itemize{
+  \item \code{\link{prm_parse}}: Parse a \code{.prm} file into an R list
+  \item \code{\link{prm_set}}: Modify parameter values
+  \item \code{\link{prm_write}}: Write parameters back to a PRM file
+  \item \code{\link{prm_defaults}}: Load bundled default templates
+  \item \code{\link{prm_validate}}: Validate parameters against a reference version
+}
+}
+
+\examples{
+\dontrun{
+# Basic Poisson analysis
+cas <- prep_cas(cases_df, loc_id = id, time = date, cases = n, time_precision = "day")
+geo <- prep_geo(locations_sf, loc_id = id)
+pop <- prep_pop(pop_df, loc_id = id, time = year, pop = population)
+
+result <- satscanr(cas, pop = pop, geo = geo, verbose = TRUE)
+
+# View clusters
+print(result)
+summary(result)
+
+# With custom parameters (Level 2 tweaks)
+result2 <- satscanr(cas,
+    pop = pop, geo = geo,
+    AnalysisType = 3,
+    MonteCarloReps = 9999,
+    MaxTemporalSize = 50
+)
+
+# Using a template PRM file (Level 3)
+result3 <- satscanr(cas,
+    pop = pop, geo = geo,
+    prm_path = "my_template.prm",
+    verbose = TRUE
+)
+}
+
+}
+\references{
+Kulldorff M. (1997). A spatial scan statistic.
+Communications in Statistics: Theory and Methods, 26:1481-1496.
+
+Kulldorff M. (2022). SaTScan User Guide for version 10.1.
+\url{https://www.satscan.org/}
+}
+\seealso{
+\code{\link{prep_cas}}, \code{\link{prep_geo}}, \code{\link{prep_pop}} for input preparation.
+\code{\link{satscan_parameters}} for parameter reference.
+\code{\link{prm_parse}}, \code{\link{prm_set}} for advanced parameter manipulation.
+}

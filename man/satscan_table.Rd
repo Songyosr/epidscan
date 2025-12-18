@@ -2,10 +2,60 @@
 % Please edit documentation in R/satscan_table.R
 \name{satscan_table}
 \alias{satscan_table}
-\title{Helper to create satscan_table safely}
+\title{Create a SaTScan Table Object}
 \usage{
 satscan_table(data, kind, spec = list())
 }
+\arguments{
+\item{data}{A data.frame containing the table data.}
+
+\item{kind}{Character. Type of SaTScan file:
+\itemize{
+  \item \code{"cas"}: Case file
+  \item \code{"pop"}: Population file
+  \item \code{"geo"}: Coordinates/geometry file
+  \item \code{"ctl"}: Control file (Bernoulli model)
+  \item \code{"grd"}: Grid file (custom scan centers)
+}}
+
+\item{spec}{List of metadata about the table (e.g., time_precision, coord_type).}
+}
+\value{
+A validated `satscan_table` object with components:
+  \itemize{
+    \item \code{data}: The input data.frame
+    \item \code{kind}: The table type
+    \item \code{spec}: Metadata list
+  }
+}
 \description{
-Helper to create satscan_table safely
+Constructs a validated `satscan_table` object from a data frame.
+These objects are used as inputs to \code{\link{satscanr}}.
+}
+\details{
+In most cases, you should use the helper functions \code{\link{prep_cas}},
+\code{\link{prep_pop}}, \code{\link{prep_geo}}, \code{\link{prep_ctl}}, or
+\code{\link{prep_grd}} to create satscan_table objects, as they handle
+data formatting and validation.
+
+This function is primarily for advanced users who need to create
+custom table types or bypass the prep_* helpers.
+}
+\examples{
+\dontrun{
+# Create a simple case table manually
+df <- data.frame(
+    loc_id = c("A", "B"),
+    cases = c(5, 10)
+)
+cas_table <- satscan_table(df, kind = "cas", spec = list(time_precision = "generic"))
+print(cas_table)
+
+# Preferred: use prep_cas() instead
+cas_table2 <- prep_cas(df, loc_id = loc_id, cases = cases, style = "aggregated")
+}
+
+}
+\seealso{
+\code{\link{prep_cas}}, \code{\link{prep_geo}}, \code{\link{satscanr}}
 }

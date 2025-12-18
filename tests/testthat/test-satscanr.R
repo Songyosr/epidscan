@@ -14,7 +14,7 @@ test_that("satscanr generates correct file structure (dry run)", {
     # or because of missing population file (which is expected for this minimal example)
     # The point is to verify the function runs without R-level errors
 
-    result <- try(satscanr(cas, geo = geo, verbose = FALSE), silent = TRUE)
+    result <- try(suppressWarnings(satscanr(cas, geo = geo, verbose = FALSE)), silent = TRUE)
 
     # We expect either a satscan_result or an error about SaTScan/missing files
     # (not an R-level crash)

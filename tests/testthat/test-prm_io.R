@@ -40,9 +40,10 @@ test_that("prm_parse works with character vector", {
     expect_equal(sections["AnalysisType"], c(AnalysisType = "Analysis"))
 })
 
-test_that("prm_defaults loads rsatscan defaults", {
-    skip_if_not_installed("rsatscan")
-    library(rsatscan) # Must be loaded, not just namespace attached
+test_that("prm_defaults loads defaults", {
+    # skip_if_not_installed("rsatscan")
+    # library(rsatscan) # Removed dependency
+
 
     prm <- prm_defaults()
 
@@ -162,8 +163,9 @@ test_that("prm_write produces valid output via skeleton injection", {
 })
 
 test_that("round-trip preserves structure", {
-    skip_if_not_installed("rsatscan")
-    library(rsatscan) # Must be loaded, not just namespace attached
+    # skip_if_not_installed("rsatscan")
+    # library(rsatscan) # Removed dependency
+
 
     prm1 <- prm_defaults()
 

@@ -13,5 +13,5 @@ prm_defaults(version = NULL)
 A `prm_list` parsed from bundled template files.
 }
 \description{
-Loads rsatscan's internal default parameters as a prm_list.
+Loads internal default parameters as a prm_list.
 }

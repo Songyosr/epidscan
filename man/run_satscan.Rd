@@ -13,22 +13,21 @@ run_satscan(
 )
 }
 \arguments{
-\item{work_dir}{Working directory with input files}
+\item{work_dir}{Working directory with input files.}
 
-\item{project_name}{Project name (default: "epid")}
+\item{project_name}{Project name (default: "epid"). This matches the inputs CaseFile=epid.cas etc.}
 
-\item{ss_location}{SatScan install location}
+\item{ss_location}{Path to the folder containing the SaTScan executable (Backwards compatibility param).}
 
-\item{ss_batch}{SatScan batch file name}
+\item{ss_batch}{Name of the SaTScan executable (Backwards compatibility param).}
 
 \item{verbose}{Print output?}
-
-\item{final_opts}{Options list for ss.options()}
 }
 \value{
 satscan result object
 }
 \description{
-Executes SatScan via rsatscan::satscan()
+Executes SatScan by calling the binary directly and parsing the output files.
+Use `satscanr()` as the main entry point.
 }
 \keyword{internal}

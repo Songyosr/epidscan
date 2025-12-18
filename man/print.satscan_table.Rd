@@ -2,10 +2,19 @@
 % Please edit documentation in R/satscan_table.R
 \name{print.satscan_table}
 \alias{print.satscan_table}
-\title{Print method for satscan_table}
+\title{Print Method for satscan_table}
 \usage{
 \method{print}{satscan_table}(x, ...)
 }
+\arguments{
+\item{x}{A \code{satscan_table} object.}
+
+\item{...}{Additional arguments passed to \code{\link{print}} for the data preview.}
+}
+\value{
+Invisibly returns the input object.
+}
 \description{
-Print method for satscan_table
+Displays a summary of a satscan_table object including its kind,
+metadata, and a preview of the data.
 }

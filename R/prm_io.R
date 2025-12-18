@@ -1,6 +1,6 @@
 # PRM I/O System
 # Complete parameter management for SaTScan PRM files
-# Replaces reliance on rsatscan::ss.options() internals
+# Replaces reliance on ss.options() internals
 
 # -----------------------------------------------------------------------------
 # prm_parse: Parse PRM text/file into structured R list
@@ -292,12 +292,12 @@ prm_write <- function(prm, path) {
 }
 
 # -----------------------------------------------------------------------------
-# prm_defaults: Load rsatscan's internal defaults
+# prm_defaults: Load internal defaults
 # -----------------------------------------------------------------------------
 
 #' Load Default PRM Parameters
 #'
-#' Loads rsatscan's internal default parameters as a prm_list.
+#' Loads internal default parameters as a prm_list.
 #'
 #' @param version Optional SaTScan version (e.g., "10.3"). If NULL, uses latest (10.3).
 #' @return A `prm_list` parsed from bundled template files.

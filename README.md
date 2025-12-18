@@ -57,7 +57,7 @@ clusters <- result |>
 | `type`                | `"space-time"`, `"purely-spatial"`, `"space-time-permutation"` |
 | `model`               | `"poisson"`, `"bernoulli"`, `"space-time-permutation"`         |
 | `time_precision`      | `"day"`, `"month"`, `"year"`, `"generic"`, or `NULL` (auto)    |
-| `...`                 | Additional `rsatscan::ss.options()` arguments                  |
+| `...`                 | Additional SaTScan arguments (e.g. `AnalysisType=1`)           |
 
 ## Output
 

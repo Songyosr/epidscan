@@ -1,6 +1,6 @@
 test_that("Real Data Workflow with New API", {
     skip_on_cran()
-    library(rsatscan)
+    # library(rsatscan) # Removed
 
     # 1. Load Data
     cases_path <- system.file("extdata", "cases_prepared.rds", package = "epidscan")
@@ -179,7 +179,7 @@ test_that("Real Data: Template + Tweak Hierarchy", {
     )
 
     # ASSERTIONS
-    # Note: rsatscan might convert numeric 10 to string "10"?
+    # Note: satscan binary output parsing might have type behavior nuances
     expect_equal(as.numeric(res$prm$MaxTemporalSize), 10)
     expect_equal(as.numeric(res$prm$MaxSpatialSizeInPopulationAtRisk), 20)
 })

@@ -5,7 +5,7 @@ library(epidscan)
 library(readr)
 library(lubridate)
 library(tidyr)
-library(rsatscan)
+# library(rsatscan) # Removed
 
 # This test file replicates the workflow from 02_SatScan_Lepto.Rmd
 # but uses the new epid_satscan function and available data in data/
