@@ -1,3 +1,5 @@
+# epidscan 0.2.0
+
 # epidscan 0.1.0
 
 ## New Features
