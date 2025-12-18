@@ -196,6 +196,25 @@ print.ss_tbl <- function(x, ...) {
 
 # ---- User-Facing Coercers ----
 
+#' Coerce Data to SaTScan Case Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "cas" (Case File).
+#'
+#' @param data A data frame containing case data.
+#' @param loc_id Column name for location ID (character or numeric).
+#' @param cases Column name for case counts (numeric).
+#' @param time Optional column name for time (Date, numeric, or character).
+#' @param covars Optional vector of column names for covariates.
+#' @param spec Additional specifications (e.g., time_precision).
+#'
+#' @return An `ss_tbl` object of type "cas".
+#'
+#' @examples
+#' df <- data.frame(id = c("A", "B"), count = c(10, 5), year = 2020)
+#' ss_cas <- as_satscan_case(df, loc_id = "id", cases = "count", time = "year")
+#'
 #' @export
 as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL, spec = list()) {
     roles <- c(loc_id = loc_id, cases = cases)
@@ -204,6 +223,21 @@ as_satscan_case <- function(data, loc_id, cases, time = NULL, covars = NULL, spe
     new_ss_tbl(data, "cas", roles, spec)
 }
 
+#' Coerce Data to SaTScan Control Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "ctl" (Control File) for Bernoulli models.
+#'
+#' @param data A data frame containing control data.
+#' @param loc_id Column name for location ID.
+#' @param controls Column name for control counts.
+#' @param time Optional column name for time.
+#' @param covars Optional vector of column names for covariates.
+#' @param spec Additional specifications.
+#'
+#' @return An `ss_tbl` object of type "ctl".
+#'
 #' @export
 as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NULL, spec = list()) {
     roles <- c(loc_id = loc_id, controls = controls)
@@ -212,6 +246,21 @@ as_satscan_control <- function(data, loc_id, controls, time = NULL, covars = NUL
     new_ss_tbl(data, "ctl", roles, spec)
 }
 
+#' Coerce Data to SaTScan Population Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "pop" (Population File).
+#'
+#' @param data A data frame containing population data.
+#' @param loc_id Column name for location ID.
+#' @param time Column name for time (census year/time).
+#' @param population Column name for population count.
+#' @param covars Optional vector of column names for covariates.
+#' @param spec Additional specifications.
+#'
+#' @return An `ss_tbl` object of type "pop".
+#'
 #' @export
 as_satscan_population <- function(data, loc_id, time, population, covars = NULL, spec = list()) {
     roles <- c(loc_id = loc_id, time = time, population = population)
@@ -219,6 +268,22 @@ as_satscan_population <- function(data, loc_id, time, population, covars = NULL,
     new_ss_tbl(data, "pop", roles, spec)
 }
 
+#' Coerce Data to SaTScan Coordinates Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "geo" (Coordinates File).
+#'
+#' @param data A data frame containing coordinate data.
+#' @param loc_id Column name for location ID.
+#' @param coord1 Column name for the first coordinate (Latitude or Cartesian X).
+#' @param coord2 Column name for the second coordinate (Longitude or Cartesian Y).
+#' @param z Optional column name for altitude/Z-coordinate.
+#' @param spec Additional specifications (e.g., `coord_type = "latlong"` or `"cartesian"`).
+#' Defaults to "auto".
+#'
+#' @return An `ss_tbl` object of type "geo".
+#'
 #' @export
 as_satscan_coordinates <- function(data, loc_id, coord1, coord2, z = NULL, spec = list(coord_type = "auto")) {
     roles <- c(loc_id = loc_id, coord1 = coord1, coord2 = coord2)
@@ -226,6 +291,24 @@ as_satscan_coordinates <- function(data, loc_id, coord1, coord2, z = NULL, spec 
     new_ss_tbl(data, "geo", roles, spec)
 }
 
+#' Coerce Data to SaTScan Grid Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "grd" (Grid File).
+#'
+#' @param data A data frame containing grid locations.
+#' @param coord1 Column name for the first coordinate.
+#' @param coord2 Column name for the second coordinate.
+#' @param z Optional column name for Z-coordinate.
+#' @param earliest_start Optional column for earliest start time constraint.
+#' @param latest_start Optional column for latest start time constraint.
+#' @param earliest_end Optional column for earliest end time constraint.
+#' @param latest_end Optional column for latest end time constraint.
+#' @param spec Additional specifications (e.g. `grid_variant`).
+#'
+#' @return An `ss_tbl` object of type "grd".
+#'
 #' @export
 as_satscan_grid <- function(data, coord1, coord2, z = NULL,
                             earliest_start = NULL, latest_start = NULL,
@@ -240,6 +323,20 @@ as_satscan_grid <- function(data, coord1, coord2, z = NULL,
     new_ss_tbl(data, "grd", roles, spec)
 }
 
+#' Coerce Data to SaTScan Network Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "nwk" (Network File).
+#'
+#' @param data A data frame containing network edges.
+#' @param loc_id Column name for the source location ID.
+#' @param neighbor_id Column name for the connected neighbor ID.
+#' @param distance Optional column name for distance/weight for the connection.
+#' @param spec Additional specifications (e.g. `distance_units`).
+#'
+#' @return An `ss_tbl` object of type "nwk".
+#'
 #' @export
 as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL, spec = list(distance_units = NULL)) {
     roles <- c(loc_id = loc_id, neighbor_id = neighbor_id)
@@ -247,6 +344,19 @@ as_satscan_network <- function(data, loc_id, neighbor_id, distance = NULL, spec 
     new_ss_tbl(data, "nwk", roles, spec)
 }
 
+#' Coerce Data to SaTScan Neighbors Table
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "nbr" (Neighbors File).
+#'
+#' @param data A data frame containing neighbor lists.
+#' @param loc_id Column name for the location ID.
+#' @param neighbor_cols Character vector of column names representing neighbors.
+#' @param spec Additional specifications.
+#'
+#' @return An `ss_tbl` object of type "nbr".
+#'
 #' @export
 as_satscan_neighbors <- function(data, loc_id, neighbor_cols, spec = list()) {
     # neighbor_cols: character vector of column names providing neighbors in order
@@ -260,6 +370,19 @@ as_satscan_neighbors <- function(data, loc_id, neighbor_cols, spec = list()) {
     new_ss_tbl(data, "nbr", roles, spec)
 }
 
+#' Coerce Data to SaTScan Meta Locations
+#'
+#' `r lifecycle::badge("stable")`
+#'
+#' Creates an `ss_tbl` object of type "met" (Meta Population File).
+#'
+#' @param data A data frame containing meta-location definitions.
+#' @param meta_loc_id Column name for the meta-location ID.
+#' @param member_cols Character vector of column names representing member locations.
+#' @param spec Additional specifications.
+#'
+#' @return An `ss_tbl` object of type "met".
+#'
 #' @export
 as_satscan_meta_locations <- function(data, meta_loc_id, member_cols, spec = list()) {
     roles <- c(meta_loc_id = meta_loc_id)
