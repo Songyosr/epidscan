@@ -1,5 +1,5 @@
-# Internal helpers for SatScan execution and result parsing
-# These functions are NOT exported - used by epid_satscan()
+# SaTScan Execution and Result Parsing
+# Internal helpers for running SaTScan and parsing output
 
 # Suppress R CMD check notes for NSE columns
 utils::globalVariables(c("LOC_ID", "CLUSTER", "P_VALUE", "REL_RISK", "CLU_RR", "epid_link_id", "CLU_ODE", "id_char", "RR"))

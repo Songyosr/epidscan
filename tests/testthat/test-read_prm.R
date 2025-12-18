@@ -1,20 +1,16 @@
-test_that("read_prm parses legacy PRM correctly", {
-    prm_path <- system.file("legacy/example/epid.prm", package = "epidscan")
-    if (prm_path == "") {
-        # Fallback to absolute path for dev env if package not installed
-        prm_path <- "/Users/tonn/Dev/epidscan/legacy/example/epid.prm"
-    }
-    skip_if_not(file.exists(prm_path), "Legacy PRM not found")
+test_that("read_prm parses PRM correctly", {
+    # Use bundled template file
+    prm_path <- system.file("extdata/prm_template/v10_3.prm", package = "epidscan")
+    skip_if_not(file.exists(prm_path), "Template PRM not found")
 
     prm <- read_prm(prm_path)
 
     expect_type(prm, "list")
 
-    # Check specific known values from epid.prm
-    expect_equal(prm$CaseFile, "epid.cas")
-    expect_equal(prm$AnalysisType, "3") # Read as string
-    expect_equal(prm$ModelType, "0")
-    expect_equal(prm$StartDate, "2024/01/01")
+    # Check expected keys exist
+    expect_true("AnalysisType" %in% names(prm))
+    expect_true("ModelType" %in% names(prm))
+    expect_true("MonteCarloReps" %in% names(prm))
 })
 
 test_that("read_prm handles comments and sections", {

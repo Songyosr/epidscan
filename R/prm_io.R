@@ -436,3 +436,63 @@ print.prm_list <- function(x, ...) {
     }
     invisible(x)
 }
+
+# -----------------------------------------------------------------------------
+# read_prm: Simple PRM parser (returns plain list)
+# -----------------------------------------------------------------------------
+
+#' Read a SaTScan PRM File (Simple)
+#'
+#' Parses a SaTScan `.prm` parameter file into a plain named R list.
+#' This is a simpler alternative to `prm_parse()` that returns a plain list
+#' instead of a `prm_list` object with metadata.
+#'
+#' @param path Path to a `.prm` file.
+#' @return A named list of SaTScan parameters (e.g., `list(AnalysisType = "3", ...)`).
+#'   Values are returned as character strings; numeric conversion is left to the caller.
+#' @examples
+#' \dontrun{
+#' prm <- read_prm("path/to/analysis.prm")
+#' prm$AnalysisType
+#' # [1] "3"
+#' }
+#' @seealso \code{\link{prm_parse}} for parsing with full metadata
+#' @export
+read_prm <- function(path) {
+    if (!file.exists(path)) {
+        stop("PRM file not found: ", path)
+    }
+
+    lines <- readLines(path, warn = FALSE)
+
+    # Keep only true "key=value" lines:
+    # - ignore empty/whitespace-only lines
+    # - ignore section headers like [Input]
+    # - ignore comment lines that start with ';' (allow leading whitespace)
+    # - require at least one '=' somewhere after a non-empty key
+    lines_trim <- trimws(lines)
+    is_param <- nzchar(lines_trim) &
+        !grepl("^\\s*\\[", lines) &
+        !grepl("^\\s*;", lines) &
+        grepl("=", lines, fixed = TRUE)
+
+    param_lines <- lines[is_param]
+
+    # Vectorized parse on the FIRST '=' only
+    x <- trimws(param_lines)
+    pos <- regexpr("=", x, fixed = TRUE)
+    has_eq <- pos > 0
+    x <- x[has_eq]
+    pos <- pos[has_eq]
+
+    key <- trimws(substr(x, 1, pos - 1))
+    val <- trimws(substr(x, pos + 1, nchar(x)))
+
+    # drop empty keys (defensive)
+    ok <- nzchar(key)
+    key <- key[ok]
+    val <- val[ok]
+
+    # Named list; duplicates overwrite earlier ones ("last wins")
+    as.list(setNames(val, key))
+}

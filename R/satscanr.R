@@ -1,3 +1,86 @@
+# SaTScan Analysis Runner
+# Main entry point for the new table-based API
+
+# -----------------------------------------------------------------------------
+# Helper: Infer Dates from Data
+# -----------------------------------------------------------------------------
+
+#' Infer Dates from Data
+#'
+#' Helper to infer StartDate and EndDate from the case data if missing from options.
+#'
+#' @param current_opts List of current SaTScan options
+#' @param cas_data Case data frame (must have a 'time' column)
+#' @param time_precision_char Character string: "day", "month", or "year"
+#' @param verbose Logical, print messages
+#' @return Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
+#' @keywords internal
+infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, verbose = FALSE) {
+    # Check if dates are already present
+    val_start <- current_opts["StartDate"]
+    val_end <- current_opts["EndDate"]
+
+    need_start <- is.na(val_start) || is.null(val_start) || val_start == ""
+    need_end <- is.na(val_end) || is.null(val_end) || val_end == ""
+
+    if (!need_start && !need_end) {
+        return(NULL)
+    }
+
+    if (is.null(cas_data) || is.null(cas_data$time)) {
+        return(NULL)
+    }
+
+    # Parse based on precision
+    d_vals <- NULL
+    if (time_precision_char == "day") {
+        d_vals <- as.Date(cas_data$time, format = "%Y/%m/%d")
+    } else if (time_precision_char == "month") {
+        d_vals <- as.Date(paste0(cas_data$time, "/01"), format = "%Y/%m/%d")
+    } else if (time_precision_char == "year") {
+        d_vals <- as.Date(paste0(cas_data$time, "/01/01"), format = "%Y/%m/%d")
+    }
+
+    if (is.null(d_vals) || all(is.na(d_vals))) {
+        return(NULL)
+    }
+
+    min_d <- min(d_vals, na.rm = TRUE)
+    max_d <- max(d_vals, na.rm = TRUE)
+
+    inferred <- list()
+    if (need_start) {
+        if (time_precision_char == "year") {
+            inferred$StartDate <- format(min_d, "%Y/01/01")
+        } else if (time_precision_char == "month") {
+            inferred$StartDate <- format(min_d, "%Y/%m/01")
+        } else {
+            inferred$StartDate <- format(min_d, "%Y/%m/%d")
+        }
+    }
+    if (need_end) {
+        if (time_precision_char == "year") {
+            inferred$EndDate <- format(max_d, "%Y/12/31")
+        } else if (time_precision_char == "month") {
+            # End of month
+            d_next <- seq(max_d, by = "month", length.out = 2)[2]
+            inferred$EndDate <- format(d_next - 1, "%Y/%m/%d")
+        } else {
+            inferred$EndDate <- format(max_d, "%Y/%m/%d")
+        }
+    }
+
+    if (length(inferred) > 0) {
+        if (verbose) message("Inferring missing dates from data: ", paste(names(inferred), collapse = ", "))
+    }
+
+    inferred
+}
+
+# -----------------------------------------------------------------------------
+# satscanr: Main Analysis Function
+# -----------------------------------------------------------------------------
+
 #' Run SaTScan Analysis
 #'
 #' Orchestrates the SaTScan analysis by managing inputs, configuring parameters
