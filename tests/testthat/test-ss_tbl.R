@@ -33,7 +33,7 @@ test_that("as_satscan_case creates valid objects", {
     expect_equal(ss_spec(ss)$covars, "age")
 })
 
-test_that("as_satscan_neighbors handles wide columns correctly", {
+test_that("ss_nbr handles wide columns correctly", {
     df <- data.frame(
         id = c(1, 2),
         n1 = c(2, 1),
@@ -73,7 +73,7 @@ test_that("write_satscan outputs correct content and order", {
     )
 
     # Basic case file: id, cases. Extra columns passed but NOT mapped.
-    ss <- as_satscan_case(df, loc_id = "id", cases = "cases")
+    ss <- ss_cas(df, loc_id = "id", cases = "cases")
     write_satscan(ss, tmp)
 
     res <- read.table(tmp)
@@ -100,7 +100,7 @@ test_that("write_satscan handles neighbors wide format", {
         n2 = c(3, 4)
     )
 
-    ss <- as_satscan_neighbors(df, loc_id = "id", neighbor_cols = c("n1", "n2"))
+    ss <- ss_nbr(df, loc_id = "id", neighbor_cols = c("n1", "n2"))
     write_satscan(ss, tmp)
 
     res <- read.table(tmp)
@@ -141,7 +141,7 @@ test_that("ss_geo handles sf objects", {
     sf_obj <- sf::st_sf(id = "A", geometry = pt)
 
     # Convert
-    ss <- as_satscan_coordinates(sf_obj, loc_id = "id", coord_type = "latlong")
+    ss <- ss_geo(sf_obj, loc_id = "id", coord_type = "latlong")
 
     # Check structure
     expect_equal(ss_type(ss), "geo")
