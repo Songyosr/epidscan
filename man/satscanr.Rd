@@ -104,18 +104,6 @@ For full details on model-specific likelihoods, scanning windows, and parameter 
 see the SaTScan technical documentation (includes the User Guide PDF):
 \url{https://www.satscan.org/techdoc.html}
 }
-\section{Parameter Hierarchy (The "Smart Tweak" Model)}{
-
-Parameters are resolved with the following precedence (highest to lowest):
-\enumerate{
-\item \strong{Level 1: Data Integrity (Immutable)} derived from the input tables (file names,
-coordinate type, time precision, and optionally inferred study dates).
-\item \strong{Level 2: User Tweaks} passed via \code{...}.
-\item \strong{Level 3: Template PRM} loaded from \code{prm_path}.
-\item \strong{Level 4: Package Defaults} from \code{prm_defaults()}.
-}
-}
-
 \examples{
 \dontrun{
 # Basic Poisson analysis

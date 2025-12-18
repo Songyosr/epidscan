@@ -28,7 +28,6 @@ inst/extdata/population_cache/
 
 # Legacy/development files (not part of package)
 legacy/
-docs/
 *.rds
 
 # Documentation to ignore
@@ -39,3 +38,5 @@ AGENT_GUIDELINES.md
 
 # Local tests (user data)
 tests/testthat/test-real_data_new_api.R
+/doc/
+/Meta/
