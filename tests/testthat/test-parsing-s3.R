@@ -38,7 +38,7 @@ test_that("parse_satscan_output creates correct S3 structure", {
 
     # summary should return clusters
     summ <- summary(res)
-    expect_equal(nrow(summ), 1)
+    expect_equal(summ$n_clusters, 1)
 })
 
 test_that("parse_satscan_output handles NULL results", {
