@@ -17,6 +17,13 @@
 | **Spatial** | Manual coordinates | **Native `sf`**: Auto-extracts centroids & CRS |
 | **Parameters** | Fragile `ss.options()` list | **Smart Hierarchy**: Immutable Data > User Tweaks > Templates |
 | **Reliability** | "Silent Failures" common | **Pre-flight Checks**: `prm_validate()` & Date Inference |
+| **API Stability** | Frozen | **Active Development**: `main` (Stable) & `dev` (Bleeding Edge) |
+
+## Migration from Legacy
+
+If you are using the older `epid_scan()` function or `epid_satscan()`:
+*   **Documentation**: Switch to the [`legacy`](https://github.com/Songyosr/epidscan/tree/legacy) branch.
+*   **Upgrade**: We strongly recommend upgrading to the new `ss_tbl` workflow (below) for new projects. The new API is stateless, safer, and supports more SaTScan features.
 
 ## Installation
 
