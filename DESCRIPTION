@@ -22,7 +22,8 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
-    rsatscan
+    rsatscan,
+    leaflet
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Authors@R: 
