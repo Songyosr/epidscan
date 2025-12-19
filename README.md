@@ -1,3 +1,10 @@
+# epidscan (Legacy)
+
+> [!WARNING]
+> **DEPRECATED VERSION**: This branch (`legacy`) contains the old `epidscan` API (`epid_scan` function). 
+> For the modern, stateless, and type-safe API, please use the `main` branch.
+> This version is preserved for reproducibility of older analyses but will not receive new features.
+
 # epidscan
 
 **Tidy Interface for SatScan Cluster Analysis**
