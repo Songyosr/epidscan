@@ -63,15 +63,20 @@ an informative error message is displayed.
 
 \strong{Map Layers:}
 \itemize{
-\item \strong{Cluster circles}: Sized by number of member locations, colored by p-value
+\item \strong{Cluster circles}: Sized by number of member locations. Fill color
+represents Relative Risk (RR). Border color and thickness indicate significance.
 \item \strong{Location points}: Individual locations within clusters (if \code{show_locations = TRUE})
-\item \strong{Popups}: Click on clusters or locations for detailed information
+\item \strong{Popups}: Click on clusters or locations for detailed information.
+Cluster popups include counts, RR, and time period (if available).
 }
 
 \strong{Color Scheme:}
-By default, clusters are colored on a gradient from red (most significant,
-p < 0.001) to green (least significant, p > 0.1). Non-significant clusters
-(p >= 0.05) are shown in muted colors when \code{significance_only = FALSE}.
+\itemize{
+\item \strong{Fill}: Mapped to Relative Risk (\code{CLU_RR}) using the provided \code{color_palette}.
+If RR is unavailable, falls back to p-value coloring.
+\item \strong{Border (Stroke)}: Red and bold for significant clusters (p < 0.05).
+Gray and thin for non-significant clusters.
+}
 
 \strong{Coordinate Detection:}
 The function automatically detects coordinate columns from the locations table:

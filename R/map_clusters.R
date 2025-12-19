@@ -34,14 +34,17 @@
 #' an informative error message is displayed.
 #'
 #' **Map Layers:**
-#' - **Cluster circles**: Sized by number of member locations, colored by p-value
+#' - **Cluster circles**: Sized by number of member locations. Fill color
+#'   represents Relative Risk (RR). Border color and thickness indicate significance.
 #' - **Location points**: Individual locations within clusters (if `show_locations = TRUE`)
-#' - **Popups**: Click on clusters or locations for detailed information
+#' - **Popups**: Click on clusters or locations for detailed information.
+#'   Cluster popups include counts, RR, and time period (if available).
 #'
 #' **Color Scheme:**
-#' By default, clusters are colored on a gradient from red (most significant,
-#' p < 0.001) to green (least significant, p > 0.1). Non-significant clusters
-#' (p >= 0.05) are shown in muted colors when `significance_only = FALSE`.
+#' - **Fill**: Mapped to Relative Risk (`CLU_RR`) using the provided `color_palette`.
+#'   If RR is unavailable, falls back to p-value coloring.
+#' - **Border (Stroke)**: Red and bold for significant clusters (p < 0.05).
+#'   Gray and thin for non-significant clusters.
 #'
 #' **Coordinate Detection:**
 #' The function automatically detects coordinate columns from the locations table:
@@ -135,8 +138,8 @@ map_clusters <- function(x,
   }
 
   # Add legend
-  if (!is.null(cluster_data) && nrow(cluster_data) > 0 && "P_VALUE" %in% names(cluster_data)) {
-    m <- add_cluster_legend(m, color_palette)
+  if (!is.null(cluster_data) && nrow(cluster_data) > 0) {
+    m <- add_cluster_legend(m, cluster_data, color_palette)
   }
 
   m
@@ -250,6 +253,9 @@ create_cluster_popup <- function(clusters) {
     if ("CLU_RR" %in% names(row)) {
       lines <- c(lines, sprintf("Relative Risk: %.2f", row$CLU_RR))
     }
+    if (all(c("START_DATE", "END_DATE") %in% names(row))) {
+      lines <- c(lines, sprintf("Period: %s to %s", row$START_DATE, row$END_DATE))
+    }
     if ("OBSERVED" %in% names(row)) {
       lines <- c(lines, sprintf("Observed: %d", row$OBSERVED))
     }
@@ -325,8 +331,12 @@ add_cluster_circles <- function(map, cluster_data, color_palette, opacity, ...) 
       data = cluster_data,
       lng = ~centroid_lon, lat = ~centroid_lat,
       radius = ~radius_m,
-      color = ~color, fillColor = ~color, fillOpacity = opacity,
-      weight = 2, popup = ~popup, group = "Clusters",
+      color = ~stroke_color,
+      fillColor = ~fill_color,
+      fillOpacity = opacity,
+      weight = ~stroke_weight,
+      popup = ~popup,
+      group = "Clusters",
       ...
     )
 }
@@ -345,14 +355,44 @@ add_location_points <- function(map, location_data, color, coords) {
 
 #' Add Legend to Map
 #' @keywords internal
-add_cluster_legend <- function(map, color_palette) {
-  map |>
-    leaflet::addLegend(
-      position = "bottomright",
-      colors = color_palette,
-      labels = c("< 0.001", "0.001-0.01", "0.01-0.05", "0.05-0.1", "0.1-0.5", "> 0.5"),
-      title = "Cluster P-value", opacity = 1
-    )
+add_cluster_legend <- function(map, cluster_data, color_palette) {
+  if ("CLU_RR" %in% names(cluster_data)) {
+    # Use RR legend
+    rr_range <- range(cluster_data$CLU_RR, na.rm = TRUE)
+    pal <- leaflet::colorBin(color_palette, domain = rr_range, bins = length(color_palette))
+
+    map <- map |>
+      leaflet::addLegend(
+        position = "bottomright",
+        pal = pal,
+        values = cluster_data$CLU_RR,
+        title = "Cluster RR",
+        opacity = 1
+      )
+  } else if ("P_VALUE" %in% names(cluster_data)) {
+    # Fallback to P-value legend if RR missing
+    map <- map |>
+      leaflet::addLegend(
+        position = "bottomright",
+        colors = color_palette,
+        labels = c("< 0.001", "0.001-0.01", "0.01-0.05", "0.05-0.1", "0.1-0.5", "> 0.5"),
+        title = "Cluster P-value", opacity = 1
+      )
+  }
+
+  # Add small significance note if stroke is used
+  if ("P_VALUE" %in% names(cluster_data)) {
+    map <- map |>
+      leaflet::addLegend(
+        position = "bottomright",
+        colors = c("#e31a1c", "#999999"),
+        labels = c("Significant (p < 0.05)", "Non-significant"),
+        title = "Significance",
+        opacity = 1
+      )
+  }
+
+  map
 }
 
 # =============================================================================
@@ -360,12 +400,31 @@ add_cluster_legend <- function(map, color_palette) {
 # =============================================================================
 
 assign_cluster_colors <- function(df, palette) {
-  if ("P_VALUE" %in% names(df)) {
+  # Defaults
+  df$fill_color <- "#999999"
+  df$stroke_color <- "#666666"
+  df$stroke_weight <- 1
+
+  # 1. Fill by Relative Risk
+  if ("CLU_RR" %in% names(df) && any(!is.na(df$CLU_RR))) {
+    pal <- leaflet::colorBin(palette, domain = df$CLU_RR, bins = length(palette))
+    df$fill_color <- pal(df$CLU_RR)
+  } else if ("P_VALUE" %in% names(df)) {
+    # Fallback legacy p-value color for fill if RR missing
     breaks <- c(0, 0.001, 0.01, 0.05, 0.1, 0.5, 1)
-    df$color <- as.character(cut(df$P_VALUE, breaks = breaks, labels = palette, include.lowest = TRUE))
-  } else {
-    df$color <- palette[3]
+    df$fill_color <- as.character(cut(df$P_VALUE, breaks = breaks, labels = palette, include.lowest = TRUE))
   }
+
+  # 2. Highlight significance with border
+  if ("P_VALUE" %in% names(df)) {
+    is_sig <- df$P_VALUE < 0.05
+    df$stroke_color <- ifelse(is_sig, "#e31a1c", "#999999") # Red vs Dark Gray
+    df$stroke_weight <- ifelse(is_sig, 3, 1)
+
+    # Optional: Fade the fill for non-significant clusters?
+    # No, keep it as is for now as RR is still useful info.
+  }
+
   df
 }
 

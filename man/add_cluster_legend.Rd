@@ -4,7 +4,7 @@
 \alias{add_cluster_legend}
 \title{Add Legend to Map}
 \usage{
-add_cluster_legend(map, color_palette)
+add_cluster_legend(map, cluster_data, color_palette)
 }
 \description{
 Add Legend to Map

@@ -192,3 +192,27 @@ test_that("detect_coordinates handles various column names", {
     expect_equal(coords4$lat, "ss_lat")
     expect_equal(coords4$lon, "ss_long")
 })
+
+test_that("map_clusters handles RR coloring and temporal popups", {
+    skip_if_not_installed("leaflet")
+
+    result <- create_mock_result()
+    # Add RR and dates
+    result$clusters$CLU_RR <- 5.5
+    result$clusters$START_DATE <- as.Date("2020-01-01")
+    result$clusters$END_DATE <- as.Date("2020-01-31")
+
+    m <- map_clusters(result)
+    expect_s3_class(m, "leaflet")
+
+    # Check if popup text contains the date and RR
+    # (Internal check of the prepare_cluster_data helper)
+    cluster_data <- prepare_cluster_data(result, FALSE, list(lat = "lat", lon = "lon"))
+    expect_match(cluster_data$popup, "Relative Risk: 5.50")
+    expect_match(cluster_data$popup, "Period: 2020-01-01 to 2020-01-31")
+
+    # Check if colors are assigned
+    colors <- assign_cluster_colors(cluster_data, c("red", "blue"))
+    expect_true("fill_color" %in% names(colors))
+    expect_true("stroke_color" %in% names(colors))
+})
