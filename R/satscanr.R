@@ -146,6 +146,7 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 #'   Custom scan centers. Created via \code{\link{prep_grd}}.
 #' @param prm_path Path to a template \code{.prm} file to load configuration from (Level 3).
 #'   If NULL, uses bundled defaults.
+#' @param keep_raw Logical. Keep raw SaTScan output files.
 #' @param output_dir Directory to copy final results to. If NULL, results remain in temp.
 #' @param verbose Logical. Print progress and debug info.
 #' @param ... Additional SaTScan parameters (Level 2 Tweaks).
@@ -214,6 +215,7 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
 satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
                      prm_path = NULL,
                      output_dir = NULL,
+                     keep_raw = FALSE,
                      verbose = FALSE, ...) {
     # 1. Setup Environment
     work_dir <- tempdir()
@@ -342,39 +344,20 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     }
 
     # 7. Parse & Return
-    geo_df <- get_ss_data(geo)
-    geo_spec_coord <- get_ss_spec(geo, "coord_type")
-
-    if (inherits(geo, "ss_tbl")) {
-        # ss_tbl has user columns, map them using roles
-        id_col <- ss_roles(geo)[["loc_id"]]
-        c1_col <- ss_roles(geo)[["coord1"]]
-        c2_col <- ss_roles(geo)[["coord2"]]
-
-        geo_for_parse <- geo_df |> dplyr::rename(id = !!rlang::sym(id_col))
-
-        if (geo_spec_coord == "latlong") {
-            geo_for_parse <- geo_for_parse |> dplyr::rename(lat = !!rlang::sym(c1_col), long = !!rlang::sym(c2_col))
-        } else {
-            geo_for_parse <- geo_for_parse |> dplyr::rename(x = !!rlang::sym(c1_col), y = !!rlang::sym(c2_col))
-        }
+    # Get the loc_id column name from ss_geo object
+    loc_id_col <- if (inherits(geo, "ss_tbl")) {
+        ss_roles(geo)[["loc_id"]]
     } else {
-        # Legacy satscan_table has normalized 'loc_id', 'coord1', 'coord2'
-        geo_for_parse <- geo_df |> dplyr::rename(id = loc_id)
-        if (geo_spec_coord == "latlong") {
-            geo_for_parse <- geo_for_parse |> dplyr::rename(lat = coord1, long = coord2)
-        } else {
-            geo_for_parse <- geo_for_parse |> dplyr::rename(x = coord1, y = coord2)
-        }
+        "loc_id" # legacy satscan_table
     }
 
+    geo_df <- get_ss_data(geo)
 
     res <- parse_satscan_output(
         ss_results = ss_res,
-        data = get_ss_data(cas),
-        geo_df = geo_for_parse,
-        id_quo = if (inherits(cas, "ss_tbl")) rlang::sym(ss_roles(cas)[["loc_id"]]) else rlang::quo(loc_id),
-        output_dir = if (!is.null(output_dir)) output_dir else work_dir,
+        geo_df = geo_df,
+        loc_id_col = loc_id_col,
+        keep_raw = keep_raw,
         verbose = verbose
     )
 

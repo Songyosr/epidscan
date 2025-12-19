@@ -170,153 +170,142 @@ get_macos_satscan_path <- function(ss_full_path) {
     list(ss_location = ss_location, ss_batch = ss_batch)
 }
 
-#' Parse SatScan Output into S3 Object
+#' Parse SaTScan Output into S3 Object
 #'
-#' Creates a satscan_result S3 object independent of the original data frame's structure (tidy/long),
-#' allowing for efficient storage and flexible access to location-summaries.
-#'
-#' @param ss_results Result from run_satscan()
-#' @param data Original input data (tibble/df/sf)
-#' @param geo_df Geometry data frame (id, lat, long) matching data rows
-#' @param id_quo Quosure for ID column
-#' @param output_dir Output directory (optional)
+#' @param ss_results Result from read_satscan_files()
+#' @param geo_df Data frame from ss_geo() with location IDs and coordinates
+#' @param loc_id_col Name of the location ID column in geo_df
+#' @param keep_raw Logical. Include raw output files?
 #' @param verbose Print debug info?
-#' @param merge_time_series Logical. If TRUE, creates a huge joined data frame in user memory?
-#'   Defaults to FALSE to save memory.
-#' @return object of class "satscan_result"
+#' @return Object of class "satscan_result"
 #' @keywords internal
-parse_satscan_output <- function(ss_results, data, geo_df, id_quo, output_dir = NULL,
-                                 verbose = FALSE, merge_time_series = FALSE) {
-    # 1. Handle NULL results (no clusters or error)
-    if (is.null(ss_results) || (is.null(ss_results$gis) && is.null(ss_results$col))) {
-        if (verbose) message("No SaTScan results found (or parse failed).")
-        res <- list(
-            main_results = NULL,
-            location_summary = NULL,
-            cluster_summary = NULL,
-            raw_output = ss_results
-        )
-        class(res) <- "satscan_result"
-        return(res)
-    }
+parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
+                                 keep_raw = FALSE, verbose = FALSE) {
+    # =========================================================================
+    # 1. CLUSTERS (from .col) - pass through, sort by P_VALUE
+    # =========================================================================
+    clusters <- ss_results$col
 
-    if (verbose) message("Parsing SaTScan results...")
-
-    # 2. Create Cluster Summary (metadata for each cluster)
-    # ss_results$col contains: CLUSTER, LOCATION_IDs, START_DATE, END_DATE, P_VALUE, etc.
-    # It is usually the authoritative source for cluster-level stats.
-    if (!is.null(ss_results$col)) {
-        cluster_summary <- ss_results$col
-
-        # Ensure standardized column names
-        if ("RR" %in% names(cluster_summary) && !"REL_RISK" %in% names(cluster_summary)) {
-            cluster_summary <- dplyr::rename(cluster_summary, REL_RISK = RR)
+    if (!is.null(clusters) && nrow(clusters) > 0) {
+        if ("P_VALUE" %in% names(clusters)) {
+            clusters <- clusters |> dplyr::arrange(.data$P_VALUE)
         }
+        if (verbose) message("Clusters: ", nrow(clusters))
     } else {
-        # Fallback: Extract from GIS if COL file is missing
-        if (verbose && !is.null(ss_results$gis)) message("No .col file found - extracting cluster summary from GIS data")
-        if (!is.null(ss_results$gis)) {
-            cluster_summary <- ss_results$gis |>
-                dplyr::select(CLUSTER, P_VALUE, REL_RISK = CLU_RR, ODE = CLU_ODE) |>
-                dplyr::distinct(CLUSTER, .keep_all = TRUE) |>
-                dplyr::arrange(CLUSTER)
-        } else {
-            cluster_summary <- data.frame()
-        }
+        clusters <- NULL
+        if (verbose) message("No clusters detected")
     }
 
-    # 3. Create Location Summary (One row per location)
-    # Join unique geometry with GIS results
-    # geo_df has duplicated rows (time series), so we distinct it
-    loc_geo <- geo_df |>
-        dplyr::distinct(id, .keep_all = TRUE)
+    # =========================================================================
+    # 2. LOCATIONS (geo + rr + gis merged)
+    # =========================================================================
 
-    is_sf_input <- inherits(data, "sf")
+    # Start with geo_df, create LOC_ID for joining (SaTScan's key)
+    locations <- geo_df |>
+        dplyr::mutate(LOC_ID = as.character(.data[[loc_id_col]]))
 
-    if (!is.null(ss_results$gis) && is.data.frame(ss_results$gis)) {
+    # Join .rr (relative risk for ALL locations)
+    if (!is.null(ss_results$rr) && nrow(ss_results$rr) > 0) {
+        rr_df <- ss_results$rr |>
+            dplyr::mutate(LOC_ID = as.character(LOC_ID))
+
+        # Handle potential column conflicts with suffix
+        locations <- dplyr::left_join(locations, rr_df,
+            by = "LOC_ID",
+            suffix = c("", ".rr")
+        )
+    }
+
+    # Join .gis (cluster membership - only locations IN clusters)
+    if (!is.null(ss_results$gis) && nrow(ss_results$gis) > 0) {
         gis_df <- ss_results$gis |>
             dplyr::mutate(LOC_ID = as.character(LOC_ID))
 
-        location_summary <- loc_geo |>
-            dplyr::left_join(gis_df, by = c("id" = "LOC_ID"))
-    } else {
-        # No GIS results - just return location info with NAs for stats
-        location_summary <- loc_geo
+        # Handle potential column conflicts with suffix
+        locations <- dplyr::left_join(locations, gis_df,
+            by = "LOC_ID",
+            suffix = c("", ".gis")
+        )
     }
 
-    # Restore sf if input was sf
-    if (is_sf_input) {
-        location_summary <- sf::st_as_sf(location_summary, coords = c("long", "lat"), crs = 4326)
+    if (verbose) {
+        n_total <- nrow(locations)
+        n_in_cluster <- if ("CLUSTER" %in% names(locations)) {
+            sum(!is.na(locations$CLUSTER))
+        } else {
+            0
+        }
+        message(sprintf("Locations: %d total, %d in clusters", n_total, n_in_cluster))
     }
 
-    # 4. Create Main Results (Optional Time Series Join)
-    main_results <- NULL
-    if (merge_time_series && !is.null(ss_results$gis)) {
-        if (verbose) message("Merging results back to full time-series data...")
-        # Map ID -> Cluster
-        id_cluster_map <- gis_df |>
-            dplyr::select(id = LOC_ID, CLUSTER, P_VALUE)
-
-        # We drop geometry from data if it's sf, to keep main_results lightweight
-        data_no_geo <- if (inherits(data, "sf")) sf::st_drop_geometry(data) else data
-
-        main_results <- data_no_geo |>
-            dplyr::mutate(id_char = as.character(dplyr::pull(data_no_geo, !!id_quo))) |>
-            dplyr::left_join(id_cluster_map, by = c("id_char" = "id")) |>
-            dplyr::select(-id_char)
-    }
-
-    # 5. Construct Object
+    # =========================================================================
+    # 3. BUILD RESULT
+    # =========================================================================
     res <- list(
-        main_results = main_results,
-        location_summary = location_summary,
-        cluster_summary = cluster_summary,
-        raw_output = ss_results
+        clusters = clusters,
+        locations = locations
     )
-    class(res) <- "satscan_result"
 
+    if (keep_raw) {
+        res$col <- ss_results$col
+        res$gis <- ss_results$gis
+        res$rr <- ss_results$rr
+        res$sci <- ss_results$sci
+        res$llr <- ss_results$llr
+        res$shapeclust <- ss_results$shapeclust
+        res$main <- ss_results$main
+    }
+
+    class(res) <- "satscan_result"
     res
 }
 
+
+# =============================================================================
+# S3 METHODS
+# =============================================================================
+
 #' @export
 print.satscan_result <- function(x, ...) {
-    n_locs <- if (is.null(x$location_summary)) 0 else nrow(x$location_summary)
-    n_clusters <- if (is.null(x$cluster_summary)) 0 else nrow(x$cluster_summary)
-    # Check if P_VALUE exists in cluster_summary before subsetting
-    has_p <- !is.null(x$cluster_summary) && "P_VALUE" %in% names(x$cluster_summary)
-    sig_clusters <- if (n_clusters > 0 && has_p) sum(x$cluster_summary$P_VALUE < 0.05, na.rm = TRUE) else 0
+    # Counts
+    n_clusters <- if (!is.null(x$clusters)) nrow(x$clusters) else 0
+    n_locs <- if (!is.null(x$locations)) nrow(x$locations) else 0
 
-    cat("SaTScan Analysis Result\n")
-    cat("=======================\n")
-    cat(sprintf("Locations: %d\n", n_locs))
-    cat(sprintf("Clusters Found: %d (%d significant at p < 0.05)\n", n_clusters, sig_clusters))
-    cat("\nTop Significant Clusters:\n")
-    if (n_clusters > 0) {
-        print(head(x$cluster_summary |>
-            dplyr::filter(P_VALUE < 0.05) |>
-            dplyr::select(dplyr::any_of(c("CLUSTER", "P_VALUE", "rel_risk", "REL_RISK", "START_DATE", "END_DATE"))), 5))
-    } else {
-        cat("None.\n")
+    # Significant clusters (if P_VALUE exists)
+    n_sig <- 0
+    if (n_clusters > 0 && "P_VALUE" %in% names(x$clusters)) {
+        n_sig <- sum(x$clusters$P_VALUE < 0.05, na.rm = TRUE)
     }
-    cat("\nAccess components via $location_summary, $cluster_summary, $main_results\n")
+
+    # Locations in clusters (if CLUSTER column exists)
+    n_in_cluster <- 0
+    if (n_locs > 0 && "CLUSTER" %in% names(x$locations)) {
+        n_in_cluster <- sum(!is.na(x$locations$CLUSTER))
+    }
+
+    cat("SaTScan Result\n")
+    cat("==============\n")
+    cat(sprintf("Clusters:  %d (%d significant at p < 0.05)\n", n_clusters, n_sig))
+    cat(sprintf("Locations: %d (%d in clusters)\n", n_locs, n_in_cluster))
+
+    # Show top clusters
+    if (n_sig > 0) {
+        cat("\nTop Significant Clusters:\n")
+        top <- x$clusters |>
+            dplyr::filter(.data$P_VALUE < 0.05) |>
+            head(5)
+        print(top)
+    }
+
+    # Show available components
+    cat("\nComponents: $clusters, $locations")
+    if (!is.null(x$col)) cat(", $col, $gis, $rr (raw)")
+    cat("\n")
+
+    invisible(x)
 }
 
 #' @export
 summary.satscan_result <- function(object, ...) {
-    object$cluster_summary
-}
-
-#' @export
-as.data.frame.satscan_result <- function(x, row.names = NULL, optional = FALSE, ...) {
-    # If main_results (time series) is populated, user probably wants that.
-    # If not, they probably want the location summary (map data).
-    if (!is.null(x$main_results)) {
-        return(x$main_results)
-    } else {
-        # If location_summary is SF, drop geometry to return a plain data.frame
-        if (inherits(x$location_summary, "sf")) {
-            return(sf::st_drop_geometry(x$location_summary))
-        }
-        return(x$location_summary)
-    }
+    object$clusters
 }

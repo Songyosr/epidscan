@@ -12,6 +12,7 @@ satscanr(
   grd = NULL,
   prm_path = NULL,
   output_dir = NULL,
+  keep_raw = FALSE,
   verbose = FALSE,
   ...
 )
@@ -34,6 +35,8 @@ Custom scan centers. Created via \code{\link{prep_grd}}.}
 If NULL, uses bundled defaults.}
 
 \item{output_dir}{Directory to copy final results to. If NULL, results remain in temp.}
+
+\item{keep_raw}{Logical. Keep raw SaTScan output files.}
 
 \item{verbose}{Logical. Print progress and debug info.}
 

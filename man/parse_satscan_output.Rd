@@ -2,39 +2,31 @@
 % Please edit documentation in R/satscan_results.R
 \name{parse_satscan_output}
 \alias{parse_satscan_output}
-\title{Parse SatScan Output into S3 Object}
+\title{Parse SaTScan Output into S3 Object}
 \usage{
 parse_satscan_output(
   ss_results,
-  data,
   geo_df,
-  id_quo,
-  output_dir = NULL,
-  verbose = FALSE,
-  merge_time_series = FALSE
+  loc_id_col,
+  keep_raw = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{ss_results}{Result from run_satscan()}
+\item{ss_results}{Result from read_satscan_files()}
 
-\item{data}{Original input data (tibble/df/sf)}
+\item{geo_df}{Data frame from ss_geo() with location IDs and coordinates}
 
-\item{geo_df}{Geometry data frame (id, lat, long) matching data rows}
+\item{loc_id_col}{Name of the location ID column in geo_df}
 
-\item{id_quo}{Quosure for ID column}
-
-\item{output_dir}{Output directory (optional)}
+\item{keep_raw}{Logical. Include raw output files?}
 
 \item{verbose}{Print debug info?}
-
-\item{merge_time_series}{Logical. If TRUE, creates a huge joined data frame in user memory?
-Defaults to FALSE to save memory.}
 }
 \value{
-object of class "satscan_result"
+Object of class "satscan_result"
 }
 \description{
-Creates a satscan_result S3 object independent of the original data frame's structure (tidy/long),
-allowing for efficient storage and flexible access to location-summaries.
+Parse SaTScan Output into S3 Object
 }
 \keyword{internal}
