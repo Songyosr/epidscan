@@ -452,25 +452,18 @@ ss_geo <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
         df_out <- as.data.frame(data)
         df_out <- df_out[, c(loc_id, setdiff(names(df_out), c(loc_id, attr(data, "sf_column")))), drop = FALSE]
 
-        # Add coords with standard internal names
+        # Add coords with semantic names based on type
         # SF returns X (Long) then Y (Lat)
-        # We'll assign them to temporary names and map them later
-        df_out[["__ss_c1"]] <- coords_mat[, 1] # X / Long
-        df_out[["__ss_c2"]] <- coords_mat[, 2] # Y / Lat
-
-        # If latlong:  SaTScan wants Lat(Y), Long(X)
-        # If cartesian: SaTScan wants X, Y
-        # new_ss_tbl expects us to map roles 'coord1', 'coord2'.
-        # For 'geo' schema:
-        #  - coord1 is the first column in the file.
-        #  - coord2 is the second column in the file.
-
         if (final_type == "latlong") {
-            # File: Map Lat(Y) -> coord1, Long(X) -> coord2
-            roles <- c(loc_id = loc_id, coord1 = "__ss_c2", coord2 = "__ss_c1")
+            df_out[["ss_long"]] <- coords_mat[, 1] # X -> Long
+            df_out[["ss_lat"]] <- coords_mat[, 2] # Y -> Lat
+            # SaTScan file: Lat first, Long second
+            roles <- c(loc_id = loc_id, coord1 = "ss_lat", coord2 = "ss_long")
         } else {
-            # File: Map X -> coord1, Y -> coord2
-            roles <- c(loc_id = loc_id, coord1 = "__ss_c1", coord2 = "__ss_c2")
+            df_out[["ss_x"]] <- coords_mat[, 1] # X
+            df_out[["ss_y"]] <- coords_mat[, 2] # Y
+            # SaTScan file: X first, Y second
+            roles <- c(loc_id = loc_id, coord1 = "ss_x", coord2 = "ss_y")
         }
 
         spec <- list(coord_type = final_type)

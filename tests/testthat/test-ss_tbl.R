@@ -145,16 +145,12 @@ test_that("ss_geo handles sf objects", {
 
     # Check structure
     expect_equal(ss_type(ss), "geo")
-    # Should have extracted coords. Lat(10) -> coord1, Long(20) -> coord2 for 'latlong' type?
-    # Wait, my logic:
-    # if final_type == "latlong": roles = c(coord1 = "__ss_c2", coord2 = "__ss_c1")
-    # __ss_c2 is Lat (Y), __ss_c1 is Long (X)
-    # So coord1 (1st col in file) = Lat = 10
-    # coord2 (2nd col in file) = Long = 20
+    # For latlong: coord1 = ss_lat, coord2 = ss_long
+    # Lat = 10, Long = 20
 
     # Verify values by peeking at data
-    expect_equal(ss[["__ss_c2"]], 10)
-    expect_equal(ss[["__ss_c1"]], 20)
+    expect_equal(ss[["ss_lat"]], 10)
+    expect_equal(ss[["ss_long"]], 20)
 
     # Check spec
     expect_equal(ss_spec(ss)$coord_type, "latlong")
