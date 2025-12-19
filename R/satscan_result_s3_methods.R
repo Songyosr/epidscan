@@ -4,6 +4,38 @@
 # This file provides a comprehensive set of S3 methods for satscan_result objects,
 # following modern R conventions (especially broom-style tidiers).
 
+#' @importFrom generics tidy glance augment
+#' @importFrom utils head
+#' @importFrom dplyr left_join
+NULL
+
+# =============================================================================
+# 0. BASE METHODS
+# =============================================================================
+
+#' Print SaTScan Results
+#'
+#' @description
+#' By default, prints the raw SaTScan text output if available.
+#' Use `summary(x)` for a structured analytical summary.
+#'
+#' @param x A `satscan_result` object.
+#' @param ... Additional arguments (currently unused).
+#' @return Invisibly returns `x`.
+#' @export
+#' @method print satscan_result
+print.satscan_result <- function(x, ...) {
+    if (!is.null(x$main)) {
+        cat(x$main)
+        cat("\n")
+    } else {
+        # Fallback to summary if raw text is not available
+        print(summary(x, ...))
+    }
+    invisible(x)
+}
+
+
 # =============================================================================
 # 1. ENHANCED summary() METHOD
 # =============================================================================
@@ -38,6 +70,7 @@
 #' }
 #'
 #' @export
+#' @method summary satscan_result
 summary.satscan_result <- function(object, ...) {
     # =========================================================================
     # BASIC COUNTS
@@ -76,7 +109,7 @@ summary.satscan_result <- function(object, ...) {
     # =========================================================================
     most_likely <- NULL
     if (n_sig > 0) {
-        most_likely <- object$clusters[1, ]  # Already sorted by p-value
+        most_likely <- object$clusters[1, ] # Already sorted by p-value
     }
 
     # =========================================================================
@@ -107,7 +140,8 @@ summary.satscan_result <- function(object, ...) {
             location_stats = location_stats,
             most_likely = most_likely,
             rr_range = rr_range,
-            analysis_params = analysis_params
+            analysis_params = analysis_params,
+            raw_text = object$main
         ),
         class = "summary.satscan_result"
     )
@@ -117,24 +151,40 @@ summary.satscan_result <- function(object, ...) {
 #' Print Method for Summary of SaTScan Results
 #'
 #' @param x A `summary.satscan_result` object.
+#' @param raw Logical. If `TRUE` and available, print the raw SaTScan text output.
 #' @param ... Additional arguments (currently unused).
 #' @return Invisibly returns `x`.
 #' @export
-print.summary.satscan_result <- function(x, ...) {
+#' @method print summary.satscan_result
+print.summary.satscan_result <- function(x, raw = FALSE, ...) {
+    if (raw && !is.null(x$raw_text)) {
+        cat("Raw SaTScan Output:\n")
+        cat("==================\n")
+        cat(x$raw_text)
+        cat("\n")
+        return(invisible(x))
+    }
+
     cat("SaTScan Results Summary\n")
     cat("=======================\n\n")
 
     # Overview
     cat("Overview:\n")
-    cat(sprintf("  Clusters detected:  %d (%d significant at p < 0.05)\n",
-                x$n_clusters, x$n_significant))
-    cat(sprintf("  Locations analyzed: %d (%d in clusters)\n",
-                x$n_locations, x$n_in_clusters))
+    cat(sprintf(
+        "  Clusters detected:  %d (%d significant at p < 0.05)\n",
+        x$n_clusters, x$n_significant
+    ))
+    cat(sprintf(
+        "  Locations analyzed: %d (%d in clusters)\n",
+        x$n_locations, x$n_in_clusters
+    ))
 
     # Relative risk range
     if (!is.null(x$rr_range)) {
-        cat(sprintf("  Relative risk:      %.2f - %.2f\n",
-                    x$rr_range[1], x$rr_range[2]))
+        cat(sprintf(
+            "  Relative risk:      %.2f - %.2f\n",
+            x$rr_range[1], x$rr_range[2]
+        ))
     }
     cat("\n")
 
@@ -176,6 +226,10 @@ print.summary.satscan_result <- function(x, ...) {
         }
     }
 
+    if (!is.null(x$raw_text)) {
+        cat("\n(Raw SaTScan text available. Use print(result, raw = TRUE) to view)\n")
+    }
+
     invisible(x)
 }
 
@@ -211,6 +265,7 @@ print.summary.satscan_result <- function(x, ...) {
 #' }
 #'
 #' @export
+#' @method tidy satscan_result
 tidy.satscan_result <- function(x, ...) {
     if (is.null(x$clusters)) {
         # Return empty tibble with correct structure
@@ -223,53 +278,60 @@ tidy.satscan_result <- function(x, ...) {
 
     df <- x$clusters
 
-    # Standardize column names to lowercase with underscores
+    # Base structure with proper types
     tidy_df <- data.frame(
-        cluster = df$CLUSTER,
+        cluster = as.integer(df$CLUSTER),
         stringsAsFactors = FALSE
     )
 
-    # Add p-value if available
-    if ("P_VALUE" %in% names(df)) {
-        tidy_df$p_value <- df$P_VALUE
-    }
+    # 1. Location & ID
+    if ("LOC_ID" %in% names(df)) tidy_df$center_id <- as.character(df$LOC_ID)
 
-    # Add relative risk
+    # Intuitive coordinate handling (preserve source names but lowercase)
+    if ("LATITUDE" %in% names(df)) tidy_df$latitude <- as.numeric(df$LATITUDE)
+    if ("LONGITUDE" %in% names(df)) tidy_df$longitude <- as.numeric(df$LONGITUDE)
+    if ("X" %in% names(df)) tidy_df$x <- as.numeric(df$X)
+    if ("Y" %in% names(df)) tidy_df$y <- as.numeric(df$Y)
+    if ("Z" %in% names(df)) tidy_df$z <- as.numeric(df$Z)
+
+    # 2. Statistics
+    if ("P_VALUE" %in% names(df)) tidy_df$p_value <- as.numeric(df$P_VALUE)
+
+    # Relative Risk (detect multiple variations)
     if ("CLU_RR" %in% names(df)) {
-        tidy_df$relative_risk <- df$CLU_RR
-    }
+        tidy_df$relative_risk <- as.numeric(df$CLU_RR)
+    } else if ("RELATIVE_RISK" %in% names(df)) tidy_df$relative_risk <- as.numeric(df$RELATIVE_RISK)
 
-    # Add observed/expected
-    if ("OBSERVED" %in% names(df)) {
-        tidy_df$observed <- df$OBSERVED
-    }
-    if ("EXPECTED" %in% names(df)) {
-        tidy_df$expected <- df$EXPECTED
-    }
+    if ("LLR" %in% names(df)) tidy_df$llr <- as.numeric(df$LLR)
 
-    # Add obs/exp ratio if both available
-    if ("OBSERVED" %in% names(df) && "EXPECTED" %in% names(df)) {
-        tidy_df$obs_exp_ratio <- df$OBSERVED / df$EXPECTED
+    # Observed/Expected
+    obs_col <- if ("OBSERVED" %in% names(df)) "OBSERVED" else if ("CASES" %in% names(df)) "CASES" else NULL
+    if (!is.null(obs_col)) tidy_df$observed <- as.numeric(df[[obs_col]])
+
+    if ("EXPECTED" %in% names(df)) tidy_df$expected <- as.numeric(df$EXPECTED)
+
+    if (!is.null(obs_col) && "EXPECTED" %in% names(df)) {
+        tidy_df$obs_exp_ratio <- as.numeric(df[[obs_col]] / df$EXPECTED)
     } else if ("OBS_EXP" %in% names(df)) {
-        tidy_df$obs_exp_ratio <- df$OBS_EXP
+        tidy_df$obs_exp_ratio <- as.numeric(df$OBS_EXP)
     }
 
-    # Add radius if available
-    if ("RADIUS" %in% names(df)) {
-        tidy_df$radius_km <- df$RADIUS
-    }
+    # 3. Geography & Population
+    if ("RADIUS" %in% names(df)) tidy_df$radius_km <- as.numeric(df$RADIUS)
+    if ("POPULATION" %in% names(df)) tidy_df$population <- as.numeric(df$POPULATION)
+    if ("GINI" %in% names(df)) tidy_df$gini_contribution <- as.numeric(df$GINI)
 
-    # Add temporal info if available
+    # 4. Temporal
     if ("START_DATE" %in% names(df)) {
-        tidy_df$start_date <- df$START_DATE
+        tidy_df$start_date <- as.Date(df$START_DATE, format = "%Y/%m/%d")
     }
     if ("END_DATE" %in% names(df)) {
-        tidy_df$end_date <- df$END_DATE
+        tidy_df$end_date <- as.Date(df$END_DATE, format = "%Y/%m/%d")
     }
 
-    # Add test statistic if available
+    # 5. Additional fields
     if ("TEST_STATISTIC" %in% names(df)) {
-        tidy_df$test_statistic <- df$TEST_STATISTIC
+        tidy_df$test_statistic <- as.numeric(df$TEST_STATISTIC)
     }
 
     make_tidy_df(tidy_df)
@@ -303,6 +365,7 @@ tidy.satscan_result <- function(x, ...) {
 #' }
 #'
 #' @export
+#' @method glance satscan_result
 glance.satscan_result <- function(x, ...) {
     n_clusters <- if (!is.null(x$clusters)) nrow(x$clusters) else 0
     n_locs <- if (!is.null(x$locations)) nrow(x$locations) else 0
@@ -317,26 +380,57 @@ glance.satscan_result <- function(x, ...) {
         n_in_cluster <- sum(!is.na(x$locations$CLUSTER))
     }
 
-    min_p <- NA
+    min_p <- as.numeric(NA)
     if (n_clusters > 0 && "P_VALUE" %in% names(x$clusters)) {
         min_p <- min(x$clusters$P_VALUE, na.rm = TRUE)
     }
 
-    max_rr <- NA
-    if (!is.null(x$clusters) && "CLU_RR" %in% names(x$clusters)) {
-        max_rr <- max(x$clusters$CLU_RR, na.rm = TRUE)
+    max_rr <- as.numeric(NA)
+    if (n_clusters > 0) {
+        if ("CLU_RR" %in% names(x$clusters)) {
+            max_rr <- max(x$clusters$CLU_RR, na.rm = TRUE)
+        } else if ("RELATIVE_RISK" %in% names(x$clusters)) {
+            max_rr <- max(x$clusters$RELATIVE_RISK, na.rm = TRUE)
+        }
     }
 
-    prop_in_clusters <- if (n_locs > 0) n_in_cluster / n_locs else NA
+    max_llr <- as.numeric(NA)
+    if (n_clusters > 0 && "LLR" %in% names(x$clusters)) {
+        max_llr <- max(x$clusters$LLR, na.rm = TRUE)
+    }
+
+    prop_in_clusters <- if (n_locs > 0) n_in_cluster / n_locs else as.numeric(NA)
+
+    # 1. Metadata from parameters
+    meta <- get_satscan_metadata(x)
+
+    # 2. Global statistics (if available via summaries)
+    total_obs <- if (n_locs > 0 && "OBSERVED" %in% names(x$locations)) {
+        sum(x$locations$OBSERVED, na.rm = TRUE)
+    } else {
+        as.numeric(NA)
+    }
+
+    total_pop <- if (n_locs > 0 && "POPULATION" %in% names(x$locations)) {
+        sum(x$locations$POPULATION, na.rm = TRUE)
+    } else {
+        as.numeric(NA)
+    }
 
     df <- data.frame(
-        n_clusters = n_clusters,
-        n_significant = n_sig,
-        n_locations = n_locs,
-        n_in_clusters = n_in_cluster,
+        n_clusters = as.integer(n_clusters),
+        n_significant = as.integer(n_sig),
+        n_locations = as.integer(n_locs),
+        n_in_clusters = as.integer(n_in_cluster),
         min_p_value = min_p,
         max_relative_risk = max_rr,
+        max_llr = max_llr,
         prop_in_clusters = prop_in_clusters,
+        total_observed = total_obs,
+        total_population = total_pop,
+        model = meta$model %||% as.character(NA),
+        analysis_type = meta$analysis_type %||% as.character(NA),
+        monte_carlo_reps = meta$monte_carlo_reps %||% as.integer(NA),
         stringsAsFactors = FALSE
     )
 
@@ -372,6 +466,7 @@ glance.satscan_result <- function(x, ...) {
 #' }
 #'
 #' @export
+#' @method augment satscan_result
 augment.satscan_result <- function(x, data = NULL, ...) {
     if (is.null(data)) {
         data <- x$locations
@@ -405,9 +500,11 @@ augment.satscan_result <- function(x, data = NULL, ...) {
         cluster_pvals <- x$clusters[, c("CLUSTER", "P_VALUE"), drop = FALSE]
         names(cluster_pvals)[2] <- ".cluster_p_value"
 
-        aug_data <- merge(aug_data, cluster_pvals, 
-                         by.x = "CLUSTER", by.y = "CLUSTER",
-                         all.x = TRUE, sort = FALSE)
+        # Ensure types match for join
+        aug_data$CLUSTER <- as.character(aug_data$CLUSTER)
+        cluster_pvals$CLUSTER <- as.character(cluster_pvals$CLUSTER)
+
+        aug_data <- dplyr::left_join(aug_data, cluster_pvals, by = "CLUSTER")
     } else {
         aug_data$.cluster_p_value <- NA
     }
@@ -487,7 +584,7 @@ augment.satscan_result <- function(x, data = NULL, ...) {
     # Note: rr, sci, llr are location-level so would need separate filtering
 
     class(result) <- "satscan_result"
-    
+
     # Copy attributes
     attributes(result) <- c(attributes(result), attributes(x)[!names(attributes(x)) %in% c("names", "class")])
 
@@ -581,7 +678,60 @@ get_params <- function(x) {
     if (!inherits(x, "satscan_result")) {
         stop("x must be a satscan_result object", call. = FALSE)
     }
-    attr(x, "parameters")
+
+    # 1. Check attribute (standard)
+    p <- attr(x, "parameters")
+
+    # 2. Check field (fallback for satscanr output)
+    if (is.null(p)) p <- x$prm
+
+    return(p)
+}
+
+
+#' Extract Human-Readable Metadata
+#'
+#' @param x A `satscan_result` object.
+#' @return List of metadata
+#' @keywords internal
+get_satscan_metadata <- function(x) {
+    p <- get_params(x)
+    if (is.null(p)) {
+        return(list())
+    }
+
+    # 1. Model Type Mapping (corrected)
+    model_map <- c(
+        "0"  = "Discrete Poisson",
+        "1"  = "Bernoulli",
+        "2"  = "Space-Time Permutation",
+        "3"  = "Ordinal",
+        "4"  = "Exponential",
+        "5"  = "Normal",
+        "6"  = "Continuous Poisson",
+        "7"  = "Multinomial",
+        "8"  = "Rank",
+        "9"  = "Uniform Time",
+        "10" = "Batched"
+    )
+
+    # 2. Analysis Type Mapping (corrected)
+    analysis_map <- c(
+        "1" = "Purely Spatial",
+        "2" = "Purely Temporal",
+        "3" = "Retrospective Space-Time",
+        "4" = "Prospective Space-Time",
+        "5" = "Spatial Variation in Temporal Trends",
+        "6" = "Prospective Purely Temporal",
+        "7" = "Seasonal Temporal"
+    )
+
+    list(
+        model = model_map[as.character(p$ModelType)],
+        analysis_type = analysis_map[as.character(p$AnalysisType)],
+        monte_carlo_reps = as.integer(p$MonteCarloReps),
+        time_precision = p$PrecisionCaseTimes
+    )
 }
 
 
@@ -613,19 +763,22 @@ compute_cluster_summary <- function(clusters) {
         return(NULL)
     }
 
-    # Convert to data frame
-    do.call(rbind, lapply(names(stats), function(name) {
+    # Convert to data frame safely
+    res <- do.call(rbind, lapply(names(stats), function(name) {
+        s <- stats[[name]]
         data.frame(
             statistic = name,
-            min = stats[[name]][1],
-            q1 = stats[[name]][2],
-            median = stats[[name]][3],
-            mean = stats[[name]][4],
-            q3 = stats[[name]][5],
-            max = stats[[name]][6],
+            min = as.numeric(s[1]),
+            q1 = as.numeric(s[2]),
+            median = as.numeric(s[3]),
+            mean = as.numeric(s[4]),
+            q3 = as.numeric(s[5]),
+            max = as.numeric(s[6]),
             stringsAsFactors = FALSE
         )
     }))
+    rownames(res) <- NULL
+    res
 }
 
 

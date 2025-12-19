@@ -17,7 +17,8 @@ Imports:
     rlang,
     utils,
     lifecycle,
-    vctrs
+    vctrs,
+    generics
 Suggests:
     testthat,
     knitr,

@@ -4,7 +4,7 @@
 \alias{augment.satscan_result}
 \title{Augment SaTScan Results with Location-Level Data}
 \usage{
-augment.satscan_result(x, data = NULL, ...)
+\method{augment}{satscan_result}(x, data = NULL, ...)
 }
 \arguments{
 \item{x}{A \code{satscan_result} object.}

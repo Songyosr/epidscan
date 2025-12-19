@@ -7,11 +7,17 @@
 create_test_result <- function(include_params = FALSE) {
     clusters <- data.frame(
         CLUSTER = 1:3,
+        LOC_ID = paste0("CENTER", 1:3),
+        LATITUDE = runif(3, 40, 41),
+        LONGITUDE = runif(3, -74, -73),
         P_VALUE = c(0.001, 0.04, 0.15),
         CLU_RR = c(2.5, 1.8, 1.2),
+        LLR = c(15.5, 10.2, 5.1),
         OBSERVED = c(50, 30, 20),
         EXPECTED = c(20, 18, 17),
         RADIUS = c(5.2, 3.1, 2.5),
+        POPULATION = c(1000, 800, 600),
+        GINI = c(0.5, 0.3, 0.1),
         START_DATE = c("2023/01/01", "2023/02/01", "2023/03/01"),
         END_DATE = c("2023/01/31", "2023/02/28", "2023/03/31"),
         stringsAsFactors = FALSE
@@ -58,6 +64,17 @@ test_that("summary.satscan_result creates correct structure", {
     expect_equal(summ$n_significant, 2)
     expect_equal(summ$n_locations, 10)
     expect_equal(summ$n_in_clusters, 7)
+})
+
+test_that("print.satscan_result outputs raw text by default", {
+    result <- create_test_result()
+    result$main <- "MOCK RAW SATSCAN OUTPUT"
+
+    expect_output(print(result), "MOCK RAW SATSCAN OUTPUT")
+
+    # If x$main is NULL, should fallback to summary
+    result$main <- NULL
+    expect_output(print(result), "SaTScan Results Summary")
 })
 
 test_that("summary.satscan_result identifies most likely cluster", {
@@ -139,14 +156,24 @@ test_that("tidy.satscan_result includes all relevant columns", {
     result <- create_test_result()
     tidy_df <- tidy(result)
 
-    expected_cols <- c("cluster", "p_value", "relative_risk",
-                      "observed", "expected", "obs_exp_ratio",
-                      "radius_km", "start_date", "end_date")
+    expected_cols <- c(
+        "cluster", "p_value", "relative_risk",
+        "observed", "expected", "obs_exp_ratio",
+        "radius_km", "start_date", "end_date",
+        "latitude", "longitude"
+    )
 
     for (col in expected_cols) {
         expect_true(col %in% names(tidy_df),
-                   info = paste("Missing column:", col))
+            info = paste("Missing column:", col)
+        )
     }
+
+    # Type checks
+    expect_s3_class(tidy_df$start_date, "Date")
+    expect_s3_class(tidy_df$end_date, "Date")
+    expect_type(tidy_df$cluster, "integer")
+    expect_type(tidy_df$observed, "double")
 })
 
 test_that("tidy.satscan_result computes obs/exp ratio correctly", {
@@ -186,7 +213,7 @@ test_that("glance.satscan_result computes proportion correctly", {
     result <- create_test_result()
     glance_df <- glance(result)
 
-    expect_equal(glance_df$prop_in_clusters, 7/10)
+    expect_equal(glance_df$prop_in_clusters, 7 / 10)
 })
 
 test_that("glance.satscan_result handles empty results", {
@@ -233,7 +260,7 @@ test_that("augment.satscan_result marks cluster membership correctly", {
     expect_equal(sum(aug_df$.in_cluster), 7)
     expect_equal(aug_df$.cluster[1], 1)
     expect_true(aug_df$.in_cluster[1])
-    expect_false(aug_df$.in_cluster[6])  # Not in cluster
+    expect_false(aug_df$.in_cluster[6]) # Not in cluster
 })
 
 test_that("augment.satscan_result joins p-values correctly", {
@@ -255,7 +282,8 @@ test_that("augment.satscan_result can augment custom data", {
 
     # Need to merge with locations to get cluster info
     custom_with_clusters <- merge(custom_data, result$locations[, c("LOC_ID", "CLUSTER", "REL_RISK")],
-                                  by = "LOC_ID", all.x = TRUE)
+        by = "LOC_ID", all.x = TRUE
+    )
 
     aug_df <- augment(result, data = custom_with_clusters)
 
@@ -293,8 +321,8 @@ test_that("subsetting filters locations correctly", {
     in_cluster_1 <- sum(subset$locations$CLUSTER == 1, na.rm = TRUE)
     not_in_any <- sum(is.na(subset$locations$CLUSTER))
 
-    expect_equal(in_cluster_1, 3)  # 3 locations in cluster 1
-    expect_gt(not_in_any, 0)  # Some locations not in any cluster
+    expect_equal(in_cluster_1, 3) # 3 locations in cluster 1
+    expect_gt(not_in_any, 0) # Some locations not in any cluster
 })
 
 test_that("subsetting by logical index works", {
@@ -433,7 +461,7 @@ test_that("all S3 methods work together in a workflow", {
 
 test_that("methods handle edge case: no significant clusters", {
     result <- create_test_result()
-    result$clusters$P_VALUE <- c(0.1, 0.2, 0.3)  # All non-significant
+    result$clusters$P_VALUE <- c(0.1, 0.2, 0.3) # All non-significant
 
     summ <- summary(result)
     expect_equal(summ$n_significant, 0)

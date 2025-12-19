@@ -4,7 +4,7 @@
 \alias{glance.satscan_result}
 \title{Glance at SaTScan Results}
 \usage{
-glance.satscan_result(x, ...)
+\method{glance}{satscan_result}(x, ...)
 }
 \arguments{
 \item{x}{A \code{satscan_result} object.}

@@ -111,13 +111,17 @@ read_satscan_files <- function(out_dir, project_name, verbose = FALSE) {
     # Shapefile (.col.shp)
     shapeclust <- read_shp_safe(".col")
 
-    # Main text output - we don't usually parse this in R but handy to have the path
+    # Main text output - read content if it exists
     txt_file <- file.path(out_dir, paste0(project_name, ".txt"))
-    main_txt <- if (file.exists(txt_file)) txt_file else NA
+    main_txt_content <- if (file.exists(txt_file)) {
+        paste(readLines(txt_file, warn = FALSE), collapse = "\n")
+    } else {
+        NULL
+    }
 
     # Construct list similar to rsatscan object
     res <- list(
-        main = main_txt,
+        main = main_txt_content,
         col = col_df,
         rr = rr_df,
         gis = gis_df,
@@ -243,7 +247,8 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
     # =========================================================================
     res <- list(
         clusters = clusters,
-        locations = locations
+        locations = locations,
+        main = ss_results$main
     )
 
     if (keep_raw) {
@@ -253,59 +258,8 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
         res$sci <- ss_results$sci
         res$llr <- ss_results$llr
         res$shapeclust <- ss_results$shapeclust
-        res$main <- ss_results$main
     }
 
     class(res) <- "satscan_result"
     res
-}
-
-
-# =============================================================================
-# S3 METHODS
-# =============================================================================
-
-#' @export
-print.satscan_result <- function(x, ...) {
-    # Counts
-    n_clusters <- if (!is.null(x$clusters)) nrow(x$clusters) else 0
-    n_locs <- if (!is.null(x$locations)) nrow(x$locations) else 0
-
-    # Significant clusters (if P_VALUE exists)
-    n_sig <- 0
-    if (n_clusters > 0 && "P_VALUE" %in% names(x$clusters)) {
-        n_sig <- sum(x$clusters$P_VALUE < 0.05, na.rm = TRUE)
-    }
-
-    # Locations in clusters (if CLUSTER column exists)
-    n_in_cluster <- 0
-    if (n_locs > 0 && "CLUSTER" %in% names(x$locations)) {
-        n_in_cluster <- sum(!is.na(x$locations$CLUSTER))
-    }
-
-    cat("SaTScan Result\n")
-    cat("==============\n")
-    cat(sprintf("Clusters:  %d (%d significant at p < 0.05)\n", n_clusters, n_sig))
-    cat(sprintf("Locations: %d (%d in clusters)\n", n_locs, n_in_cluster))
-
-    # Show top clusters
-    if (n_sig > 0) {
-        cat("\nTop Significant Clusters:\n")
-        top <- x$clusters |>
-            dplyr::filter(.data$P_VALUE < 0.05) |>
-            head(5)
-        print(top)
-    }
-
-    # Show available components
-    cat("\nComponents: $clusters, $locations")
-    if (!is.null(x$col)) cat(", $col, $gis, $rr (raw)")
-    cat("\n")
-
-    invisible(x)
-}
-
-#' @export
-summary.satscan_result <- function(object, ...) {
-    object$clusters
 }

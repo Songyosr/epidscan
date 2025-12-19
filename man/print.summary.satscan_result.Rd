@@ -4,10 +4,12 @@
 \alias{print.summary.satscan_result}
 \title{Print Method for Summary of SaTScan Results}
 \usage{
-\method{print}{summary.satscan_result}(x, ...)
+\method{print}{summary.satscan_result}(x, raw = FALSE, ...)
 }
 \arguments{
 \item{x}{A \code{summary.satscan_result} object.}
+
+\item{raw}{Logical. If \code{TRUE} and available, print the raw SaTScan text output.}
 
 \item{...}{Additional arguments (currently unused).}
 }

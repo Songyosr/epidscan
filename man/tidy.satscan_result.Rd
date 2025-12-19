@@ -4,7 +4,7 @@
 \alias{tidy.satscan_result}
 \title{Tidy SaTScan Results into a Data Frame}
 \usage{
-tidy.satscan_result(x, ...)
+\method{tidy}{satscan_result}(x, ...)
 }
 \arguments{
 \item{x}{A \code{satscan_result} object.}
