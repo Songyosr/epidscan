@@ -99,9 +99,9 @@ test_that("Real Data Workflow with New API", {
     expect_s3_class(res, "satscan_result")
 
     # Check that we got results
-    # SaTScan completed, so cluster_summary should exist (even if empty rows if no clusters, but usually non-null)
-    expect_false(is.null(res$cluster_summary))
-    expect_false(is.null(res$location_summary))
+    # SaTScan completed, so clusters should exist (even if empty rows if no clusters, but usually non-null)
+    expect_false(is.null(res$clusters))
+    expect_false(is.null(res$locations))
 
     # Show results for user demo
     print(res)

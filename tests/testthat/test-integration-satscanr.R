@@ -36,8 +36,9 @@ test_that("satscanr accepts ss_tbl inputs and generates correct files", {
 
     mock_run <- function(...) {
         return(list(
-            col = data.frame(loc_id = "A", cluster = 1),
-            rr = data.frame(cluster = 1, rel_risk = 2)
+            col = data.frame(CLUSTER = 1, P_VALUE = 0.001),
+            rr = data.frame(LOC_ID = "A", REL_RISK = 2, CLUSTER = 1),
+            gis = data.frame(LOC_ID = "A", CLUSTER = 1)
         ))
     }
 

@@ -207,7 +207,7 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
     # Join .rr (relative risk for ALL locations)
     if (!is.null(ss_results$rr) && nrow(ss_results$rr) > 0) {
         rr_df <- ss_results$rr |>
-            dplyr::mutate(LOC_ID = as.character(LOC_ID))
+            dplyr::mutate(LOC_ID = as.character(.data$LOC_ID))
 
         # Handle potential column conflicts with suffix
         locations <- dplyr::left_join(locations, rr_df,
@@ -219,7 +219,7 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
     # Join .gis (cluster membership - only locations IN clusters)
     if (!is.null(ss_results$gis) && nrow(ss_results$gis) > 0) {
         gis_df <- ss_results$gis |>
-            dplyr::mutate(LOC_ID = as.character(LOC_ID))
+            dplyr::mutate(LOC_ID = as.character(.data$LOC_ID))
 
         # Handle potential column conflicts with suffix
         locations <- dplyr::left_join(locations, gis_df,
