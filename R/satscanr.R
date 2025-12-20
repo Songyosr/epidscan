@@ -15,7 +15,7 @@
 #' @param verbose Logical, print messages
 #' @return Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
 #' @keywords internal
-infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, verbose = FALSE) {
+infer_dates_from_data <- function(current_opts, time_values, time_precision_char, verbose = FALSE) {
     # Check if dates are already present and NOT placeholder values
     # The default template has StartDate=2000/1/1 and EndDate=2000/12/31 as placeholders
     val_start <- current_opts[["StartDate"]]
@@ -34,18 +34,18 @@ infer_dates_from_data <- function(current_opts, cas_data, time_precision_char, v
         return(NULL)
     }
 
-    if (is.null(cas_data) || is.null(cas_data$time)) {
+    if (is.null(time_values)) {
         return(NULL)
     }
 
     # Parse based on precision
     d_vals <- NULL
     if (time_precision_char == "day") {
-        d_vals <- as.Date(cas_data$time, format = "%Y/%m/%d")
+        d_vals <- as.Date(time_values, format = "%Y/%m/%d")
     } else if (time_precision_char == "month") {
-        d_vals <- as.Date(paste0(cas_data$time, "/01"), format = "%Y/%m/%d")
+        d_vals <- as.Date(paste0(time_values, "/01"), format = "%Y/%m/%d")
     } else if (time_precision_char == "year") {
-        d_vals <- as.Date(paste0(cas_data$time, "/01/01"), format = "%Y/%m/%d")
+        d_vals <- as.Date(paste0(time_values, "/01/01"), format = "%Y/%m/%d")
     }
 
     if (is.null(d_vals) || all(is.na(d_vals))) {
@@ -307,9 +307,25 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
 
     # D. Date Inference (Smart Defaults)
     # If StartDate/EndDate are NOT set by user/PRM, try to infer from data.
+
+    # Extract time values based on input type
+    time_values <- NULL
+    if (inherits(cas, "ss_tbl")) {
+        time_col <- ss_roles(cas)[["time"]]
+        if (!is.null(time_col) && time_col %in% names(cas)) {
+            time_values <- cas[[time_col]]
+        }
+    } else {
+        # Legacy satscan_table
+        cas_df <- get_ss_data(cas)
+        if ("time" %in% names(cas_df)) {
+            time_values <- cas_df$time
+        }
+    }
+
     inferred_dates <- infer_dates_from_data(
         current_opts = prm, # Pass prm_list instead of ss.options()
-        cas_data = get_ss_data(cas),
+        time_values = time_values,
         time_precision_char = tp_char,
         verbose = verbose
     )

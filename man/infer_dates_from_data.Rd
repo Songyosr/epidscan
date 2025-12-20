@@ -6,7 +6,7 @@
 \usage{
 infer_dates_from_data(
   current_opts,
-  cas_data,
+  time_values,
   time_precision_char,
   verbose = FALSE
 )
@@ -14,11 +14,11 @@ infer_dates_from_data(
 \arguments{
 \item{current_opts}{List of current SaTScan options}
 
-\item{cas_data}{Case data frame (must have a 'time' column)}
-
 \item{time_precision_char}{Character string: "day", "month", or "year"}
 
 \item{verbose}{Logical, print messages}
+
+\item{cas_data}{Case data frame (must have a 'time' column)}
 }
 \value{
 Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
