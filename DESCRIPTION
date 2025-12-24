@@ -1,7 +1,7 @@
 Package: epidscan
 Type: Package
 Title: Modern, Stateless Interface for SaTScan Cluster Analysis
-Version: 0.2.0
+Version: 0.1.0
 Description: A modern, stateless R interface for the SaTScan spatial scan statistic. 
     Provides a tidy, type-safe API for preparing data (`ss_tbl`), automatic parameter management, 
     and native `sf` support for spatial data. Designed for reproducibility and robust 
