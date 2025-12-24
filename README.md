@@ -88,13 +88,13 @@ summary(result)
 #> SaTScan Results Summary
 #> =======================
 #> 
-#> ── SaTScan Analysis Summary ──────────────────────────────────
+#> == SaTScan Analysis Summary ==================================
 #> Model: Discrete Poisson [High Rates]
 #> Scan:  Retrospective Space-Time
 #> Time:  1973/01/01 to 1991/12/31 (Month)
 #> Space: Circular (Max: 50% pop)
 #> Sims:  999 Monte Carlo Reps
-#> ──────────────────────────────────────────────────────────────
+#> ==============================================================
 #> 
 #> Overview:
 #>   Clusters detected:  6 (2 significant at p < 0.05)
@@ -135,7 +135,7 @@ tidy(result)
 
 For a detailed walkthrough, implementation details, and advanced
 configuration, see the [Getting Started
-vignette](vignettes/getting-started.Rmd).
+vignette](https://Songyosr.github.io/epidscan/articles/getting-started.html).
 
 ## Available Input Types
 
@@ -152,8 +152,10 @@ vignette](vignettes/getting-started.Rmd).
 
 ## Documentation
 
-- [Getting Started](doc/getting-started.html)
-- [Parameter Reference](doc/satscan-parameters.html)
+- [Getting
+  Started](https://Songyosr.github.io/epidscan/articles/getting-started.html)
+- [Parameter
+  Reference](https://Songyosr.github.io/epidscan/articles/satscan-parameters.html)
 - [Report Issues](https://github.com/Songyosr/epidscan/issues)
 
 ## Citation

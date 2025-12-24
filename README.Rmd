@@ -88,7 +88,7 @@ tidy(result)
 # map_clusters(result, simple = TRUE) # Interactive map (view locally)
 ```
 
-For a detailed walkthrough, implementation details, and advanced configuration, see the [Getting Started vignette](vignettes/getting-started.Rmd).
+For a detailed walkthrough, implementation details, and advanced configuration, see the [Getting Started vignette](https://Songyosr.github.io/epidscan/articles/getting-started.html).
 
 ## Available Input Types
 
@@ -105,8 +105,8 @@ For a detailed walkthrough, implementation details, and advanced configuration, 
 
 ## Documentation
 
-- [Getting Started](doc/getting-started.html)
-- [Parameter Reference](doc/satscan-parameters.html)
+-   [Getting Started](https://Songyosr.github.io/epidscan/articles/getting-started.html)
+-   [Parameter Reference](https://Songyosr.github.io/epidscan/articles/satscan-parameters.html)
 -   [Report Issues](https://github.com/Songyosr/epidscan/issues)
 
 ## Citation
