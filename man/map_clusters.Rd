@@ -49,6 +49,15 @@ to include in location popups. Default is \code{NULL}.}
 
 \item{verbose}{Logical. If \code{TRUE}, show progress messages. Default is \code{FALSE}.}
 
+\item{crs}{Optional. CRS for projecting Cartesian coordinates (e.g., 32618).
+If provided, coordinates are projected to WGS84 for standard mapping.}
+
+\item{use_radius}{Logical. If \code{TRUE} (default), use the physical radius from
+SaTScan results for circle size. If \code{FALSE}, size by number of locations.}
+
+\item{simple}{Logical. If \code{TRUE}, force a simple coordinate system (pixels)
+regardless of data type. Useful for debugging or non-geographic scans.}
+
 \item{...}{Additional arguments passed to \code{leaflet::addCircles()} for clusters.}
 }
 \value{

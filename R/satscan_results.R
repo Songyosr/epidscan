@@ -1,8 +1,6 @@
 # SaTScan Execution and Result Parsing
 # Internal helpers for running SaTScan and parsing output
 
-# Suppress R CMD check notes for NSE columns
-utils::globalVariables(c("LOC_ID", "CLUSTER", "P_VALUE", "REL_RISK", "CLU_RR", "epid_link_id", "CLU_ODE", "id_char", "RR"))
 
 #' Run SatScan Analysis
 #'
@@ -192,7 +190,7 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
 
     if (!is.null(clusters) && nrow(clusters) > 0) {
         if ("P_VALUE" %in% names(clusters)) {
-            clusters <- clusters |> dplyr::arrange(.data$P_VALUE)
+            clusters <- clusters |> dplyr::arrange(P_VALUE)
         }
         if (verbose) message("Clusters: ", nrow(clusters))
     } else {
@@ -206,12 +204,12 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
 
     # Start with geo_df, create LOC_ID for joining (SaTScan's key)
     locations <- geo_df |>
-        dplyr::mutate(LOC_ID = as.character(.data[[loc_id_col]]))
+        dplyr::mutate(LOC_ID = as.character(!!rlang::sym(loc_id_col)))
 
     # Join .rr (relative risk for ALL locations)
     if (!is.null(ss_results$rr) && nrow(ss_results$rr) > 0) {
         rr_df <- ss_results$rr |>
-            dplyr::mutate(LOC_ID = as.character(.data$LOC_ID))
+            dplyr::mutate(LOC_ID = as.character(LOC_ID))
 
         # Handle potential column conflicts with suffix
         locations <- dplyr::left_join(locations, rr_df,
@@ -223,7 +221,7 @@ parse_satscan_output <- function(ss_results, geo_df, loc_id_col,
     # Join .gis (cluster membership - only locations IN clusters)
     if (!is.null(ss_results$gis) && nrow(ss_results$gis) > 0) {
         gis_df <- ss_results$gis |>
-            dplyr::mutate(LOC_ID = as.character(.data$LOC_ID))
+            dplyr::mutate(LOC_ID = as.character(LOC_ID))
 
         # Handle potential column conflicts with suffix
         locations <- dplyr::left_join(locations, gis_df,

@@ -35,6 +35,10 @@ Custom scan centers. Created via \code{\link{prep_grd}}.}
 \item{prm_path}{Path to a template \code{.prm} file to load configuration from (Level 3).
 If NULL, uses bundled defaults.}
 
+\item{prm}{Optional. A \code{prm_list} object or path to a parameter file.
+Parameters in this object/file act as the base configuration, which can be
+overridden by arguments in \code{...} or \code{prm_options()}.}
+
 \item{output_dir}{Directory to copy final results to. If NULL, results remain in temp.}
 
 \item{keep_raw}{Logical. Keep raw SaTScan output files.}
@@ -95,7 +99,7 @@ likelihood ratio form is proportional to:
 \left(\frac{C-c}{C-E}\right)^{C-c}
 \cdot \mathbb{I}(c > E)
 }
-where \eqn{\mathbb{I}(c > E)} enforces the “high-rate” constraint. (For low-rate or two-sided
+where \eqn{\mathbb{I}(c > E)} enforces the "high-rate" constraint. (For low-rate or two-sided
 scanning, the indicator rule differs; see the SaTScan User Guide.)
 
 \strong{Example (Bernoulli; high-rate scanning):}

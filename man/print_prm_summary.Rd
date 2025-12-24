@@ -7,7 +7,7 @@
 print_prm_summary(s)
 }
 \arguments{
-\item{param_summary}{List from prm_summarize}
+\item{s}{List from prm_summarize}
 }
 \description{
 Print Parameter Summary

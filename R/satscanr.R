@@ -7,16 +7,16 @@
 
 #' Print Parameter Summary
 #'
-#' @param param_summary List from prm_summarize
+#' @param s List from prm_summarize
 #' @keywords internal
 print_prm_summary <- function(s) {
-    cat("── SaTScan Analysis Summary ──────────────────────────────────\n")
+    cat("== SaTScan Analysis Summary ==================================\n")
     cat(sprintf("Model: %s [%s]\n", s$model, s$scan_areas))
     cat(sprintf("Scan:  %s\n", s$analysis_type))
     cat(sprintf("Time:  %s (%s)\n", s$study_period, s$time_precision))
     cat(sprintf("Space: %s\n", s$spatial_window))
     cat(sprintf("Sims:  %d Monte Carlo Reps\n", s$monte_carlo))
-    cat("──────────────────────────────────────────────────────────────\n")
+    cat("==============================================================\n")
 }
 
 #' Infer Dates from Data
@@ -27,7 +27,7 @@ print_prm_summary <- function(s) {
 #' Helper to infer StartDate and EndDate from the case data if missing from options.
 #'
 #' @param current_opts List of current SaTScan options
-#' @param cas_data Case data frame (must have a 'time' column)
+#' @param time_values Vector of time values (from case or pop file)
 #' @param time_precision_char Character string: "day", "month", or "year"
 #' @param verbose Logical, print messages
 #' @return Named list of inferred dates (StartDate, EndDate) or NULL if nothing inferred.
@@ -147,7 +147,7 @@ infer_dates_from_data <- function(current_opts, time_values, time_precision_char
 #' \left(\frac{C-c}{C-E}\right)^{C-c}
 #' \cdot \mathbb{I}(c > E)
 #' }
-#' where \eqn{\mathbb{I}(c > E)} enforces the “high-rate” constraint. (For low-rate or two-sided
+#' where \eqn{\mathbb{I}(c > E)} enforces the "high-rate" constraint. (For low-rate or two-sided
 #' scanning, the indicator rule differs; see the SaTScan User Guide.)
 #'
 #' \strong{Example (Bernoulli; high-rate scanning):}
@@ -170,6 +170,9 @@ infer_dates_from_data <- function(current_opts, time_values, time_precision_char
 #'   Custom scan centers. Created via \code{\link{prep_grd}}.
 #' @param prm_path Path to a template \code{.prm} file to load configuration from (Level 3).
 #'   If NULL, uses bundled defaults.
+#' @param prm Optional. A \code{prm_list} object or path to a parameter file.
+#'   Parameters in this object/file act as the base configuration, which can be
+#'   overridden by arguments in \code{...} or \code{prm_options()}.
 #' @param keep_raw Logical. Keep raw SaTScan output files.
 #' @param output_dir Directory to copy final results to. If NULL, results remain in temp.
 #' @param verbose Logical. Print progress and debug info.
@@ -235,6 +238,7 @@ infer_dates_from_data <- function(current_opts, time_values, time_precision_char
 #'
 #' @importFrom utils write.table read.table modifyList file_test
 #' @importFrom dplyr rename
+#' @importFrom utils write.table read.table modifyList file_test tail
 #' @export
 satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
                      prm_path = NULL,

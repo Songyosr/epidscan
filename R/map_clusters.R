@@ -23,6 +23,12 @@
 #'   in addition to cluster boundaries. Default is `TRUE`.
 #' @param popup_vars Character vector. Additional variables from `$locations`
 #'   to include in location popups. Default is `NULL`.
+#' @param crs Optional. CRS for projecting Cartesian coordinates (e.g., 32618).
+#'   If provided, coordinates are projected to WGS84 for standard mapping.
+#' @param use_radius Logical. If `TRUE` (default), use the physical radius from
+#'   SaTScan results for circle size. If `FALSE`, size by number of locations.
+#' @param simple Logical. If `TRUE`, force a simple coordinate system (pixels)
+#'   regardless of data type. Useful for debugging or non-geographic scans.
 #' @param verbose Logical. If `TRUE`, show progress messages. Default is `FALSE`.
 #' @param ... Additional arguments passed to `leaflet::addCircles()` for clusters.
 #'
@@ -314,12 +320,12 @@ prepare_cluster_data <- function(x, significance_only, coords) {
   # This avoids issues if the SaTScan output table lacks coordinates
   if (!is.null(x$locations) && "CLUSTER" %in% names(x$locations)) {
     cluster_stats <- x$locations |>
-      dplyr::filter(!is.na(.data$CLUSTER)) |>
-      dplyr::group_by(.data$CLUSTER) |>
+      dplyr::filter(!is.na(CLUSTER)) |>
+      dplyr::group_by(CLUSTER) |>
       dplyr::summarise(
         n_locations = dplyr::n(),
-        centroid_lat = mean(.data[[coords$lat]], na.rm = TRUE),
-        centroid_lon = mean(.data[[coords$lon]], na.rm = TRUE),
+        centroid_lat = mean(!!rlang::sym(coords$lat), na.rm = TRUE),
+        centroid_lon = mean(!!rlang::sym(coords$lon), na.rm = TRUE),
         .groups = "drop"
       )
 

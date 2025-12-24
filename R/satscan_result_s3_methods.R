@@ -487,7 +487,7 @@ augment.satscan_result <- function(x, data = NULL, ...) {
     # Mapping of SaTScan DBF names to tidy broom names (with dot prefix)
     ss_mapping <- c(
         "CLUSTER" = ".cluster",
-        "LOC_ID" = ".loc_id",
+        # "LOC_ID" = ".loc_id", # Keep original ID name
         "REL_RISK" = ".relative_risk",
         "LLR" = ".llr",
         "OBSERVED" = ".observed",
@@ -533,16 +533,16 @@ augment.satscan_result <- function(x, data = NULL, ...) {
 
         if (!is.null(p_col) && !is.null(c_col)) {
             p_df <- cluster_info[, c(c_col, p_col), drop = FALSE]
-            names(p_df) <- c(".cluster", ".p_value")
+            names(p_df) <- c(".cluster", ".cluster_p_value")
             p_df$.cluster <- as.integer(p_df$.cluster)
 
             # Join!
             aug_data <- dplyr::left_join(aug_data, p_df, by = ".cluster")
         } else {
-            aug_data$.p_value <- as.numeric(NA)
+            aug_data$.cluster_p_value <- as.numeric(NA)
         }
     } else {
-        aug_data$.p_value <- as.numeric(NA)
+        aug_data$.cluster_p_value <- as.numeric(NA)
     }
 
     make_tidy_df(aug_data)

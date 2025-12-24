@@ -18,7 +18,8 @@ Imports:
     utils,
     lifecycle,
     vctrs,
-    generics
+    generics,
+    tibble
 Suggests:
     testthat,
     knitr,
