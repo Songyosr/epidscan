@@ -3,13 +3,17 @@ test_that("Real Data Workflow with New API", {
     # library(rsatscan) # Removed
 
     # 1. Load Data
-    cases_path <- system.file("extdata", "cases_prepared.rds", package = "epidscan")
-    if (cases_path == "") skip("cases_prepared.rds not found")
+    cases_path <- "../../data-raw/cases_prepared.rds"
+    if (!file.exists(cases_path)) cases_path <- "data-raw/cases_prepared.rds"
+    if (!file.exists(cases_path)) skip("cases_prepared.rds not found")
     cases_raw <- readRDS(cases_path)
 
-    pop_path <- system.file("extdata", "population_cache", "thailand_pop_2024.rds", package = "epidscan")
-    pop_path2 <- system.file("extdata", "population_cache", "thailand_pop_2025.rds", package = "epidscan")
-    if (pop_path == "") skip("thailand_pop_2024.rds not found")
+    pop_dir <- "../../data-raw/population_cache"
+    if (!dir.exists(pop_dir)) pop_dir <- "data-raw/population_cache"
+    pop_path <- file.path(pop_dir, "thailand_pop_2024.rds")
+    pop_path2 <- file.path(pop_dir, "thailand_pop_2025.rds")
+
+    if (!file.exists(pop_path)) skip("thailand_pop_2024.rds not found")
     pop_raw <- readRDS(pop_path)
 
     if (file.exists(pop_path2)) {
@@ -76,7 +80,7 @@ test_that("Real Data Workflow with New API", {
 
     # SatScan Path
     # Check common locations
-    ss_path <- "/Applications/SaTScan.app/Contents/MacOS/SaTScan"
+    ss_path <- "/Applications/SaTScan.app/Contents/app/satscan"
     if (!file.exists(ss_path)) skip("SaTScan executable not found")
     set_satscan_path(ss_path)
 
@@ -113,16 +117,19 @@ test_that("Real Data: Template + Tweak Hierarchy", {
 
     # 1. Reuse Data Prep (Copied from above for independence, or we can rely on file existence)
     # Ideally we'd wrap setup in a helper, but for now we trust previous test passed or skip if data missing.
-    cases_path <- system.file("extdata", "cases_prepared.rds", package = "epidscan")
-    if (cases_path == "") skip("cases_prepared.rds not found")
+    cases_path <- "../../data-raw/cases_prepared.rds"
+    if (!file.exists(cases_path)) cases_path <- "data-raw/cases_prepared.rds"
+    if (!file.exists(cases_path)) skip("cases_prepared.rds not found")
     cases <- readRDS(cases_path) |>
         dplyr::mutate(date = as.Date(onset_date), location_id = as.character(location_id)) |>
         dplyr::filter(lubridate::year(date) >= 2024) |>
         dplyr::group_by(location_id, date) |>
         dplyr::summarise(cases = dplyr::n(), .groups = "drop")
 
-    pop_path <- system.file("extdata", "population_cache", "thailand_pop_2024.rds", package = "epidscan")
-    if (pop_path == "") skip("pop not found")
+    pop_dir <- "../../data-raw/population_cache"
+    if (!dir.exists(pop_dir)) pop_dir <- "data-raw/population_cache"
+    pop_path <- file.path(pop_dir, "thailand_pop_2024.rds")
+    if (!file.exists(pop_path)) skip("pop not found")
     pop_raw <- readRDS(pop_path)
     pop_cols <- grep("^(male|female)_g", names(pop_raw), value = TRUE)
     pop_agg <- pop_raw |>
@@ -151,7 +158,7 @@ test_that("Real Data: Template + Tweak Hierarchy", {
     pop_obj <- prep_pop(pop_agg, loc_id = location_id, time = year, pop = pop)
     geo_obj <- prep_geo(geo_sf, loc_id = location_id)
 
-    ss_path <- "/Applications/SaTScan.app/Contents/MacOS/SaTScan"
+    ss_path <- "/Applications/SaTScan.app/Contents/app/satscan"
     if (!file.exists(ss_path)) skip("SaTScan executable not found")
     set_satscan_path(ss_path)
 
