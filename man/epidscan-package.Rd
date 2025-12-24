@@ -8,6 +8,15 @@
 \description{
 A modern, stateless R interface for the SaTScan spatial scan statistic. Provides a tidy, type-safe API for preparing data (`ss_tbl`), automatic parameter management, and native `sf` support for spatial data. Designed for reproducibility and robust epidemiological workflows without global state side-effects.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://Songyosr.github.io/epidscan}
+  \item \url{https://github.com/Songyosr/epidscan}
+  \item Report bugs at \url{https://github.com/Songyosr/epidscan/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Songyos Rajborirug \email{songyos.r@psu.ac.th} (\href{https://orcid.org/0000-0002-5000-7409}{ORCID})
 
