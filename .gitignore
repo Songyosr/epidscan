@@ -31,7 +31,7 @@ inst/extdata/population_cache/
 # Legacy/development files (not part of package)
 legacy/
 *.rds
-data-raw/NMlung/
+data-raw/
 
 # Documentation to ignore
 SaTScan_Users_Guide.md
@@ -41,6 +41,9 @@ AGENT_GUIDELINES.md
 
 # Local tests (user data)
 tests/testthat/test-real_data_new_api.R
-/Meta/
-inst/doc
+#/Meta/
+#inst/doc
+#/doc/
+
 /doc/
+/Meta/
