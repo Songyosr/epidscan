@@ -475,45 +475,74 @@ glance.satscan_result <- function(x, ...) {
 #' @export
 #' @method augment satscan_result
 augment.satscan_result <- function(x, data = NULL, ...) {
-    if (is.null(data)) {
-        data <- x$locations
-    }
+    # 1. Base data
+    # If no data is provided, use the locations merged during parsing
+    aug_data <- if (is.null(data)) x$locations else data
 
-    if (is.null(data)) {
+    if (is.null(aug_data)) {
         stop("No data available to augment", call. = FALSE)
     }
 
-    # Start with copy of data
-    aug_data <- data
+    # 2. Tidy SaTScan-derived columns in aug_data
+    # Mapping of SaTScan DBF names to tidy broom names (with dot prefix)
+    ss_mapping <- c(
+        "CLUSTER" = ".cluster",
+        "LOC_ID" = ".loc_id",
+        "REL_RISK" = ".relative_risk",
+        "LLR" = ".llr",
+        "OBSERVED" = ".observed",
+        "EXPECTED" = ".expected",
+        "ODE" = ".obs_exp_ratio",
+        "LATITUDE" = ".latitude",
+        "LONGITUDE" = ".longitude",
+        "X" = ".x",
+        "Y" = ".y"
+    )
 
-    # Add cluster assignment
-    if ("CLUSTER" %in% names(aug_data)) {
-        aug_data$.cluster <- aug_data$CLUSTER
-        aug_data$.in_cluster <- !is.na(aug_data$CLUSTER)
+    # Apply mapping (rename or create tidied version)
+    for (old in names(ss_mapping)) {
+        if (old %in% names(aug_data)) {
+            new_name <- ss_mapping[old]
+            # Rename if not already existing
+            if (!(new_name %in% names(aug_data))) {
+                names(aug_data)[names(aug_data) == old] <- new_name
+            } else {
+                # Sync if already exists
+                aug_data[[new_name]] <- aug_data[[old]]
+            }
+        }
+    }
+
+    # 3. Add .in_cluster helper
+    if (".cluster" %in% names(aug_data)) {
+        aug_data$.in_cluster <- !is.na(aug_data$.cluster)
+        # Ensure it's integer for better output
+        aug_data$.cluster <- as.integer(aug_data$.cluster)
     } else {
-        aug_data$.cluster <- NA
+        aug_data$.cluster <- as.integer(NA)
         aug_data$.in_cluster <- FALSE
     }
 
-    # Add relative risk
-    if ("REL_RISK" %in% names(aug_data)) {
-        aug_data$.relative_risk <- aug_data$REL_RISK
+    # 4. Join Cluster-level p-value from x$clusters
+    if (!is.null(x$clusters) && ".cluster" %in% names(aug_data)) {
+        # SaTScan clusters might have CLUSTER and P_VALUE
+        cluster_info <- x$clusters
+        # Handle both raw and tidied versions of clusters p-value
+        p_col <- if ("P_VALUE" %in% names(cluster_info)) "P_VALUE" else if ("p_value" %in% names(cluster_info)) "p_value" else NULL
+        c_col <- if ("CLUSTER" %in% names(cluster_info)) "CLUSTER" else if ("cluster" %in% names(cluster_info)) "cluster" else NULL
+
+        if (!is.null(p_col) && !is.null(c_col)) {
+            p_df <- cluster_info[, c(c_col, p_col), drop = FALSE]
+            names(p_df) <- c(".cluster", ".p_value")
+            p_df$.cluster <- as.integer(p_df$.cluster)
+
+            # Join!
+            aug_data <- dplyr::left_join(aug_data, p_df, by = ".cluster")
+        } else {
+            aug_data$.p_value <- as.numeric(NA)
+        }
     } else {
-        aug_data$.relative_risk <- NA
-    }
-
-    # Add cluster-level p-value by joining
-    if (!is.null(x$clusters) && "CLUSTER" %in% names(aug_data)) {
-        cluster_pvals <- x$clusters[, c("CLUSTER", "P_VALUE"), drop = FALSE]
-        names(cluster_pvals)[2] <- ".cluster_p_value"
-
-        # Ensure types match for join
-        aug_data$CLUSTER <- as.character(aug_data$CLUSTER)
-        cluster_pvals$CLUSTER <- as.character(cluster_pvals$CLUSTER)
-
-        aug_data <- dplyr::left_join(aug_data, cluster_pvals, by = "CLUSTER")
-    } else {
-        aug_data$.cluster_p_value <- NA
+        aug_data$.p_value <- as.numeric(NA)
     }
 
     make_tidy_df(aug_data)
