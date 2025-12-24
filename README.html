@@ -632,229 +632,301 @@ configuration explicit and traceable.</p>
 <p><strong>Requirements:</strong> <a href="https://www.satscan.org/">SaTScan™</a> must be installed on your
 system.</p>
 <h2 id="example">Example</h2>
-<p>Using the New Mexico brain cancer dataset (distributed with
-SaTScan):</p>
+<p>Using the New Mexico brain cancer dataset (distributed with SaTScan):
+Using the New Mexico Lung Cancer dataset (included in
+<code>epidscan</code>):</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(epidscan)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Configure SaTScan path (one time)</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>ss_path <span class="ot">&lt;-</span> <span class="st">&quot;/Applications/SaTScan.app/Contents/app/satscan&quot;</span> <span class="co"># Depend on yours location</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="fu">set_satscan_path</span>(ss_path)</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># Load the classic NM brain cancer example data</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co"># This dataset is distributed with SaTScan and included in the rsatscan package</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="fu">data</span>(NMcas, NMpop, NMgeo, <span class="at">package =</span> <span class="st">&quot;rsatscan&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;dplyr&#39;</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:stats&#39;:</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;     filter, lag</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:base&#39;:</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co"># Check data</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="fu">head</span>(NMcas)</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="fu">head</span>(NMpop)</span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="fu">head</span>(NMgeo) <span class="co"># The real data are actually X/Y not Lat/Long</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co"># Configure SaTScan path (one time)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>ss_path <span class="ot">&lt;-</span> <span class="st">&quot;/Applications/SaTScan.app/Contents/app/satscan&quot;</span> <span class="co"># Depend on yours location</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="fu">set_satscan_path</span>(ss_path)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; SatScan path set to: /Applications/SaTScan.app/Contents/app/satscan</span></span>
 <span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co"># Prepare inputs</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  NMcas,</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;cases&quot;</span>,</span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;year&quot;</span>,</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>)</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>  NMpop,</span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;year&quot;</span>,</span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;population&quot;</span>,</span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span></span>
-<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>)</span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
-<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  NMgeo,</span>
-<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
-<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  <span class="at">coord1 =</span> <span class="st">&quot;long&quot;</span>,</span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  <span class="at">coord2 =</span> <span class="st">&quot;lat&quot;</span>,</span>
-<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  <span class="at">coord_type =</span> <span class="st">&quot;cartesian&quot;</span></span>
-<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>)</span>
-<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a></span>
-<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co"># Run analysis</span></span>
-<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co"># Create parameter object (Auto-detects SaTScan version)</span></span>
-<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a>my_prm <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
-<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># RetroSpective Space-time</span></span>
-<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>  <span class="at">ModelType =</span> <span class="dv">0</span>, <span class="co"># Poisson</span></span>
-<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>  <span class="at">TimeAggregationUnits =</span> <span class="dv">4</span>, <span class="co"># Year</span></span>
-<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span></span>
-<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a>)</span>
-<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a></span>
-<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a><span class="co"># Preview configuration</span></span>
-<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a><span class="fu">print</span>(my_prm)</span>
-<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="co">#&gt; ── SaTScan Analysis Summary ──────────────────────────────────</span></span>
-<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt; Model: Discrete Poisson [High Rates]</span></span>
-<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="co">#&gt; Scan:  Retrospective Space-Time</span></span>
-<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt; Time:  ? to ? (Year)</span></span>
-<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt; Space: Circular (Max: 50% pop)</span></span>
-<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt; Sims:  999 Monte Carlo Reps</span></span>
-<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co">#&gt; ──────────────────────────────────────────────────────────────</span></span>
-<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a></span>
-<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">satscanr</span>(</span>
-<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a>  <span class="at">cas =</span> cas,</span>
-<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a>  <span class="at">geo =</span> geo,</span>
-<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a>  <span class="at">pop =</span> pop,</span>
-<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a>  <span class="at">prm =</span> my_prm,</span>
-<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a>  <span class="co"># verbose = TRUE,</span></span>
-<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a>  <span class="at">output_dir =</span> <span class="st">&quot;legacy/example/&quot;</span></span>
-<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a>)</span>
-<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a></span>
-<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a><span class="co"># Examine results</span></span>
-<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a><span class="fu">print</span>(result)</span>
-<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a><span class="co">#&gt; SaTScan Analysis Results</span></span>
-<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a><span class="co">#&gt; ========================</span></span>
-<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a><span class="co">#&gt; Model: Poisson (Discrete)</span></span>
-<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a><span class="co">#&gt; Analysis Type: Space-Time Retrospective</span></span>
-<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a><span class="co">#&gt;</span></span>
-<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a><span class="co">#&gt; Clusters Detected: 5</span></span>
-<span id="cb2-79"><a href="#cb2-79" tabindex="-1"></a><span class="co">#&gt; Significant Clusters (p &lt; 0.05): 2</span></span>
-<span id="cb2-80"><a href="#cb2-80" tabindex="-1"></a></span>
-<span id="cb2-81"><a href="#cb2-81" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb2-82"><a href="#cb2-82" tabindex="-1"></a><span class="fu">tidy</span>(result)</span>
-<span id="cb2-83"><a href="#cb2-83" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 11</span></span>
-<span id="cb2-84"><a href="#cb2-84" tabindex="-1"></a><span class="co">#&gt;   cluster observed expected relative_risk log_likelihood p_value radius</span></span>
-<span id="cb2-85"><a href="#cb2-85" tabindex="-1"></a><span class="co">#&gt;     &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;         &lt;dbl&gt;          &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;</span></span>
-<span id="cb2-86"><a href="#cb2-86" tabindex="-1"></a><span class="co">#&gt; 1       1      129     57.1          2.26           23.7   0.001   48.2</span></span>
-<span id="cb2-87"><a href="#cb2-87" tabindex="-1"></a><span class="co">#&gt; 2       2       46     19.0          2.42           10.4   0.021   39.1</span></span>
-<span id="cb2-88"><a href="#cb2-88" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
-<span id="cb2-90"><a href="#cb2-90" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 7</span></span>
-<span id="cb2-91"><a href="#cb2-91" tabindex="-1"></a><span class="co">#&gt;   n_clusters n_significant n_locations max_relative_risk min_p_value</span></span>
-<span id="cb2-92"><a href="#cb2-92" tabindex="-1"></a><span class="co">#&gt;        &lt;int&gt;         &lt;int&gt;       &lt;int&gt;             &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb2-93"><a href="#cb2-93" tabindex="-1"></a><span class="co">#&gt; 1          5             2          32              2.42       0.001</span></span>
-<span id="cb2-94"><a href="#cb2-94" tabindex="-1"></a></span>
-<span id="cb2-95"><a href="#cb2-95" tabindex="-1"></a><span class="fu">augment</span>(result)</span></code></pre></div>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co"># Load the New Mexico Lung Cancer data</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="fu">data</span>(NMlung_cas)</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="fu">data</span>(NMlung_pop)</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="fu">data</span>(NMlung_geo)</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co"># Check data</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="fu">head</span>(NMlung_cas)</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;       county cases       date age_group    sex</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 1 Bernalillo     1 1973-01-01     40-44   Male</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 2 Bernalillo     2 1973-01-01     45-49   Male</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 3 Bernalillo     2 1973-01-01     50-54   Male</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 4 Bernalillo     1 1973-01-01     50-54 Female</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; 5 Bernalillo     1 1973-01-01     65-69   Male</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; 6 Bernalillo     1 1973-01-01     70-74   Male</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="fu">head</span>(NMlung_pop)</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt;       county year population age_group    sex</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; 1 Bernalillo 1973        469        &lt;5   Male</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt; 2 Bernalillo 1973        478        &lt;5 Female</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; 3 Bernalillo 1973      14502        &lt;5   Male</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; 4 Bernalillo 1973      13888        &lt;5 Female</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; 5 Bernalillo 1973        566        &lt;5   Male</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; 6 Bernalillo 1973        565        &lt;5 Female</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="fu">head</span>(NMlung_geo)</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt;       county x_km y_km</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; 1 Bernalillo  219  338</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; 2     Catron   27  189</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; 3     Chaves  418  156</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; 4     Colfax  408  538</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt; 5      Curry  534  262</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt; 6     DeBaca  438  272</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co"># Prepare inputs</span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co"># Case File: Monthly data with Age/Sex covariates</span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a>  NMlung_cas,</span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;cases&quot;</span>,</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;date&quot;</span>,</span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;month&quot;</span>,</span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a>  <span class="at">covars =</span> <span class="fu">c</span>(<span class="st">&quot;age_group&quot;</span>, <span class="st">&quot;sex&quot;</span>)</span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a>)</span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co"># Population File: Yearly census data</span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a>  NMlung_pop,</span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;year&quot;</span>,</span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;population&quot;</span>,</span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span>,</span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a>  <span class="at">covars =</span> <span class="fu">c</span>(<span class="st">&quot;age_group&quot;</span>, <span class="st">&quot;sex&quot;</span>)</span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a>)</span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a><span class="co"># Coordinates File: Cartesian (km)</span></span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a>  NMlung_geo,</span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a>  <span class="at">coord1 =</span> <span class="st">&quot;x_km&quot;</span>,</span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a>  <span class="at">coord2 =</span> <span class="st">&quot;y_km&quot;</span>,</span>
+<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a>  <span class="at">coord_type =</span> <span class="st">&quot;cartesian&quot;</span></span>
+<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a>)</span>
+<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a></span>
+<span id="cb2-79"><a href="#cb2-79" tabindex="-1"></a><span class="co"># Run analysis</span></span>
+<span id="cb2-80"><a href="#cb2-80" tabindex="-1"></a><span class="co"># Create parameter object (Auto-detects SaTScan version)</span></span>
+<span id="cb2-81"><a href="#cb2-81" tabindex="-1"></a>my_prm <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
+<span id="cb2-82"><a href="#cb2-82" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># RetroSpective Space-time</span></span>
+<span id="cb2-83"><a href="#cb2-83" tabindex="-1"></a>  <span class="at">ModelType =</span> <span class="dv">0</span>, <span class="co"># Poisson</span></span>
+<span id="cb2-84"><a href="#cb2-84" tabindex="-1"></a>  <span class="at">TimeAggregationUnits =</span> <span class="dv">3</span>, <span class="co"># Month</span></span>
+<span id="cb2-85"><a href="#cb2-85" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span></span>
+<span id="cb2-86"><a href="#cb2-86" tabindex="-1"></a>)</span>
+<span id="cb2-87"><a href="#cb2-87" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" tabindex="-1"></a><span class="co"># Preview configuration</span></span>
+<span id="cb2-89"><a href="#cb2-89" tabindex="-1"></a><span class="fu">print</span>(my_prm)</span>
+<span id="cb2-90"><a href="#cb2-90" tabindex="-1"></a><span class="co">#&gt; ── SaTScan Analysis Summary ──────────────────────────────────</span></span>
+<span id="cb2-91"><a href="#cb2-91" tabindex="-1"></a><span class="co">#&gt; Model: Discrete Poisson [High Rates]</span></span>
+<span id="cb2-92"><a href="#cb2-92" tabindex="-1"></a><span class="co">#&gt; Scan:  Retrospective Space-Time</span></span>
+<span id="cb2-93"><a href="#cb2-93" tabindex="-1"></a><span class="co">#&gt; Time:  2000/1/1 to 2000/12/31 (Year)</span></span>
+<span id="cb2-94"><a href="#cb2-94" tabindex="-1"></a><span class="co">#&gt; Space: Circular (Max: 50% pop)</span></span>
+<span id="cb2-95"><a href="#cb2-95" tabindex="-1"></a><span class="co">#&gt; Sims:  999 Monte Carlo Reps</span></span>
+<span id="cb2-96"><a href="#cb2-96" tabindex="-1"></a><span class="co">#&gt; ──────────────────────────────────────────────────────────────</span></span>
+<span id="cb2-97"><a href="#cb2-97" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-98"><a href="#cb2-98" tabindex="-1"></a><span class="co">#&gt; (plus 146 other parameters. Use as.list() to view all)</span></span>
+<span id="cb2-99"><a href="#cb2-99" tabindex="-1"></a></span>
+<span id="cb2-100"><a href="#cb2-100" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">satscanr</span>(</span>
+<span id="cb2-101"><a href="#cb2-101" tabindex="-1"></a>  <span class="at">cas =</span> cas,</span>
+<span id="cb2-102"><a href="#cb2-102" tabindex="-1"></a>  <span class="at">geo =</span> geo,</span>
+<span id="cb2-103"><a href="#cb2-103" tabindex="-1"></a>  <span class="at">pop =</span> pop,</span>
+<span id="cb2-104"><a href="#cb2-104" tabindex="-1"></a>  <span class="at">prm =</span> my_prm,</span>
+<span id="cb2-105"><a href="#cb2-105" tabindex="-1"></a>  <span class="at">output_dir =</span> <span class="st">&quot;example_output&quot;</span></span>
+<span id="cb2-106"><a href="#cb2-106" tabindex="-1"></a>)</span>
+<span id="cb2-107"><a href="#cb2-107" tabindex="-1"></a><span class="co">#&gt; Warning in value[[3L]](cond): SaTScan execution failed: SaTScan execution failed with exit code: 1</span></span>
+<span id="cb2-108"><a href="#cb2-108" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-109"><a href="#cb2-109" tabindex="-1"></a><span class="co">#&gt; --- SaTScan Output (Tail) ---</span></span>
+<span id="cb2-110"><a href="#cb2-110" tabindex="-1"></a><span class="co">#&gt; The shapefiles option is not available for Cartesian coordinates.</span></span>
+<span id="cb2-111"><a href="#cb2-111" tabindex="-1"></a><span class="co">#&gt; The option was disabled.</span></span>
+<span id="cb2-112"><a href="#cb2-112" tabindex="-1"></a><span class="co">#&gt; Parameter Setting Warning:</span></span>
+<span id="cb2-113"><a href="#cb2-113" tabindex="-1"></a><span class="co">#&gt; The Google Maps option is not available for Cartesian coordinates.</span></span>
+<span id="cb2-114"><a href="#cb2-114" tabindex="-1"></a><span class="co">#&gt; The option was disabled.</span></span>
+<span id="cb2-115"><a href="#cb2-115" tabindex="-1"></a><span class="co">#&gt; Error: Unknown identifier in population file, record 66115. &#39;&#39; was not specified in the coordinates file.</span></span>
+<span id="cb2-116"><a href="#cb2-116" tabindex="-1"></a><span class="co">#&gt; Error: Record 66115 of the population file is missing the date.</span></span>
+<span id="cb2-117"><a href="#cb2-117" tabindex="-1"></a><span class="co">#&gt; Please see the &#39;population file&#39; section in the user guide for help.</span></span>
+<span id="cb2-118"><a href="#cb2-118" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-119"><a href="#cb2-119" tabindex="-1"></a><span class="co">#&gt; Problem encountered when reading the data from the input files.</span></span>
+<span id="cb2-120"><a href="#cb2-120" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-121"><a href="#cb2-121" tabindex="-1"></a><span class="co">#&gt; Use &#39;--help&#39; to get help with program options.</span></span>
+<span id="cb2-122"><a href="#cb2-122" tabindex="-1"></a><span class="co">#&gt; You are running SaTScan v10.2.5.</span></span>
+<span id="cb2-123"><a href="#cb2-123" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-124"><a href="#cb2-124" tabindex="-1"></a><span class="co">#&gt; SaTScan is free, available for download from https://www.satscan.org/.</span></span>
+<span id="cb2-125"><a href="#cb2-125" tabindex="-1"></a><span class="co">#&gt; It may be used free of charge as long as proper citations are given</span></span>
+<span id="cb2-126"><a href="#cb2-126" tabindex="-1"></a><span class="co">#&gt; to both the SaTScan software and the underlying statistical methodology.</span></span>
+<span id="cb2-127"><a href="#cb2-127" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-128"><a href="#cb2-128" tabindex="-1"></a><span class="co">#&gt; Reading the coordinates file</span></span>
+<span id="cb2-129"><a href="#cb2-129" tabindex="-1"></a><span class="co">#&gt; Reading the population file</span></span>
+<span id="cb2-130"><a href="#cb2-130" tabindex="-1"></a><span class="co">#&gt; ------------------------------</span></span>
+<span id="cb2-131"><a href="#cb2-131" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" tabindex="-1"></a><span class="co"># Examine results</span></span>
+<span id="cb2-133"><a href="#cb2-133" tabindex="-1"></a><span class="fu">summary</span>(result)</span>
+<span id="cb2-134"><a href="#cb2-134" tabindex="-1"></a><span class="co">#&gt; SaTScan Results Summary</span></span>
+<span id="cb2-135"><a href="#cb2-135" tabindex="-1"></a><span class="co">#&gt; =======================</span></span>
+<span id="cb2-136"><a href="#cb2-136" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-137"><a href="#cb2-137" tabindex="-1"></a><span class="co">#&gt; ── SaTScan Analysis Summary ──────────────────────────────────</span></span>
+<span id="cb2-138"><a href="#cb2-138" tabindex="-1"></a><span class="co">#&gt; Model: Discrete Poisson [High Rates]</span></span>
+<span id="cb2-139"><a href="#cb2-139" tabindex="-1"></a><span class="co">#&gt; Scan:  Retrospective Space-Time</span></span>
+<span id="cb2-140"><a href="#cb2-140" tabindex="-1"></a><span class="co">#&gt; Time:  2000/1/1 to 2000/12/31 (Month)</span></span>
+<span id="cb2-141"><a href="#cb2-141" tabindex="-1"></a><span class="co">#&gt; Space: Circular (Max: 50% pop)</span></span>
+<span id="cb2-142"><a href="#cb2-142" tabindex="-1"></a><span class="co">#&gt; Sims:  999 Monte Carlo Reps</span></span>
+<span id="cb2-143"><a href="#cb2-143" tabindex="-1"></a><span class="co">#&gt; ──────────────────────────────────────────────────────────────</span></span>
+<span id="cb2-144"><a href="#cb2-144" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-145"><a href="#cb2-145" tabindex="-1"></a><span class="co">#&gt; Overview:</span></span>
+<span id="cb2-146"><a href="#cb2-146" tabindex="-1"></a><span class="co">#&gt;   Clusters detected:  0 (0 significant at p &lt; 0.05)</span></span>
+<span id="cb2-147"><a href="#cb2-147" tabindex="-1"></a><span class="co">#&gt;   Locations analyzed: 32 (0 in clusters)</span></span>
+<span id="cb2-148"><a href="#cb2-148" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-149"><a href="#cb2-149" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-150"><a href="#cb2-150" tabindex="-1"></a><span class="co">#&gt; (Raw SaTScan text available. Use print(result, raw = TRUE) to view)</span></span>
+<span id="cb2-151"><a href="#cb2-151" tabindex="-1"></a></span>
+<span id="cb2-152"><a href="#cb2-152" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb2-153"><a href="#cb2-153" tabindex="-1"></a><span class="fu">tidy</span>(result)</span>
+<span id="cb2-154"><a href="#cb2-154" tabindex="-1"></a><span class="co">#&gt; # A tibble: 0 × 2</span></span>
+<span id="cb2-155"><a href="#cb2-155" tabindex="-1"></a><span class="co">#&gt; # ℹ 2 variables: cluster &lt;int&gt;, p_value &lt;dbl&gt;</span></span>
+<span id="cb2-156"><a href="#cb2-156" tabindex="-1"></a></span>
+<span id="cb2-157"><a href="#cb2-157" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
+<span id="cb2-158"><a href="#cb2-158" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 13</span></span>
+<span id="cb2-159"><a href="#cb2-159" tabindex="-1"></a><span class="co">#&gt;   n_clusters n_significant n_locations n_in_clusters min_p_value</span></span>
+<span id="cb2-160"><a href="#cb2-160" tabindex="-1"></a><span class="co">#&gt;        &lt;int&gt;         &lt;int&gt;       &lt;int&gt;         &lt;int&gt;       &lt;dbl&gt;</span></span>
+<span id="cb2-161"><a href="#cb2-161" tabindex="-1"></a><span class="co">#&gt; 1          0             0          32             0          NA</span></span>
+<span id="cb2-162"><a href="#cb2-162" tabindex="-1"></a><span class="co">#&gt; # ℹ 8 more variables: max_relative_risk &lt;dbl&gt;, max_llr &lt;dbl&gt;,</span></span>
+<span id="cb2-163"><a href="#cb2-163" tabindex="-1"></a><span class="co">#&gt; #   prop_in_clusters &lt;dbl&gt;, total_observed &lt;dbl&gt;, total_population &lt;dbl&gt;,</span></span>
+<span id="cb2-164"><a href="#cb2-164" tabindex="-1"></a><span class="co">#&gt; #   model &lt;chr&gt;, analysis_type &lt;chr&gt;, monte_carlo_reps &lt;int&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># simple = TRUE for Cartesian/blank canvas mapping</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">simple =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <h2 id="core-workflow">Core Workflow</h2>
 <h3 id="id_1-create-validated-inputs">1. Create validated inputs</h3>
 <p>The <code>ss_*()</code> functions construct type-safe input
 objects:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Case file</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  data,</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;case_count&quot;</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;onset_date&quot;</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;day&quot;</span> <span class="co"># &quot;day&quot;, &quot;month&quot;, &quot;year&quot;, or &quot;generic&quot;</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Coordinates file (works with sf objects or data frames)</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  shapefile_sf,</span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="co"># Centroids extracted automatically</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="co"># CRS detected and coordinates ordered correctly for SaTScan</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>)</span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co"># Population file</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>  population_data,</span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;census_year&quot;</span>,</span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;pop_count&quot;</span>,</span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span></span>
-<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Case file</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  data,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;case_count&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;onset_date&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;day&quot;</span> <span class="co"># &quot;day&quot;, &quot;month&quot;, &quot;year&quot;, or &quot;generic&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># Coordinates file (works with sf objects or data frames)</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  shapefile_sf,</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="co"># Centroids extracted automatically</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="co"># CRS detected and coordinates ordered correctly for SaTScan</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>)</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co"># Population file</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  population_data,</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;census_year&quot;</span>,</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;pop_count&quot;</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>)</span></code></pre></div>
 <h3 id="id_2-configure--run">2. Configure &amp; Run</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># New: Object-Oriented Configuration</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>opts <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># Space-time</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">MaxSpatialSizeInPopulation =</span> <span class="dv">50</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">satscanr</span>(</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  cas,</span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">geo =</span> geo,</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">pop =</span> pop,</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">prm =</span> opts</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># New: Object-Oriented Configuration</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>opts <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># Space-time</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">MaxSpatialSizeInPopulation =</span> <span class="dv">50</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">satscanr</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  cas,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">geo =</span> geo,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">pop =</span> pop,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">prm =</span> opts</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>)</span></code></pre></div>
 <p>The <code>satscanr()</code> function: - Writes SaTScan input files
 (<code>.cas</code>, <code>.geo</code>, <code>.pop</code>) - Constructs
 parameter file using three-level hierarchy - Executes SaTScan - Parses
 results into structured R objects</p>
 <h3 id="id_3-work-with-results">3. Work with results</h3>
 <p>Results implement broom methods for tidy analysis:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Cluster-level details</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">tidy</span>(result)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Analysis-level summary</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Visualize clusters</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># The NM dataset uses arbitrary X/Y coordinates (named lat/long).</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># We set simple = TRUE to plot them on a blank canvas (Simple CRS).</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">simple =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Cluster-level details</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">tidy</span>(result)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Analysis-level summary</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># Visualize clusters</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># The NM dataset uses arbitrary X/Y coordinates (named lat/long).</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># We set simple = TRUE to plot them on a blank canvas (Simple CRS).</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">simple =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <h2 id="key-features">Key Features</h2>
 <h3 id="the-ss_tbl-system">The <code>ss_tbl</code> System</h3>
 <p>Input validation at construction time:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(data, <span class="at">loc_id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">cases =</span> <span class="st">&quot;n&quot;</span>, <span class="at">time =</span> <span class="st">&quot;date&quot;</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">class</span>(cas)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;ss_tbl&quot;      &quot;data.frame&quot;</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">print</span>(cas)</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; &lt;ss_tbl: cas&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; Roles:</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   - loc_id -&gt; id</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;   - cases -&gt; n</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;   - time -&gt; date</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; Spec:</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;   - time_precision: day</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; Data: 1,234 rows x 3 cols</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(data, <span class="at">loc_id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">cases =</span> <span class="st">&quot;n&quot;</span>, <span class="at">time =</span> <span class="st">&quot;date&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">class</span>(cas)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;ss_tbl&quot;      &quot;data.frame&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">print</span>(cas)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; &lt;ss_tbl: cas&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; Roles:</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt;   - loc_id -&gt; id</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;   - cases -&gt; n</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;   - time -&gt; date</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; Spec:</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt;   - time_precision: day</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; Data: 1,234 rows x 3 cols</span></span></code></pre></div>
 <p>Features: - Zero-case rows automatically excluded - Time formatting
 deferred to write-time based on precision - Column role mappings
 explicit and inspectable</p>
 <h3 id="spatial-data-support">Spatial Data Support</h3>
 <p>Native <code>sf</code> integration:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co"># From sf object</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(my_shapefile, <span class="at">loc_id =</span> <span class="st">&quot;GEOID&quot;</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># → Extracts centroids</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co"># → Detects coordinate system (lat/long vs projected)</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co"># → Orders coordinates correctly for SaTScan</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co"># From data frame</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  coords_df,</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;id&quot;</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">coord1 =</span> <span class="st">&quot;longitude&quot;</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="at">coord2 =</span> <span class="st">&quot;latitude&quot;</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="at">coord_type =</span> <span class="st">&quot;latlong&quot;</span> <span class="co"># or &quot;cartesian&quot;, or &quot;auto&quot;</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co"># From sf object</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(my_shapefile, <span class="at">loc_id =</span> <span class="st">&quot;GEOID&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co"># → Extracts centroids</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co"># → Detects coordinate system (lat/long vs projected)</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># → Orders coordinates correctly for SaTScan</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co"># From data frame</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  coords_df,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;id&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">coord1 =</span> <span class="st">&quot;longitude&quot;</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">coord2 =</span> <span class="st">&quot;latitude&quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="at">coord_type =</span> <span class="st">&quot;latlong&quot;</span> <span class="co"># or &quot;cartesian&quot;, or &quot;auto&quot;</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>)</span></code></pre></div>
 <p>Coordinate ordering is handled automatically: - Lat/Long: SaTScan
 expects Latitude, Longitude (Y, X) - Cartesian: SaTScan expects X, Y</p>
 <h3 id="parameter-management">Parameter Management</h3>
 <h3 id="parameter-management-1">Parameter Management</h3>
 <p>Flexible configuration options:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Method A: Object-Oriented (Recommended)</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co"># - Auto-detects SaTScan version</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co"># - Validates parameter names</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># - Reusable across runs</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>my_opts <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(<span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="at">MonteCarloReps =</span> <span class="dv">999</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">prm =</span> my_opts)</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co"># Method B: Quick Tweaks (Legacy/Interactive)</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co"># - Good for single runs or quick checks</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">AnalysisType =</span> <span class="dv">3</span>)</span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co"># Method C: Template Files (Replication)</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co"># - Exact reproduction of GUI or previous runs</span></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">prm_path =</span> <span class="st">&quot;space_time_template.prm&quot;</span>)</span></code></pre></div>
-<p>Parameter validation:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Validate against SaTScan&#39;s official templates</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>,</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">ModelType =</span> <span class="dv">1</span>,</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Method A: Object-Oriented (Recommended)</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># - Auto-detects SaTScan version</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># - Validates parameter names</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># - Reusable across runs</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>my_opts <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(<span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="at">MonteCarloReps =</span> <span class="dv">999</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">prm =</span> my_opts)</span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">prm_validate</span>(params)</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; ✓ All parameters valid</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; ℹ Using template: Poisson space-time</span></span></code></pre></div>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># Method B: Quick Tweaks (Legacy/Interactive)</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co"># - Good for single runs or quick checks</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">AnalysisType =</span> <span class="dv">3</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co"># Method C: Template Files (Replication)</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co"># - Exact reproduction of GUI or previous runs</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="fu">satscanr</span>(cas, geo, <span class="at">prm_path =</span> <span class="st">&quot;space_time_template.prm&quot;</span>)</span></code></pre></div>
+<p>Parameter validation:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Validate against SaTScan&#39;s official templates</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">ModelType =</span> <span class="dv">1</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="fu">prm_validate</span>(params)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; ✓ All parameters valid</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; ℹ Using template: Poisson space-time</span></span></code></pre></div>
 <h2 id="available-input-types">Available Input Types</h2>
 <table>
 <thead>
@@ -923,11 +995,11 @@ Issues</a></li>
 The API is stabilizing but may change in response to user feedback and
 testing.</p>
 <h2 id="citation">Citation</h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">citation</span>(<span class="st">&quot;epidscan&quot;</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co"># Please also cite SaTScan:</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Kulldorff M. (1997). A spatial scan statistic. </span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co"># Communications in Statistics: Theory and Methods, 26:1481-1496.</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">citation</span>(<span class="st">&quot;epidscan&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co"># Please also cite SaTScan:</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># Kulldorff M. (1997). A spatial scan statistic. </span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co"># Communications in Statistics: Theory and Methods, 26:1481-1496.</span></span></code></pre></div>
 <h2 id="license">License</h2>
 <p>MIT © Songyos Rajborirug</p>
 

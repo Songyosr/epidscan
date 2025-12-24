@@ -16,6 +16,7 @@
 # data/
 temp/
 output/
+example_output/
 local/
 
 # R CMD check output
