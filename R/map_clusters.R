@@ -94,8 +94,9 @@ map_clusters <- function(x,
   # =========================================================================
   # 3. DETECT & TRANSFORM COORDINATES
   # =========================================================================
-  # Detect coords from locations table
-  coord_info <- detect_coordinates(x$locations)
+  # Detect coords from locations table (using metadata if available)
+  summary_info <- attr(x, "summary_info")
+  coord_info <- detect_coordinates(x$locations, summary_info)
 
   # Determine Leaflet CRS mode
   # If Lat/Long: Standard EPSG:3857/4326 logic (Default)
@@ -107,7 +108,13 @@ map_clusters <- function(x,
 
   locations_mapped <- x$locations
 
-  if (simple || coord_info$type == "cartesian") {
+  # Determine if Cartesian based on detection OR metadata
+  is_cartesian <- (coord_info$type == "cartesian")
+  if (!is.null(summary_info$coord_type_code) && summary_info$coord_type_code == 0) {
+    is_cartesian <- TRUE
+  }
+
+  if (simple || is_cartesian) {
     if (!is.null(crs) && !simple) {
       # Project to Lat/Lon using sf (Only if NOT forced simple)
       if (verbose) message("Projecting Cartesian coordinates to Lat/Long using CRS: ", crs)
@@ -224,9 +231,26 @@ map_clusters <- function(x,
 #' Detect Coordinate Columns
 #'
 #' @param df Data frame with location coordinates
+#' @param meta Optional summary_info list with 'coord_cols' and 'coord_type_code'
 #' @return List with lat_col, lon_col, and type
 #' @keywords internal
-detect_coordinates <- function(df) {
+detect_coordinates <- function(df, meta = NULL) {
+  # 1. Check Metadata first (Highest Priority)
+  if (!is.null(meta$coord_cols)) {
+    x_c <- meta$coord_cols$x
+    y_c <- meta$coord_cols$y
+
+    if (!is.null(x_c) && !is.null(y_c) && x_c %in% names(df) && y_c %in% names(df)) {
+      # Determine type from metadata code (0=Cartesian, 1=LatLong)
+      type <- "latlong"
+      if (!is.null(meta$coord_type_code) && meta$coord_type_code == 0) {
+        type <- "cartesian"
+      }
+      return(list(lat = y_c, lon = x_c, type = type))
+    }
+  }
+
+  # 2. Heuristic Detection
   # Priority: 1. ss_tbl roles, 2. semantic names, 3. common names
   candidates <- list(
     lat = c("ss_lat", "lat", "latitude", "LATITUDE", "Latitude"),

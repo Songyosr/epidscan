@@ -588,7 +588,11 @@ prm_summarize <- function(prm) {
         max_size <- paste0("Max: ", get_val("MaxSpatialSizeInPopulationAtRisk", "50"), "% pop")
     }
 
-    # 5. Build Result
+    # 5. Coordinates
+    coord_code <- get_val("CoordinatesType", "1") # Default to Lat/Long (1)
+    coord_type_str <- if (coord_code == "0") "Cartesian" else "Lat/Long"
+
+    # 6. Build Result
     list(
         model = unname(model_map[model_code]),
         model_code = model_code,
@@ -600,6 +604,8 @@ prm_summarize <- function(prm) {
         end_date = end_date,
         time_precision = unname(time_prec_map[prec_code]),
         spatial_window = paste0(shape_str, " (", max_size, ")"),
-        monte_carlo = as.integer(get_val("MonteCarloReps", "999"))
+        monte_carlo = as.integer(get_val("MonteCarloReps", "999")),
+        coord_type = coord_type_str,
+        coord_type_code = as.integer(coord_code)
     )
 }

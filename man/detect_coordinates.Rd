@@ -4,10 +4,12 @@
 \alias{detect_coordinates}
 \title{Detect Coordinate Columns}
 \usage{
-detect_coordinates(df)
+detect_coordinates(df, meta = NULL)
 }
 \arguments{
 \item{df}{Data frame with location coordinates}
+
+\item{meta}{Optional summary_info list with 'coord_cols' and 'coord_type_code'}
 }
 \value{
 List with lat_col, lon_col, and type

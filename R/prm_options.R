@@ -56,6 +56,10 @@
 #' @param base_prm Optional existing `satscan_prm` object to extend.
 #' @return An object of class `satscan_prm` (which is a subclass of `prm_list`).
 #'
+#' @seealso
+#' \code{\link{prm_defaults}}, \code{\link{prm_set}}
+#' \code{vignette("satscan-parameters", package = "epidscan")}
+#'
 #' @export
 prm_options <- function(..., version = NULL, base_prm = NULL) {
     # 1. Determine Baseline

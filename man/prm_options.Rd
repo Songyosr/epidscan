@@ -63,3 +63,7 @@ An object of class \code{satscan_prm} (which is a subclass of \code{prm_list}).
 Constructor for a \code{satscan_prm} object. Defaults are loaded based on the
 configured SaTScan version (if available), and user overrides are applied.
 }
+\seealso{
+\code{\link{prm_defaults}}, \code{\link{prm_set}}
+\code{vignette("satscan-parameters", package = "epidscan")}
+}

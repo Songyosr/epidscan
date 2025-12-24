@@ -415,6 +415,16 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
     res$prm <- prm
 
     # Store pre-computed summary for S3 methods
+
+    # Enrich summary with actual coordinate columns used
+    coord_cols <- list()
+    if (inherits(geo, "ss_tbl")) {
+        roles <- ss_roles(geo)
+        coord_cols$x <- roles[["coord1"]]
+        coord_cols$y <- roles[["coord2"]]
+    } # Fallback for legacy tables? Usually handled in ss_geo/prep_geo normalization
+
+    summary_info$coord_cols <- coord_cols
     attr(res, "summary_info") <- summary_info
 
     return(res)
