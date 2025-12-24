@@ -16,6 +16,7 @@ map_clusters(
   verbose = FALSE,
   crs = NULL,
   use_radius = TRUE,
+  simple = FALSE,
   ...
 )
 }

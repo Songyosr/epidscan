@@ -57,12 +57,19 @@ infer_dates_from_data <- function(current_opts, time_values, time_precision_char
 
     # Parse based on precision
     d_vals <- NULL
-    if (time_precision_char == "day") {
-        d_vals <- as.Date(time_values, format = "%Y/%m/%d")
-    } else if (time_precision_char == "month") {
-        d_vals <- as.Date(paste0(time_values, "/01"), format = "%Y/%m/%d")
-    } else if (time_precision_char == "year") {
-        d_vals <- as.Date(paste0(time_values, "/01/01"), format = "%Y/%m/%d")
+
+    # Pre-check: If already Date, use directly
+    if (inherits(time_values, "Date") || inherits(time_values, "POSIXt")) {
+        d_vals <- as.Date(time_values)
+    } else {
+        if (time_precision_char == "day") {
+            d_vals <- as.Date(time_values, format = "%Y/%m/%d")
+        } else if (time_precision_char == "month") {
+            # Handle YYYY/MM assumption for character
+            d_vals <- as.Date(paste0(time_values, "/01"), format = "%Y/%m/%d")
+        } else if (time_precision_char == "year") {
+            d_vals <- as.Date(paste0(time_values, "/01/01"), format = "%Y/%m/%d")
+        }
     }
 
     if (is.null(d_vals) || all(is.na(d_vals))) {

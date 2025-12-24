@@ -231,8 +231,8 @@ detect_coordinates <- function(df) {
   candidates <- list(
     lat = c("ss_lat", "lat", "latitude", "LATITUDE", "Latitude"),
     lon = c("ss_long", "ss_lon", "lon", "long", "longitude", "LONGITUDE", "Longitude"),
-    y = c("y", "Y", "coord_y"),
-    x = c("x", "X", "coord_x")
+    y = c("y", "Y", "coord_y", "y_km"),
+    x = c("x", "X", "coord_x", "x_km")
   )
 
   find_col <- function(choices) {

@@ -43,7 +43,8 @@ pak::pak("Songyosr/epidscan")
 ## Example
 
 Using the New Mexico brain cancer dataset (distributed with SaTScan):
-```{r example, eval=FALSE}
+Using the New Mexico Lung Cancer dataset (included in `epidscan`):
+```{r example}
 library(epidscan)
 library(dplyr)
 library(broom)
@@ -52,37 +53,43 @@ library(broom)
 ss_path <- "/Applications/SaTScan.app/Contents/app/satscan" # Depend on yours location
 set_satscan_path(ss_path)
 
-# Load the classic NM brain cancer example data
-# This dataset is distributed with SaTScan and included in the rsatscan package
-data(NMcas, NMpop, NMgeo, package = "rsatscan")
+# Load the New Mexico Lung Cancer data
+data(NMlung_cas)
+data(NMlung_pop)
+data(NMlung_geo)
 
 # Check data
-head(NMcas)
-head(NMpop)
-head(NMgeo) # The real data are actually X/Y not Lat/Long
+head(NMlung_cas)
+head(NMlung_pop)
+head(NMlung_geo)
 
 # Prepare inputs
+# Case File: Monthly data with Age/Sex covariates
 cas <- ss_cas(
-  NMcas,
+  NMlung_cas,
   loc_id = "county",
   cases = "cases",
-  time = "year",
-  time_precision = "year"
+  time = "date",
+  time_precision = "month",
+  covars = c("age_group", "sex")
 )
 
+# Population File: Yearly census data
 pop <- ss_pop(
-  NMpop,
+  NMlung_pop,
   loc_id = "county",
   time = "year",
   population = "population",
-  time_precision = "year"
+  time_precision = "year",
+  covars = c("age_group", "sex")
 )
 
+# Coordinates File: Cartesian (km)
 geo <- ss_geo(
-  NMgeo,
+  NMlung_geo,
   loc_id = "county",
-  coord1 = "long",
-  coord2 = "lat",
+  coord1 = "x_km",
+  coord2 = "y_km",
   coord_type = "cartesian"
 )
 
@@ -91,54 +98,33 @@ geo <- ss_geo(
 my_prm <- prm_options(
   AnalysisType = 3, # RetroSpective Space-time
   ModelType = 0, # Poisson
-  TimeAggregationUnits = 4, # Year
+  TimeAggregationUnits = 3, # Month
   MonteCarloReps = 999
 )
 
 # Preview configuration
 print(my_prm)
-#> ── SaTScan Analysis Summary ──────────────────────────────────
-#> Model: Discrete Poisson [High Rates]
-#> Scan:  Retrospective Space-Time
-#> Time:  ? to ? (Year)
-#> Space: Circular (Max: 50% pop)
-#> Sims:  999 Monte Carlo Reps
-#> ──────────────────────────────────────────────────────────────
 
 result <- satscanr(
   cas = cas,
   geo = geo,
   pop = pop,
   prm = my_prm,
-  # verbose = TRUE,
-  output_dir = "legacy/example/"
+  output_dir = "example_output"
 )
 
 # Examine results
-print(result)
-#> SaTScan Analysis Results
-#> ========================
-#> Model: Poisson (Discrete)
-#> Analysis Type: Space-Time Retrospective
-#>
-#> Clusters Detected: 5
-#> Significant Clusters (p < 0.05): 2
+summary(result)
 
 library(broom)
 tidy(result)
-#> # A tibble: 5 × 11
-#>   cluster observed expected relative_risk log_likelihood p_value radius
-#>     <int>    <dbl>    <dbl>         <dbl>          <dbl>   <dbl>  <dbl>
-#> 1       1      129     57.1          2.26           23.7   0.001   48.2
-#> 2       2       46     19.0          2.42           10.4   0.021   39.1
 
 glance(result)
-#> # A tibble: 1 × 7
-#>   n_clusters n_significant n_locations max_relative_risk min_p_value
-#>        <int>         <int>       <int>             <dbl>       <dbl>
-#> 1          5             2          32              2.42       0.001
+```
 
-augment(result)
+```{r map, eval=FALSE}
+# simple = TRUE for Cartesian/blank canvas mapping
+map_clusters(result, simple = TRUE)
 ```
 
 ## Core Workflow

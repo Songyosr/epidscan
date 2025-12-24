@@ -46,47 +46,84 @@ on your system.
 ## Example
 
 Using the New Mexico brain cancer dataset (distributed with SaTScan):
+Using the New Mexico Lung Cancer dataset (included in `epidscan`):
 
 ``` r
 library(epidscan)
 library(dplyr)
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
 library(broom)
 
 # Configure SaTScan path (one time)
 ss_path <- "/Applications/SaTScan.app/Contents/app/satscan" # Depend on yours location
 set_satscan_path(ss_path)
+#> SatScan path set to: /Applications/SaTScan.app/Contents/app/satscan
 
-# Load the classic NM brain cancer example data
-# This dataset is distributed with SaTScan and included in the rsatscan package
-data(NMcas, NMpop, NMgeo, package = "rsatscan")
+# Load the New Mexico Lung Cancer data
+data(NMlung_cas)
+data(NMlung_pop)
+data(NMlung_geo)
 
 # Check data
-head(NMcas)
-head(NMpop)
-head(NMgeo) # The real data are actually X/Y not Lat/Long
+head(NMlung_cas)
+#>       county cases       date age_group    sex
+#> 1 Bernalillo     1 1973-01-01     40-44   Male
+#> 2 Bernalillo     2 1973-01-01     45-49   Male
+#> 3 Bernalillo     2 1973-01-01     50-54   Male
+#> 4 Bernalillo     1 1973-01-01     50-54 Female
+#> 5 Bernalillo     1 1973-01-01     65-69   Male
+#> 6 Bernalillo     1 1973-01-01     70-74   Male
+head(NMlung_pop)
+#>       county year population age_group    sex
+#> 1 Bernalillo 1973        469        <5   Male
+#> 2 Bernalillo 1973        478        <5 Female
+#> 3 Bernalillo 1973      14502        <5   Male
+#> 4 Bernalillo 1973      13888        <5 Female
+#> 5 Bernalillo 1973        566        <5   Male
+#> 6 Bernalillo 1973        565        <5 Female
+head(NMlung_geo)
+#>       county x_km y_km
+#> 1 Bernalillo  219  338
+#> 2     Catron   27  189
+#> 3     Chaves  418  156
+#> 4     Colfax  408  538
+#> 5      Curry  534  262
+#> 6     DeBaca  438  272
 
 # Prepare inputs
+# Case File: Monthly data with Age/Sex covariates
 cas <- ss_cas(
-  NMcas,
+  NMlung_cas,
   loc_id = "county",
   cases = "cases",
-  time = "year",
-  time_precision = "year"
+  time = "date",
+  time_precision = "month",
+  covars = c("age_group", "sex")
 )
 
+# Population File: Yearly census data
 pop <- ss_pop(
-  NMpop,
+  NMlung_pop,
   loc_id = "county",
   time = "year",
   population = "population",
-  time_precision = "year"
+  time_precision = "year",
+  covars = c("age_group", "sex")
 )
 
+# Coordinates File: Cartesian (km)
 geo <- ss_geo(
-  NMgeo,
+  NMlung_geo,
   loc_id = "county",
-  coord1 = "long",
-  coord2 = "lat",
+  coord1 = "x_km",
+  coord2 = "y_km",
   coord_type = "cartesian"
 )
 
@@ -95,7 +132,7 @@ geo <- ss_geo(
 my_prm <- prm_options(
   AnalysisType = 3, # RetroSpective Space-time
   ModelType = 0, # Poisson
-  TimeAggregationUnits = 4, # Year
+  TimeAggregationUnits = 3, # Month
   MonteCarloReps = 999
 )
 
@@ -104,45 +141,83 @@ print(my_prm)
 #> ── SaTScan Analysis Summary ──────────────────────────────────
 #> Model: Discrete Poisson [High Rates]
 #> Scan:  Retrospective Space-Time
-#> Time:  ? to ? (Year)
+#> Time:  2000/1/1 to 2000/12/31 (Year)
 #> Space: Circular (Max: 50% pop)
 #> Sims:  999 Monte Carlo Reps
 #> ──────────────────────────────────────────────────────────────
+#> 
+#> (plus 146 other parameters. Use as.list() to view all)
 
 result <- satscanr(
   cas = cas,
   geo = geo,
   pop = pop,
   prm = my_prm,
-  # verbose = TRUE,
-  output_dir = "legacy/example/"
+  output_dir = "example_output"
 )
+#> Warning in value[[3L]](cond): SaTScan execution failed: SaTScan execution failed with exit code: 1
+#> 
+#> --- SaTScan Output (Tail) ---
+#> The shapefiles option is not available for Cartesian coordinates.
+#> The option was disabled.
+#> Parameter Setting Warning:
+#> The Google Maps option is not available for Cartesian coordinates.
+#> The option was disabled.
+#> Error: Unknown identifier in population file, record 66115. '' was not specified in the coordinates file.
+#> Error: Record 66115 of the population file is missing the date.
+#> Please see the 'population file' section in the user guide for help.
+#> 
+#> Problem encountered when reading the data from the input files.
+#> 
+#> Use '--help' to get help with program options.
+#> You are running SaTScan v10.2.5.
+#> 
+#> SaTScan is free, available for download from https://www.satscan.org/.
+#> It may be used free of charge as long as proper citations are given
+#> to both the SaTScan software and the underlying statistical methodology.
+#> 
+#> Reading the coordinates file
+#> Reading the population file
+#> ------------------------------
 
 # Examine results
-print(result)
-#> SaTScan Analysis Results
-#> ========================
-#> Model: Poisson (Discrete)
-#> Analysis Type: Space-Time Retrospective
-#>
-#> Clusters Detected: 5
-#> Significant Clusters (p < 0.05): 2
+summary(result)
+#> SaTScan Results Summary
+#> =======================
+#> 
+#> ── SaTScan Analysis Summary ──────────────────────────────────
+#> Model: Discrete Poisson [High Rates]
+#> Scan:  Retrospective Space-Time
+#> Time:  2000/1/1 to 2000/12/31 (Month)
+#> Space: Circular (Max: 50% pop)
+#> Sims:  999 Monte Carlo Reps
+#> ──────────────────────────────────────────────────────────────
+#> 
+#> Overview:
+#>   Clusters detected:  0 (0 significant at p < 0.05)
+#>   Locations analyzed: 32 (0 in clusters)
+#> 
+#> 
+#> (Raw SaTScan text available. Use print(result, raw = TRUE) to view)
 
 library(broom)
 tidy(result)
-#> # A tibble: 5 × 11
-#>   cluster observed expected relative_risk log_likelihood p_value radius
-#>     <int>    <dbl>    <dbl>         <dbl>          <dbl>   <dbl>  <dbl>
-#> 1       1      129     57.1          2.26           23.7   0.001   48.2
-#> 2       2       46     19.0          2.42           10.4   0.021   39.1
+#> # A tibble: 0 × 2
+#> # ℹ 2 variables: cluster <int>, p_value <dbl>
 
 glance(result)
-#> # A tibble: 1 × 7
-#>   n_clusters n_significant n_locations max_relative_risk min_p_value
-#>        <int>         <int>       <int>             <dbl>       <dbl>
-#> 1          5             2          32              2.42       0.001
+#> # A tibble: 1 × 13
+#>   n_clusters n_significant n_locations n_in_clusters min_p_value
+#>        <int>         <int>       <int>         <int>       <dbl>
+#> 1          0             0          32             0          NA
+#> # ℹ 8 more variables: max_relative_risk <dbl>, max_llr <dbl>,
+#> #   prop_in_clusters <dbl>, total_observed <dbl>, total_population <dbl>,
+#> #   model <chr>, analysis_type <chr>, monte_carlo_reps <int>
+```
 
-augment(result)
+``` r
+# simple = TRUE for Cartesian/blank canvas mapping
+map_clusters(result, simple = TRUE)
 ```
 
 ## Core Workflow
