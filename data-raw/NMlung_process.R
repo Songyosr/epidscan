@@ -1,7 +1,7 @@
 # Process NMlung Dataset from inst/extdata to data/
 
 # Paths
-raw_dir <- "inst/extdata/NMlung"
+raw_dir <- "data-raw/NMlung"
 cas_file <- file.path(raw_dir, "lung.cas")
 pop_file <- file.path(raw_dir, "nm-m.pop")
 geo_file <- file.path(raw_dir, "nm-km.geo")

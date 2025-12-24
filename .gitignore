@@ -12,7 +12,8 @@
 *.cas
 
 # Data directories (not in package)
-data/
+# data/ linked to package datasets should be tracked
+# data/
 temp/
 output/
 local/
@@ -29,6 +30,7 @@ inst/extdata/population_cache/
 # Legacy/development files (not part of package)
 legacy/
 *.rds
+data-raw/NMlung/
 
 # Documentation to ignore
 SaTScan_Users_Guide.md

@@ -2,7 +2,7 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README\.md$
-^data$
+
 ^output$
 ^Meta$
 ^refactor_plan\.md$
@@ -12,3 +12,4 @@
 ^SaTScan_Users_Guide\.md$
 
 ^doc$
+^data-raw$
