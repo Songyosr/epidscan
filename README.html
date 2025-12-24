@@ -726,7 +726,9 @@ SaTScan):</p>
 <span id="cb2-90"><a href="#cb2-90" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 7</span></span>
 <span id="cb2-91"><a href="#cb2-91" tabindex="-1"></a><span class="co">#&gt;   n_clusters n_significant n_locations max_relative_risk min_p_value</span></span>
 <span id="cb2-92"><a href="#cb2-92" tabindex="-1"></a><span class="co">#&gt;        &lt;int&gt;         &lt;int&gt;       &lt;int&gt;             &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb2-93"><a href="#cb2-93" tabindex="-1"></a><span class="co">#&gt; 1          5             2          32              2.42       0.001</span></span></code></pre></div>
+<span id="cb2-93"><a href="#cb2-93" tabindex="-1"></a><span class="co">#&gt; 1          5             2          32              2.42       0.001</span></span>
+<span id="cb2-94"><a href="#cb2-94" tabindex="-1"></a></span>
+<span id="cb2-95"><a href="#cb2-95" tabindex="-1"></a><span class="fu">augment</span>(result)</span></code></pre></div>
 <h2 id="core-workflow">Core Workflow</h2>
 <h3 id="id_1-create-validated-inputs">1. Create validated inputs</h3>
 <p>The <code>ss_*()</code> functions construct type-safe input
@@ -782,8 +784,10 @@ results into structured R objects</p>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Analysis-level summary</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Interactive map (requires leaflet)</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">geo_data =</span> shapefile)</span></code></pre></div>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Visualize clusters</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># The NM dataset uses arbitrary X/Y coordinates (named lat/long).</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># We set simple = TRUE to plot them on a blank canvas (Simple CRS).</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">simple =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <h2 id="key-features">Key Features</h2>
 <h3 id="the-ss_tbl-system">The <code>ss_tbl</code> System</h3>
 <p>Input validation at construction time:</p>

@@ -137,6 +137,8 @@ glance(result)
 #>   n_clusters n_significant n_locations max_relative_risk min_p_value
 #>        <int>         <int>       <int>             <dbl>       <dbl>
 #> 1          5             2          32              2.42       0.001
+
+augment(result)
 ```
 
 ## Core Workflow
@@ -205,8 +207,10 @@ tidy(result)
 # Analysis-level summary
 glance(result)
 
-# Interactive map (requires leaflet)
-map_clusters(result, geo_data = shapefile)
+# Visualize clusters
+# The NM dataset uses arbitrary X/Y coordinates (named lat/long).
+# We set simple = TRUE to plot them on a blank canvas (Simple CRS).
+map_clusters(result, simple = TRUE)
 ```
 
 ## Key Features

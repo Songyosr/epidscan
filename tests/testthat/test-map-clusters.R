@@ -65,3 +65,22 @@ test_that("map_clusters uses correct radius", {
 
     expect_s3_class(map, "leaflet")
 })
+
+test_that("map_clusters 'simple=TRUE' overrides misleading lat/long names", {
+  skip_if_not_installed("leaflet")
+  
+  # Data with "lat" and "lon" cols but arbitrary values
+  res <- list(
+    locations = data.frame(LOC_ID=1:3, lat=c(0,10,0), lon=c(0,0,10), CLUSTER=c(1,1,NA)),
+    clusters = data.frame(CLUSTER=1, P_VALUE=0.01, RADIUS=5, n_locations=2)
+  )
+  class(res) <- "satscan_result"
+  
+  # 1. Default finds 'latlong' -> standard CRS
+  map_def <- map_clusters(res)
+  expect_equal(map_def$x$options$crs$crsClass, "L.CRS.EPSG3857")
+  
+  # 2. Force simple -> Simple CRS
+  map_simple <- map_clusters(res, simple = TRUE)
+  expect_equal(map_simple$x$options$crs$crsClass, "L.CRS.Simple")
+})

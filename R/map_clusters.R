@@ -67,6 +67,7 @@ map_clusters <- function(x,
                          verbose = FALSE,
                          crs = NULL,
                          use_radius = TRUE,
+                         simple = FALSE,
                          ...) {
   # =========================================================================
   # PACKAGE CHECK
@@ -106,9 +107,9 @@ map_clusters <- function(x,
 
   locations_mapped <- x$locations
 
-  if (coord_info$type == "cartesian") {
-    if (!is.null(crs)) {
-      # Project to Lat/Lon using sf
+  if (simple || coord_info$type == "cartesian") {
+    if (!is.null(crs) && !simple) {
+      # Project to Lat/Lon using sf (Only if NOT forced simple)
       if (verbose) message("Projecting Cartesian coordinates to Lat/Long using CRS: ", crs)
 
       # Create temporary sf object
@@ -130,7 +131,8 @@ map_clusters <- function(x,
       coord_info$type <- "latlong"
     } else {
       # Stay Cartesian -> Simple CRS
-      if (verbose) message("Using Cartesian coordinates with Simple CRS (pixels).")
+      # Either natively cartesian OR forced simple (e.g. unknown x/y named as lat/long)
+      if (verbose) message("Using Simple CRS (pixels) for blank map.")
       leaflet_crs <- leaflet::leafletCRS(crsClass = "L.CRS.Simple")
       is_simple <- TRUE
     }
