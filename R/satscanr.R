@@ -5,6 +5,23 @@
 # Helper: Infer Dates from Data
 # -----------------------------------------------------------------------------
 
+#' Print Parameter Summary
+#'
+#' @param param_summary List from prm_summarize
+#' @keywords internal
+print_prm_summary <- function(s) {
+    cat("── SaTScan Analysis Summary ──────────────────────────────────\n")
+    cat(sprintf("Model: %s [%s]\n", s$model, s$scan_areas))
+    cat(sprintf("Scan:  %s\n", s$analysis_type))
+    cat(sprintf("Time:  %s (%s)\n", s$study_period, s$time_precision))
+    cat(sprintf("Space: %s\n", s$spatial_window))
+    cat(sprintf("Sims:  %d Monte Carlo Reps\n", s$monte_carlo))
+    cat("──────────────────────────────────────────────────────────────\n")
+}
+
+#' Infer Dates from Data
+# -----------------------------------------------------------------------------
+
 #' Infer Dates from Data
 #'
 #' Helper to infer StartDate and EndDate from the case data if missing from options.
@@ -334,7 +351,13 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
         prm <- do.call(prm_set, c(list(prm, .strict = FALSE), as.list(inferred_dates)))
     }
 
-    # 5. Execution
+    # 5. Summary & Verbose Output
+    summary_info <- prm_summarize(prm)
+    if (verbose) {
+        print_prm_summary(summary_info)
+    }
+
+    # 6. Execution
     # Write PRM using skeleton injection
     prm_write(prm, file.path(work_dir, "epid.prm"))
 
@@ -381,6 +404,9 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
 
     # Return the prm_list for reference
     res$prm <- prm
+
+    # Store pre-computed summary for S3 methods
+    attr(res, "summary_info") <- summary_info
 
     return(res)
 }

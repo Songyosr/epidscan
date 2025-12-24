@@ -141,6 +141,7 @@ summary.satscan_result <- function(object, ...) {
             most_likely = most_likely,
             rr_range = rr_range,
             analysis_params = analysis_params,
+            summary_info = get_satscan_metadata(object),
             raw_text = object$main
         ),
         class = "summary.satscan_result"
@@ -213,8 +214,11 @@ print.summary.satscan_result <- function(x, raw = FALSE, ...) {
     }
 
     # Analysis parameters
-    if (!is.null(x$analysis_params)) {
-        cat("Analysis Parameters:\n")
+    if (!is.null(x$summary_info)) {
+        print_prm_summary(x$summary_info)
+    } else if (!is.null(x$analysis_params)) {
+        # Fallback for old objects
+        cat("Analysis Parameters (Legacy):\n")
         if (!is.null(x$analysis_params$AnalysisType)) {
             cat(sprintf("  Analysis Type:      %s\n", x$analysis_params$AnalysisType))
         }
@@ -430,7 +434,7 @@ glance.satscan_result <- function(x, ...) {
         total_population = total_pop,
         model = meta$model %||% as.character(NA),
         analysis_type = meta$analysis_type %||% as.character(NA),
-        monte_carlo_reps = meta$monte_carlo_reps %||% as.integer(NA),
+        monte_carlo_reps = meta$monte_carlo %||% as.integer(NA),
         stringsAsFactors = FALSE
     )
 
@@ -695,43 +699,20 @@ get_params <- function(x) {
 #' @return List of metadata
 #' @keywords internal
 get_satscan_metadata <- function(x) {
+    # 1. Try pre-computed summary attached to result
+    s <- attr(x, "summary_info")
+    if (!is.null(s)) {
+        return(s)
+    }
+
+    # 2. Fallback: Extract from stored prm
     p <- get_params(x)
     if (is.null(p)) {
         return(list())
     }
 
-    # 1. Model Type Mapping (corrected)
-    model_map <- c(
-        "0"  = "Discrete Poisson",
-        "1"  = "Bernoulli",
-        "2"  = "Space-Time Permutation",
-        "3"  = "Ordinal",
-        "4"  = "Exponential",
-        "5"  = "Normal",
-        "6"  = "Continuous Poisson",
-        "7"  = "Multinomial",
-        "8"  = "Rank",
-        "9"  = "Uniform Time",
-        "10" = "Batched"
-    )
-
-    # 2. Analysis Type Mapping (corrected)
-    analysis_map <- c(
-        "1" = "Purely Spatial",
-        "2" = "Purely Temporal",
-        "3" = "Retrospective Space-Time",
-        "4" = "Prospective Space-Time",
-        "5" = "Spatial Variation in Temporal Trends",
-        "6" = "Prospective Purely Temporal",
-        "7" = "Seasonal Temporal"
-    )
-
-    list(
-        model = model_map[as.character(p$ModelType)],
-        analysis_type = analysis_map[as.character(p$AnalysisType)],
-        monte_carlo_reps = as.integer(p$MonteCarloReps),
-        time_precision = p$PrecisionCaseTimes
-    )
+    # Use centralized summarizer
+    prm_summarize(p)
 }
 
 

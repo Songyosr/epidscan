@@ -2,7 +2,8 @@
 % Please edit documentation in R/satscanr.R
 \name{infer_dates_from_data}
 \alias{infer_dates_from_data}
-\title{Infer Dates from Data}
+\title{Infer Dates from Data
+Infer Dates from Data}
 \usage{
 infer_dates_from_data(
   current_opts,

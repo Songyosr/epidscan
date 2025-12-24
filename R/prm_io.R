@@ -496,3 +496,110 @@ read_prm <- function(path) {
     # Named list; duplicates overwrite earlier ones ("last wins")
     as.list(setNames(val, key))
 }
+
+# -----------------------------------------------------------------------------
+# prm_summarize: Extract Analysis Summary
+# -----------------------------------------------------------------------------
+
+#' Summarize Analysis Parameters
+#'
+#' Extracts a human-readable summary of the analysis configuration from a
+#' `prm_list`. useful for "pre-flight" checks and result summaries.
+#'
+#' @param prm A `prm_list` or named list of parameters.
+#' @return A list containing:
+#'   \itemize{
+#'     \item \code{model}: Human-readable model type (e.g., "Discrete Poisson")
+#'     \item \code{analysis_type}: Human-readable analysis type (e.g., "Retrospective Space-Time")
+#'     \item \code{scan_areas}: Human-readable scan areas (e.g. "High Rates")
+#'     \item \code{study_period}: Formatted string "StartDate to EndDate"
+#'     \item \code{time_precision}: Time unit (e.g., "Month")
+#'     \item \code{spatial_window}: Description of spatial window (e.g., "Circular (Max: 50% pop)")
+#'     \item \code{monte_carlo}: Number of replications
+#'   }
+#' @export
+prm_summarize <- function(prm) {
+    # 1. Mappings
+    model_map <- c(
+        "0"  = "Discrete Poisson",
+        "1"  = "Bernoulli",
+        "2"  = "Space-Time Permutation",
+        "3"  = "Ordinal",
+        "4"  = "Exponential",
+        "5"  = "Normal",
+        "6"  = "Continuous Poisson",
+        "7"  = "Multinomial",
+        "8"  = "Rank",
+        "9"  = "Uniform Time",
+        "10" = "Batched"
+    )
+
+    analysis_map <- c(
+        "1" = "Purely Spatial",
+        "2" = "Purely Temporal",
+        "3" = "Retrospective Space-Time",
+        "4" = "Prospective Space-Time",
+        "5" = "Spatial Variation in Temporal Trends",
+        "6" = "Prospective Purely Temporal",
+        "7" = "Seasonal Temporal"
+    )
+
+    scan_areas_map <- c(
+        "1" = "High Rates",
+        "2" = "Low Rates",
+        "3" = "Both High and Low Rates"
+    )
+
+    time_prec_map <- c(
+        "0" = "None",
+        "1" = "Year",
+        "2" = "Month",
+        "3" = "Day",
+        "4" = "Generic"
+    )
+
+    # 2. Extract Values safely
+    get_val <- function(key, default = NA_character_) {
+        val <- prm[[key]]
+        if (is.null(val)) default else val
+    }
+
+    model_code <- get_val("ModelType")
+    analysis_code <- get_val("AnalysisType")
+    scan_areas_code <- get_val("ScanAreas")
+    prec_code <- get_val("PrecisionCaseTimes", "0")
+
+    # 3. Format Study Period
+    start_date <- get_val("StartDate", "?")
+    end_date <- get_val("EndDate", "?")
+    period <- sprintf("%s to %s", start_date, end_date)
+
+    # 4. Format Spatial Window
+    shape <- get_val("SpatialWindowShapeType", "0")
+    shape_str <- if (shape == "0") "Circular" else "Elliptic"
+
+    max_size <- "?"
+    if (get_val("UseMaxCirclePopulationFileOption", "n") == "y") {
+        max_size <- paste0("Max: ", get_val("MaxSpatialSizeInMaxCirclePopulationFile"), "% of MaxCircle Pop")
+    } else if (get_val("UseDistanceFromCenterOption", "n") == "y") {
+        max_size <- paste0("Max: ", get_val("MaxSpatialSizeInDistanceFromCenter"), " dist")
+    } else {
+        # Default percent
+        max_size <- paste0("Max: ", get_val("MaxSpatialSizeInPopulationAtRisk", "50"), "% pop")
+    }
+
+    # 5. Build Result
+    list(
+        model = unname(model_map[model_code]),
+        model_code = model_code,
+        analysis_type = unname(analysis_map[analysis_code]),
+        analysis_code = analysis_code,
+        scan_areas = unname(scan_areas_map[scan_areas_code]),
+        study_period = period,
+        start_date = start_date,
+        end_date = end_date,
+        time_precision = unname(time_prec_map[prec_code]),
+        spatial_window = paste0(shape_str, " (", max_size, ")"),
+        monte_carlo = as.integer(get_val("MonteCarloReps", "999"))
+    )
+}
