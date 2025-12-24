@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Getting Started with epidscan</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with epidscan</h1>
+
+
+
+<p><code>epidscan</code> is a modern R interface for
+<strong>Spatio-temporal scan statistics</strong>, designed to bring
+modern data science practices to epidemiological cluster detection.
+While primarily built as a robust front-end for <a href="https://www.satscan.org/">SaTScan™</a>, its architecture allows
+for future expansion to other methods.</p>
+<div id="design-principles" class="section level2">
+<h2>Design Principles</h2>
+<p><code>epidscan</code> is built around a few core ideas:</p>
+<p><strong>Stateless by design:</strong> No hidden global state. Every
+function call is independent and reproducible. Input validation happens
+upfront rather than at runtime.</p>
+<p><strong>Type-safe inputs:</strong> The <code>ss_tbl</code> system
+validates data structure before analysis runs. Location IDs,
+coordinates, and time formats are checked at construction time.</p>
+<p><strong>Spatial-first:</strong> Native support for <code>sf</code>
+objects. Coordinate system detection and ordering handled
+automatically.</p>
+<p><strong>Parameter transparency:</strong> Three-level parameter
+hierarchy (data defaults → function overrides → template files) makes
+configuration explicit and traceable.</p>
+</div>
+<div id="core-workflow" class="section level2">
+<h2>Core Workflow</h2>
+<div id="create-validated-inputs" class="section level3">
+<h3>1. Create validated inputs</h3>
+<p>The <code>ss_*()</code> functions construct type-safe input objects.
+This step ensures your data is correct before you ever run an
+analysis.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(epidscan)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Case file</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  data,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;case_count&quot;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;onset_date&quot;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;day&quot;</span> <span class="co"># &quot;day&quot;, &quot;month&quot;, &quot;year&quot;, or &quot;generic&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>)</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co"># Coordinates file (works with sf objects or data frames)</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>  shapefile_sf,</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  <span class="co"># Centroids extracted automatically</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  <span class="co"># CRS detected and coordinates ordered correctly for SaTScan</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co"># Population file</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>  population_data,</span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;location_id&quot;</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;census_year&quot;</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;pop_count&quot;</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span></span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="configure-run" class="section level3">
+<h3>2. Configure &amp; Run</h3>
+<p>You can configure the analysis using a flexible object-oriented
+approach or simple overrides.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Object-Oriented Configuration (Recommended)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>opts <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># Space-time</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">MaxSpatialSizeInPopulation =</span> <span class="dv">50</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Run Analysis</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">satscanr</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  cas,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">geo =</span> geo,</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="at">pop =</span> pop,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="at">prm =</span> opts</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>)</span></code></pre></div>
+<p>The <code>satscanr()</code> function handles the messy work: - Writes
+temporary SaTScan input files (<code>.cas</code>, <code>.geo</code>,
+<code>.pop</code>). - Constructs a precise parameter file using the
+three-level hierarchy. - Executes the SaTScan binary. - Parses the
+results back into structured R objects.</p>
+</div>
+<div id="work-with-results" class="section level3">
+<h3>3. Work with results</h3>
+<p>Results are returned as S3 objects with support for the
+<code>broom</code> package, making it easy to harness the results for
+further analysis or visualization.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># Cluster-level details (tidy data frame)</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">tidy</span>(result)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Analysis-level summary (metrics like max likelihood)</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">glance</span>(result)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co"># Visualize clusters</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># For Cartesian data or blank canvas mapping:</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="fu">map_clusters</span>(result, <span class="at">simple =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="key-features-deep-dive" class="section level2">
+<h2>Key Features Deep Dive</h2>
+<div id="the-ss_tbl-system" class="section level3">
+<h3>The <code>ss_tbl</code> System</h3>
+<p>We strictly validate inputs at construction time to prevent runtime
+errors in the external SaTScan executable.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(data, <span class="at">loc_id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">cases =</span> <span class="st">&quot;n&quot;</span>, <span class="at">time =</span> <span class="st">&quot;date&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">class</span>(cas)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># &quot;ss_tbl&quot; &quot;data.frame&quot;</span></span></code></pre></div>
+<p>Features: - <strong>Zero-case/population checks</strong>: Rows with
+zero counts are handled appropriately. - <strong>Time
+formatting</strong>: We store raw times and format them correctly for
+SaTScan (YYYY/MM/DD) only when writing files, respecting your specified
+<code>time_precision</code>. - <strong>Role tracking</strong>: Metadata
+about which column represents <code>cases</code>, <code>time</code>,
+etc., is preserved.</p>
+</div>
+<div id="spatial-data-support" class="section level3">
+<h3>Spatial Data Support</h3>
+<p><code>epidscan</code> loves <code>sf</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co"># From sf object</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(my_shapefile, <span class="at">loc_id =</span> <span class="st">&quot;GEOID&quot;</span>)</span></code></pre></div>
+<ul>
+<li><strong>Centroids</strong>: Automatically extracts centroids from
+polygons.</li>
+<li><strong>Projections</strong>: Detects if your data is
+Latitude/Longitude (Geodetic) or Projected (Cartesian).</li>
+<li><strong>Ordering</strong>: SaTScan is picky (Lat/Long vs X/Y). We
+automatically order columns correctly based on the detected type.</li>
+</ul>
+</div>
+<div id="parameter-management" class="section level3">
+<h3>Parameter Management</h3>
+<p>We use a “Level 3 Hierarchy” to resolve parameters: 1. <strong>Level
+1 (Data Defaults)</strong>: Derived from your input data (e.g., file
+names, date ranges inferred from data). 2. <strong>Level 2 (Function
+Overrides)</strong>: Arguments passed directly to
+<code>satscanr()</code> or <code>prm_options()</code> (e.g.,
+<code>AnalysisType=3</code>). 3. <strong>Level 3 (Templates)</strong>: A
+<code>.prm</code> file you provide (e.g.,
+<code>prm_path = &quot;template.prm&quot;</code>).</p>
+<p>Overrides take precedence! <code>AnalysisType</code> in
+<code>satscanr()</code> will overwrite <code>AnalysisType</code> in your
+template.</p>
+</div>
+</div>
+<div id="full-example-new-mexico-lung-cancer" class="section level2">
+<h2>Full Example: New Mexico Lung Cancer</h2>
+<p>This example uses the dataset distributed with this package.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(epidscan)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># 1. Setup</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co"># ss_path &lt;- &quot;/Applications/SaTScan.app/Contents/app/satscan&quot; </span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># set_satscan_path(ss_path)</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># 2. Load Data</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">data</span>(NMlung_cas)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="fu">data</span>(NMlung_pop)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">data</span>(NMlung_geo)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># 3. Prepare Inputs</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co"># Case File: Monthly data with Age/Sex covariates</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>cas <span class="ot">&lt;-</span> <span class="fu">ss_cas</span>(</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>  NMlung_cas,</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>  <span class="at">cases =</span> <span class="st">&quot;cases&quot;</span>,</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;date&quot;</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;month&quot;</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  <span class="at">covars =</span> <span class="fu">c</span>(<span class="st">&quot;age_group&quot;</span>, <span class="st">&quot;sex&quot;</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>)</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a><span class="co"># Population File: Yearly census data</span></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>pop <span class="ot">&lt;-</span> <span class="fu">ss_pop</span>(</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  NMlung_pop,</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">&quot;year&quot;</span>,</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>  <span class="at">population =</span> <span class="st">&quot;population&quot;</span>,</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>  <span class="at">time_precision =</span> <span class="st">&quot;year&quot;</span>,</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>  <span class="at">covars =</span> <span class="fu">c</span>(<span class="st">&quot;age_group&quot;</span>, <span class="st">&quot;sex&quot;</span>)</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>)</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a><span class="co"># Coordinates File: Cartesian (km)</span></span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>geo <span class="ot">&lt;-</span> <span class="fu">ss_geo</span>(</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>  NMlung_geo,</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>  <span class="at">loc_id =</span> <span class="st">&quot;county&quot;</span>,</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a>  <span class="at">coord1 =</span> <span class="st">&quot;x_km&quot;</span>,</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>  <span class="at">coord2 =</span> <span class="st">&quot;y_km&quot;</span>,</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>  <span class="at">coord_type =</span> <span class="st">&quot;cartesian&quot;</span></span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>)</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a></span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a><span class="co"># 4. Configure &amp; Run</span></span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a>my_prm <span class="ot">&lt;-</span> <span class="fu">prm_options</span>(</span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a>  <span class="at">AnalysisType =</span> <span class="dv">3</span>, <span class="co"># Retrospective Space-time</span></span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a>  <span class="at">ModelType =</span> <span class="dv">0</span>,    <span class="co"># Poisson</span></span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a>  <span class="at">TimeAggregationUnits =</span> <span class="dv">3</span>, <span class="co"># Month</span></span>
+<span id="cb6-49"><a href="#cb6-49" tabindex="-1"></a>  <span class="at">MonteCarloReps =</span> <span class="dv">999</span>,</span>
+<span id="cb6-50"><a href="#cb6-50" tabindex="-1"></a>  <span class="at">ReportGiniClusters =</span> <span class="st">&quot;y&quot;</span></span>
+<span id="cb6-51"><a href="#cb6-51" tabindex="-1"></a>)</span>
+<span id="cb6-52"><a href="#cb6-52" tabindex="-1"></a></span>
+<span id="cb6-53"><a href="#cb6-53" tabindex="-1"></a><span class="co"># (This requires SaTScan to be installed and path set)</span></span>
+<span id="cb6-54"><a href="#cb6-54" tabindex="-1"></a><span class="co"># result &lt;- satscanr(</span></span>
+<span id="cb6-55"><a href="#cb6-55" tabindex="-1"></a><span class="co">#   cas = cas,</span></span>
+<span id="cb6-56"><a href="#cb6-56" tabindex="-1"></a><span class="co">#   geo = geo,</span></span>
+<span id="cb6-57"><a href="#cb6-57" tabindex="-1"></a><span class="co">#   pop = pop,</span></span>
+<span id="cb6-58"><a href="#cb6-58" tabindex="-1"></a><span class="co">#   prm = my_prm,</span></span>
+<span id="cb6-59"><a href="#cb6-59" tabindex="-1"></a><span class="co">#   output_dir = tempdir()</span></span>
+<span id="cb6-60"><a href="#cb6-60" tabindex="-1"></a><span class="co"># )</span></span>
+<span id="cb6-61"><a href="#cb6-61" tabindex="-1"></a></span>
+<span id="cb6-62"><a href="#cb6-62" tabindex="-1"></a><span class="co"># 5. Inspect (Mock output)</span></span>
+<span id="cb6-63"><a href="#cb6-63" tabindex="-1"></a><span class="co"># summary(result)</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
