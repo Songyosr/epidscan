@@ -6,6 +6,16 @@ automatic parameter management, and native \`sf\` support for spatial
 data. Designed for reproducibility and robust epidemiological workflows
 without global state side-effects.
 
+## See also
+
+Useful links:
+
+- <https://Songyosr.github.io/epidscan>
+
+- <https://github.com/Songyosr/epidscan>
+
+- Report bugs at <https://github.com/Songyosr/epidscan/issues>
+
 ## Author
 
 **Maintainer**: Songyos Rajborirug <songyos.r@psu.ac.th>
