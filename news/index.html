@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">epidscan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,51 +38,109 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="epidscan-020">epidscan 0.2.0<a class="anchor" aria-label="anchor" href="#epidscan-020"></a></h2>
-<div class="section level3">
-<h3 id="major-api-overhaul-the-stateless-era-0-2-0">Major API Overhaul: The Stateless Era<a class="anchor" aria-label="anchor" href="#major-api-overhaul-the-stateless-era-0-2-0"></a></h3>
-<p>This release introduces a fundamental re-architecture of the package, moving away from global state management to a pure, functional design.</p>
-<div class="section level4">
-<h4 id="new-features-0-2-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h4>
-<ul><li>
-<strong><code>ss_tbl</code> System</strong>: New S3 classes for robust input handling.
-<ul><li>
-<code>as_satscan_case()</code>: Create typesafe Case files.</li>
-<li>
-<code>as_satscan_population()</code>: Create typesafe Population files.</li>
-<li>
-<code>as_satscan_coordinates()</code>: Native support for <code>sf</code> objects and auto-detection of Coordinate systems.</li>
-</ul></li>
-<li>
-<strong><code><a href="../reference/satscanr.html">satscanr()</a></code></strong>: The new core engine. It is stateless (no <code>ssenv</code>), accepting <code>ss_tbl</code> inputs and returning parsed results directly.</li>
-<li>
-<strong>Parameter Management</strong>:
-<ul><li>
-<code><a href="../reference/prm_parse.html">prm_parse()</a></code> / <code><a href="../reference/prm_write.html">prm_write()</a></code>: New robust parser that preserves comments and structure of SaTScan parameter files.</li>
-<li>
-<code><a href="../reference/prm_validate.html">prm_validate()</a></code>: Validate your settings against official SaTScan templates before execution.</li>
-</ul></li>
-</ul></div>
-<div class="section level4">
-<h4 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h4>
-<ul><li>
-<strong>Date Inference</strong>: Automatically detects the time range from your data if <code>StartDate</code>/<code>EndDate</code> are missing.</li>
-<li>
-<strong>Output Management</strong>: Results are now generated in a <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code> by default to keep your workspace clean. Use <code>output_dir</code> to save them explicitly.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="breaking-changes-0-2-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h4>
-<ul><li>
-<strong>Replaced</strong>: <code>epid_satscan()</code> is superseded by the <code>as_satscan_*</code> + <code>satscanr</code> workflow.</li>
-<li>
-<strong>Superseded</strong>: <code>prep_cas</code>, <code>prep_geo</code> functions now point to the new <code>as_satscan_*</code> equivalents.</li>
-</ul></div>
-</div>
-</div>
-    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="epidscan-010">epidscan 0.1.0<a class="anchor" aria-label="anchor" href="#epidscan-010"></a></h2>
-<ul><li>Initial Release</li>
+<p><strong>First release of epidscan</strong> - A modern, stateless R interface for SaTScan spatial scan statistics.</p>
+<div class="section level3">
+<h3 id="features-0-1-0">Features<a class="anchor" aria-label="anchor" href="#features-0-1-0"></a></h3>
+<div class="section level4">
+<h4 id="core-analysis-engine-0-1-0">Core Analysis Engine<a class="anchor" aria-label="anchor" href="#core-analysis-engine-0-1-0"></a></h4>
+<ul><li>
+<strong><code><a href="../reference/satscanr.html">satscanr()</a></code></strong> - Stateless analysis engine that accepts validated inputs and returns parsed results directly</li>
+<li>
+<strong>Automatic parameter management</strong> - Three-level hierarchy (data defaults → function overrides → template files) for flexible configuration</li>
+<li>
+<strong>Clean workspace</strong> - Results generated in <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code> by default; use <code>output_dir</code> to save explicitly</li>
 </ul></div>
+<div class="section level4">
+<h4 id="type-safe-input-system-0-1-0">Type-Safe Input System<a class="anchor" aria-label="anchor" href="#type-safe-input-system-0-1-0"></a></h4>
+<p>The <code>ss_tbl</code> system ensures data is correct before analysis runs:</p>
+<ul><li>
+<strong><code><a href="../reference/ss_cas.html">ss_cas()</a></code></strong> - Create validated case files with upfront error checking
+<ul><li>Zero-case handling</li>
+<li>Time formatting with precision control (day/month/year/generic)</li>
+<li>Support for covariates (age groups, sex, etc.)</li>
+</ul></li>
+<li>
+<strong><code><a href="../reference/ss_geo.html">ss_geo()</a></code></strong> - Spatial coordinates with native <code>sf</code> support
+<ul><li>Automatic centroid extraction from polygons</li>
+<li>CRS detection (geodetic vs. cartesian)</li>
+<li>Correct coordinate ordering for SaTScan</li>
+</ul></li>
+<li>
+<strong><code><a href="../reference/ss_pop.html">ss_pop()</a></code></strong> - Population denominators
+<ul><li>Zero-population checks</li>
+<li>Time-based population with precision control</li>
+<li>Covariate support matching case files</li>
+</ul></li>
+<li>
+<strong><code><a href="../reference/ss_ctl.html">ss_ctl()</a></code></strong> - Controls for Bernoulli models</li>
+<li>
+<strong><code><a href="../reference/ss_grd.html">ss_grd()</a></code></strong> - Custom scan centers</li>
+</ul></div>
+<div class="section level4">
+<h4 id="parameter-management-0-1-0">Parameter Management<a class="anchor" aria-label="anchor" href="#parameter-management-0-1-0"></a></h4>
+<ul><li>
+<strong><code><a href="../reference/prm_options.html">prm_options()</a></code></strong> - Object-oriented parameter configuration for reproducible analyses</li>
+<li>
+<strong><code><a href="../reference/prm_parse.html">prm_parse()</a></code> / <code><a href="../reference/prm_write.html">prm_write()</a></code></strong> - Robust parser that preserves comments and structure</li>
+<li>
+<strong><code><a href="../reference/prm_validate.html">prm_validate()</a></code></strong> - Validate settings against official SaTScan templates before execution</li>
+</ul></div>
+<div class="section level4">
+<h4 id="results--visualization-0-1-0">Results &amp; Visualization<a class="anchor" aria-label="anchor" href="#results--visualization-0-1-0"></a></h4>
+<ul><li>
+<strong>S3 methods</strong> following <code>broom</code> conventions:
+<ul><li>
+<code>tidy()</code> - Cluster-level details as tidy data frames</li>
+<li>
+<code>glance()</code> - Analysis-level summary metrics</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> - Human-readable cluster summaries</li>
+</ul></li>
+<li>
+<strong><code><a href="../reference/map_clusters.html">map_clusters()</a></code></strong> - Interactive visualization with leaflet
+<ul><li>Significance-based color coding</li>
+<li>Rich cluster popups with statistics</li>
+<li>Support for both cartesian and lat/long data</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="smart-defaults-0-1-0">Smart Defaults<a class="anchor" aria-label="anchor" href="#smart-defaults-0-1-0"></a></h4>
+<ul><li>
+<strong>Automatic date inference</strong> - Time range detected from your data if not specified</li>
+<li>
+<strong>Flexible column handling</strong> - Works with your column names via role mapping</li>
+<li>
+<strong>Spatial-first</strong> - Seamless integration with <code>sf</code> simple features</li>
+</ul></div>
+</div>
+<div class="section level3">
+<h3 id="included-data-0-1-0">Included Data<a class="anchor" aria-label="anchor" href="#included-data-0-1-0"></a></h3>
+<ul><li>
+<strong>New Mexico lung cancer dataset</strong> - Complete example with cases, population, and coordinates
+<ul><li>
+<code>NMlung_cas</code> - Monthly case counts by county, age, and sex</li>
+<li>
+<code>NMlung_pop</code> - Annual population by county, age, and sex<br></li>
+<li>
+<code>NMlung_geo</code> - County centroids in kilometers</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-1-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0"></a></h3>
+<ul><li>
+<strong>Getting Started vignette</strong> - Complete workflow walkthrough</li>
+<li>
+<strong>Parameter Reference</strong> - Guide to SaTScan parameter configuration</li>
+<li>
+<strong>Function documentation</strong> - Comprehensive help pages for all functions</li>
+</ul></div>
+<div class="section level3">
+<h3 id="requirements-0-1-0">Requirements<a class="anchor" aria-label="anchor" href="#requirements-0-1-0"></a></h3>
+<ul><li>R &gt;= 4.1.0</li>
+<li>SaTScan™ must be installed on your system (free download from <a href="https://www.satscan.org/" class="external-link uri">https://www.satscan.org/</a>)</li>
+</ul></div>
+</div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
