@@ -231,6 +231,7 @@ infer_dates_from_data <- function(current_opts, time_values, time_precision_char
 #' @export
 satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
                      prm_path = NULL,
+                     prm = NULL,
                      output_dir = NULL,
                      keep_raw = FALSE,
                      verbose = FALSE, ...) {
@@ -265,29 +266,30 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
 
     # 4. Parameter Setup (The Hierarchy) - Using new prm_* system
 
-    # A. Base Template (Level 3/4)
-    if (!is.null(prm_path)) {
-        if (verbose) message("Loading Template: ", basename(prm_path))
-        prm <- prm_parse(prm_path)
+    # A. Determine Baseline
+    # If explicit prm object provided, use it.
+    # Otherwise check prm_path or use defaults.
 
-        # Validate external PRM file
-        validation <- prm_validate(prm)
-        if (!validation$valid && verbose) {
-            message(
-                "  Warning: External PRM missing ", length(validation$missing),
-                " parameters (compared to v", validation$ref_version, " template)"
-            )
+    base_prm <- prm
+    if (is.null(base_prm)) {
+        if (!is.null(prm_path)) {
+            if (verbose) message("Loading Template: ", basename(prm_path))
+            base_prm <- prm_parse(prm_path)
+
+            # Validate external PRM file
+            validation <- prm_validate(base_prm)
+            if (!validation$valid && verbose) {
+                message(
+                    "  Warning: External PRM missing ", length(validation$missing),
+                    " parameters (compared to v", validation$ref_version, " template)"
+                )
+            }
         }
-    } else {
-        if (verbose) message("Loading defaults from bundled templates")
-        prm <- prm_defaults()
     }
 
-    # B. Apply User Overrides (Level 2) from ...
-    user_opts <- list(...)
-    if (length(user_opts) > 0) {
-        prm <- do.call(prm_set, c(list(prm, .strict = FALSE), user_opts))
-    }
+    # B. Create Final PRM Object using Constructor
+    # This handles defaults (if base_prm is NULL) and merges user overrides (...)
+    prm <- prm_options(..., base_prm = base_prm)
 
     # C. Level 1 Data Integrity (Immutable Overrides)
     # Using internal helpers get_ss_spec, get_ss_data

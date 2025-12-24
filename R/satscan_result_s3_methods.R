@@ -166,8 +166,27 @@ print.summary.satscan_result <- function(x, raw = FALSE, ...) {
         return(invisible(x))
     }
 
+
     cat("SaTScan Results Summary\n")
     cat("=======================\n\n")
+
+    # Analysis parameters
+    if (!is.null(x$summary_info)) {
+        print_prm_summary(x$summary_info)
+    } else if (!is.null(x$analysis_params)) {
+        # Fallback for old objects
+        cat("Analysis Parameters (Legacy):\n")
+        if (!is.null(x$analysis_params$AnalysisType)) {
+            cat(sprintf("  Analysis Type:      %s\n", x$analysis_params$AnalysisType))
+        }
+        if (!is.null(x$analysis_params$ModelType)) {
+            cat(sprintf("  Model Type:         %s\n", x$analysis_params$ModelType))
+        }
+        if (!is.null(x$analysis_params$MonteCarloReps)) {
+            cat(sprintf("  Monte Carlo Reps:   %s\n", x$analysis_params$MonteCarloReps))
+        }
+    }
+    cat("\n")
 
     # Overview
     cat("Overview:\n")
@@ -213,22 +232,6 @@ print.summary.satscan_result <- function(x, raw = FALSE, ...) {
         cat("\n")
     }
 
-    # Analysis parameters
-    if (!is.null(x$summary_info)) {
-        print_prm_summary(x$summary_info)
-    } else if (!is.null(x$analysis_params)) {
-        # Fallback for old objects
-        cat("Analysis Parameters (Legacy):\n")
-        if (!is.null(x$analysis_params$AnalysisType)) {
-            cat(sprintf("  Analysis Type:      %s\n", x$analysis_params$AnalysisType))
-        }
-        if (!is.null(x$analysis_params$ModelType)) {
-            cat(sprintf("  Model Type:         %s\n", x$analysis_params$ModelType))
-        }
-        if (!is.null(x$analysis_params$MonteCarloReps)) {
-            cat(sprintf("  Monte Carlo Reps:   %s\n", x$analysis_params$MonteCarloReps))
-        }
-    }
 
     if (!is.null(x$raw_text)) {
         cat("\n(Raw SaTScan text available. Use print(result, raw = TRUE) to view)\n")

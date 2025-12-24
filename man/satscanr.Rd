@@ -11,6 +11,7 @@ satscanr(
   ctl = NULL,
   grd = NULL,
   prm_path = NULL,
+  prm = NULL,
   output_dir = NULL,
   keep_raw = FALSE,
   verbose = FALSE,
