@@ -6,6 +6,8 @@ Description: A modern, stateless R interface for the SaTScan spatial scan statis
     Provides a tidy, type-safe API for preparing data (`ss_tbl`), automatic parameter management, 
     and native `sf` support for spatial data. Designed for reproducibility and robust 
     epidemiological workflows without global state side-effects.
+URL: https://Songyosr.github.io/epidscan, https://github.com/Songyosr/epidscan
+BugReports: https://github.com/Songyosr/epidscan/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
