@@ -38,6 +38,6 @@ AGENT_GUIDELINES.md
 
 # Local tests (user data)
 tests/testthat/test-real_data_new_api.R
-/doc/
 /Meta/
 inst/doc
+/doc/

@@ -295,7 +295,7 @@ satscanr <- function(cas, pop = NULL, geo, ctl = NULL, grd = NULL,
         CensusAreasReportedClustersDBase = "y",
         IncludeRelativeRisksCensusAreasDBase = "y",
         SaveSimLLRsDBase = "y",
-        OutputShapefiles = "y",
+        # OutputShapefiles = "y",
         .strict = FALSE
     )
 
