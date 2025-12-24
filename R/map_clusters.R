@@ -52,6 +52,7 @@
 #' - Longitude: `lon`, `long`, `longitude`, `x`, `LONGITUDE`
 #'
 #' @export
+#' @export
 map_clusters <- function(x,
                          significance_only = FALSE,
                          provider = "CartoDB.Positron",
@@ -64,16 +65,18 @@ map_clusters <- function(x,
                          show_locations = TRUE,
                          popup_vars = NULL,
                          verbose = FALSE,
+                         crs = NULL,
+                         use_radius = TRUE,
                          ...) {
   # =========================================================================
   # PACKAGE CHECK
   # =========================================================================
   if (!requireNamespace("leaflet", quietly = TRUE)) {
-    stop(
-      "Package 'leaflet' is required for interactive mapping.\n",
-      "Install it with: install.packages('leaflet')",
-      call. = FALSE
-    )
+    stop("Package 'leaflet' is required for interactive mapping.", call. = FALSE)
+  }
+
+  if (!is.null(crs) && !requireNamespace("sf", quietly = TRUE)) {
+    stop("Package 'sf' is required when providing 'crs'.", call. = FALSE)
   }
 
   # =========================================================================
@@ -88,33 +91,81 @@ map_clusters <- function(x,
   }
 
   # =========================================================================
-  # 3. DETECT COORDINATES
+  # 3. DETECT & TRANSFORM COORDINATES
   # =========================================================================
-  # Detect coords from locations (most reliable source)
-  coords <- detect_coordinates(x$locations)
+  # Detect coords from locations table
+  coord_info <- detect_coordinates(x$locations)
+
+  # Determine Leaflet CRS mode
+  # If Lat/Long: Standard EPSG:3857/4326 logic (Default)
+  # If Cartesian + CRS provided: Project to 4326
+  # If Cartesian + No CRS: Use CRS.Simple
+
+  leaflet_crs <- leaflet::leafletCRS(crsClass = "L.CRS.EPSG3857") # Default
+  is_simple <- FALSE
+
+  locations_mapped <- x$locations
+
+  if (coord_info$type == "cartesian") {
+    if (!is.null(crs)) {
+      # Project to Lat/Lon using sf
+      if (verbose) message("Projecting Cartesian coordinates to Lat/Long using CRS: ", crs)
+
+      # Create temporary sf object
+      loc_sf <- sf::st_as_sf(
+        locations_mapped,
+        coords = c(coord_info$lon, coord_info$lat),
+        crs = crs
+      )
+
+      # Transform to WGS84
+      loc_sf <- sf::st_transform(loc_sf, 4326)
+
+      # Extract transformed coords
+      coords_mat <- sf::st_coordinates(loc_sf)
+      locations_mapped[[coord_info$lon]] <- coords_mat[, 1]
+      locations_mapped[[coord_info$lat]] <- coords_mat[, 2]
+
+      # Treat as lat/lon now
+      coord_info$type <- "latlong"
+    } else {
+      # Stay Cartesian -> Simple CRS
+      if (verbose) message("Using Cartesian coordinates with Simple CRS (pixels).")
+      leaflet_crs <- leaflet::leafletCRS(crsClass = "L.CRS.Simple")
+      is_simple <- TRUE
+    }
+  }
 
   # =========================================================================
   # 4. PREPARE DATA
   # =========================================================================
-  # Prepare clusters
+  # Prepare clusters (with updated locations_mapped)
   cluster_data <- prepare_cluster_data(
-    x = x,
+    x = list(clusters = x$clusters, locations = locations_mapped), # Pass updated locs
     significance_only = significance_only,
-    coords = coords
+    coords = coord_info
   )
 
   # Prepare locations
   location_data <- prepare_location_data(
-    x = x,
-    coords = coords,
+    x = list(locations = locations_mapped), # Pass updated locs
+    coords = coord_info,
     popup_vars = popup_vars
   )
 
   # =========================================================================
   # 5. BUILD MAP
   # =========================================================================
-  m <- leaflet::leaflet() |>
-    leaflet::addProviderTiles(provider)
+  m <- leaflet::leaflet(options = leaflet::leafletOptions(crs = leaflet_crs))
+
+  if (!is_simple) {
+    m <- m |> leaflet::addProviderTiles(provider)
+  } else {
+    # For Simple CRS, tiles don't really work well unless we have a custom image overlay.
+    # We just plot on blank canvas.
+    # But sometimes users want tiles if their "Cartesian" is actually WebMercator?
+    # Assuming mostly "arbitrary grid" here.
+  }
 
   # Add cluster circles
   if (!is.null(cluster_data) && nrow(cluster_data) > 0) {
@@ -123,6 +174,8 @@ map_clusters <- function(x,
       cluster_data = cluster_data,
       color_palette = color_palette,
       opacity = cluster_opacity,
+      use_radius = use_radius,
+      is_simple = is_simple,
       ...
     )
   }
@@ -133,13 +186,22 @@ map_clusters <- function(x,
       map = m,
       location_data = location_data,
       color = location_color,
-      coords = coords
+      coords = coord_info
     )
   }
 
   # Add legend
   if (!is.null(cluster_data) && nrow(cluster_data) > 0) {
     m <- add_cluster_legend(m, cluster_data, color_palette)
+  }
+
+  # For Simple/Cartesian, fit bounds
+  if (is_simple) {
+    m <- leaflet::fitBounds(
+      m,
+      min(locations_mapped[[coord_info$lon]]), min(locations_mapped[[coord_info$lat]]),
+      max(locations_mapped[[coord_info$lon]]), max(locations_mapped[[coord_info$lat]])
+    )
   }
 
   m
@@ -153,13 +215,15 @@ map_clusters <- function(x,
 #' Detect Coordinate Columns
 #'
 #' @param df Data frame with location coordinates
-#' @return List with lat_col and lon_col
+#' @return List with lat_col, lon_col, and type
 #' @keywords internal
 detect_coordinates <- function(df) {
   # Priority: 1. ss_tbl roles, 2. semantic names, 3. common names
   candidates <- list(
-    lat = c("ss_lat", "lat", "latitude", "y", "LATITUDE", "Latitude"),
-    lon = c("ss_long", "ss_lon", "lon", "long", "longitude", "x", "LONGITUDE", "Longitude")
+    lat = c("ss_lat", "lat", "latitude", "LATITUDE", "Latitude"),
+    lon = c("ss_long", "ss_lon", "lon", "long", "longitude", "LONGITUDE", "Longitude"),
+    y = c("y", "Y", "coord_y"),
+    x = c("x", "X", "coord_x")
   )
 
   find_col <- function(choices) {
@@ -171,14 +235,23 @@ detect_coordinates <- function(df) {
     NULL
   }
 
+  # Check Lat/Long first
   lat_col <- find_col(candidates$lat)
   lon_col <- find_col(candidates$lon)
 
-  if (is.null(lat_col) || is.null(lon_col)) {
-    stop("Could not detect spatial coordinates in locations table.", call. = FALSE)
+  if (!is.null(lat_col) && !is.null(lon_col)) {
+    return(list(lat = lat_col, lon = lon_col, type = "latlong"))
   }
 
-  list(lat = lat_col, lon = lon_col)
+  # Check Cartesian X/Y
+  y_col <- find_col(candidates$y)
+  x_col <- find_col(candidates$x)
+
+  if (!is.null(y_col) && !is.null(x_col)) {
+    return(list(lat = y_col, lon = x_col, type = "cartesian"))
+  }
+
+  stop("Could not detect spatial coordinates (lat/long or x/y) in locations table.", call. = FALSE)
 }
 
 
@@ -216,6 +289,10 @@ prepare_cluster_data <- function(x, significance_only, coords) {
         centroid_lon = mean(.data[[coords$lon]], na.rm = TRUE),
         .groups = "drop"
       )
+
+    # Careful merge to preserve types
+    clusters$CLUSTER <- as.character(clusters$CLUSTER)
+    cluster_stats$CLUSTER <- as.character(cluster_stats$CLUSTER)
 
     clusters <- merge(clusters, cluster_stats, by = "CLUSTER", all.x = TRUE)
   }
@@ -322,9 +399,11 @@ create_location_popup <- function(locs, popup_vars) {
 
 #' Add Cluster Circles to Map
 #' @keywords internal
-add_cluster_circles <- function(map, cluster_data, color_palette, opacity, ...) {
+add_cluster_circles <- function(map, cluster_data, color_palette, opacity, use_radius = TRUE, is_simple = FALSE, ...) {
   cluster_data <- assign_cluster_colors(cluster_data, color_palette)
-  cluster_data$radius_m <- calculate_radius(cluster_data)
+
+  # Calculate radius in meters (or pixels for simple CRS)
+  cluster_data$radius_m <- calculate_radius(cluster_data, use_radius, is_simple)
 
   map |>
     leaflet::addCircles(
@@ -428,12 +507,23 @@ assign_cluster_colors <- function(df, palette) {
   df
 }
 
-calculate_radius <- function(df) {
-  if ("n_locations" %in% names(df)) {
-    sqrt(df$n_locations) * 3000 # 3km base for visibility
-  } else if ("RADIUS" %in% names(df)) {
-    df$RADIUS * 1000
+calculate_radius <- function(df, use_radius = TRUE, is_simple = FALSE) {
+  if (use_radius && "RADIUS" %in% names(df)) {
+    # Use physical radius
+    if (is_simple) {
+      # Cartesian/Pixel units
+      df$RADIUS
+    } else {
+      # Lat/Long units (assumed Kilometers -> Meters)
+      df$RADIUS * 1000
+    }
   } else {
-    10000
+    # Fallback to heuristic based on location counts
+    if ("n_locations" %in% names(df)) {
+      scale <- if (is_simple) 10 else 3000
+      sqrt(df$n_locations) * scale
+    } else {
+      if (is_simple) 50 else 10000
+    }
   }
 }
