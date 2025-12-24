@@ -156,15 +156,22 @@ map_clusters <- function(x,
   # =========================================================================
   # 5. BUILD MAP
   # =========================================================================
-  m <- leaflet::leaflet(options = leaflet::leafletOptions(crs = leaflet_crs))
+  # Initial map options
 
-  if (!is_simple) {
-    m <- m |> leaflet::addProviderTiles(provider)
+  if (is_simple) {
+    # Use Simple CRS (Blank Map)
+    # set min/max zoom to allow zooming in on pixels
+    m <- leaflet::leaflet(options = leaflet::leafletOptions(
+      crs = leaflet_crs,
+      minZoom = -5,
+      maxZoom = 5
+    ))
+
+    if (verbose) message("Rendering Cartesian map (no tiles).")
   } else {
-    # For Simple CRS, tiles don't really work well unless we have a custom image overlay.
-    # We just plot on blank canvas.
-    # But sometimes users want tiles if their "Cartesian" is actually WebMercator?
-    # Assuming mostly "arbitrary grid" here.
+    # Standard Map
+    m <- leaflet::leaflet(options = leaflet::leafletOptions(crs = leaflet_crs))
+    m <- m |> leaflet::addProviderTiles(provider)
   }
 
   # Add cluster circles

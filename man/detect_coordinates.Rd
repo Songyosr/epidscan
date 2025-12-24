@@ -10,7 +10,7 @@ detect_coordinates(df)
 \item{df}{Data frame with location coordinates}
 }
 \value{
-List with lat_col and lon_col
+List with lat_col, lon_col, and type
 }
 \description{
 Detect Coordinate Columns

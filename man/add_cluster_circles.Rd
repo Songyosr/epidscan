@@ -4,7 +4,15 @@
 \alias{add_cluster_circles}
 \title{Add Cluster Circles to Map}
 \usage{
-add_cluster_circles(map, cluster_data, color_palette, opacity, ...)
+add_cluster_circles(
+  map,
+  cluster_data,
+  color_palette,
+  opacity,
+  use_radius = TRUE,
+  is_simple = FALSE,
+  ...
+)
 }
 \description{
 Add Cluster Circles to Map

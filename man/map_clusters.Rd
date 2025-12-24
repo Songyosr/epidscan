@@ -14,6 +14,8 @@ map_clusters(
   show_locations = TRUE,
   popup_vars = NULL,
   verbose = FALSE,
+  crs = NULL,
+  use_radius = TRUE,
   ...
 )
 }

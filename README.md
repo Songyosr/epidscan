@@ -114,7 +114,7 @@ result <- satscanr(
   geo = geo,
   pop = pop,
   prm = my_prm,
-  #verbose = TRUE,
+  # verbose = TRUE,
   output_dir = "legacy/example/"
 )
 
