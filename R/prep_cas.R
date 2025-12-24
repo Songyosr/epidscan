@@ -63,7 +63,7 @@
 #' }
 #' @importFrom rlang enquo eval_tidy quo_is_null
 #' @importFrom dplyr select mutate arrange filter
-#' @export
+#' @keywords internal
 prep_cas <- function(df, loc_id, time = NULL, cases = NULL, covars = NULL,
                      style = c("casewise", "aggregated"),
                      time_precision = c("day", "month", "year", "generic")) {

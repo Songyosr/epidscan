@@ -57,7 +57,7 @@
 #' }
 #' @importFrom rlang enquo eval_tidy quo_is_null
 #' @importFrom sf st_centroid st_coordinates st_geometry st_is_longlat st_crs
-#' @export
+#' @keywords internal
 prep_geo <- function(x, loc_id, coords = NULL, geometry = NULL,
                      coord_type = c("auto", "latlong", "cartesian")) {
     coord_type_arg <- match.arg(coord_type)

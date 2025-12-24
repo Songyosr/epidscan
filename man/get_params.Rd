@@ -15,3 +15,4 @@ List of parameters, or NULL if not stored.
 \description{
 Retrieves stored analysis parameters from a satscan_result object.
 }
+\keyword{internal}

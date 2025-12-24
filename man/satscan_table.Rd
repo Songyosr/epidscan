@@ -59,3 +59,4 @@ cas_table2 <- prep_cas(df, loc_id = loc_id, cases = cases, style = "aggregated")
 \seealso{
 \code{\link{prep_cas}}, \code{\link{prep_geo}}, \code{\link{satscanr}}
 }
+\keyword{internal}

@@ -64,3 +64,4 @@ pop_obj2 <- prep_pop(pop_strat, loc_id = county, time = year, pop = pop, covars 
 \seealso{
 \code{\link[=ss_pop]{ss_pop()}} for the new \code{ss_tbl} interface.
 }
+\keyword{internal}

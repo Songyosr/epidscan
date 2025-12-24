@@ -80,7 +80,7 @@ validate_satscan_table <- function(x) {
 #' }
 #'
 #' @seealso \code{\link{prep_cas}}, \code{\link{prep_geo}}, \code{\link{satscanr}}
-#' @export
+#' @keywords internal
 satscan_table <- function(data, kind, spec = list()) {
     validate_satscan_table(new_satscan_table(data, kind, spec))
 }

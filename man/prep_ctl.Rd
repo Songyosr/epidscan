@@ -55,3 +55,4 @@ The Control File has the following structure:
 \seealso{
 \code{\link[=ss_ctl]{ss_ctl()}} for the new \code{ss_tbl} interface.
 }
+\keyword{internal}

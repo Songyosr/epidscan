@@ -58,7 +58,6 @@
 #' - Longitude: `lon`, `long`, `longitude`, `x`, `LONGITUDE`
 #'
 #' @export
-#' @export
 map_clusters <- function(x,
                          significance_only = FALSE,
                          provider = "CartoDB.Positron",

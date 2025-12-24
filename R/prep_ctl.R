@@ -27,7 +27,7 @@
 #' @param time_precision Time resolution: "day", "month", "year", or "generic".
 #' @return A \code{satscan_table} object of kind "ctl".
 #' @importFrom rlang enquo eval_tidy quo_is_null
-#' @export
+#' @keywords internal
 prep_ctl <- function(df, loc_id, time = NULL, cases = NULL, covars = NULL,
                      style = c("casewise", "aggregated"),
                      time_precision = c("day", "month", "year", "generic")) {

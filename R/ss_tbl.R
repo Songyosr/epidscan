@@ -426,7 +426,6 @@ ss_geo <- function(data, loc_id, coord1 = NULL, coord2 = NULL, z = NULL,
     if (inherits(data, "sf")) {
         # Check CRS
         is_ll <- sf::st_is_longlat(data)
-        crs <- sf::st_crs(data)
 
         # Auto-detect type
         final_type <- if (coord_type == "auto") {
@@ -702,7 +701,7 @@ ss_met <- function(data, meta_loc_id, member_cols) {
 #' @param x Vector of times (Date, POSIXt, numeric, character)
 #' @param time_precision "day", "month", "year", or "generic"
 #' @return Character vector formatted for SaTScan
-#' @export
+#' @keywords internal
 format_satscan_time <- function(x, time_precision) {
     if (is.null(time_precision)) {
         return(as.character(x))
@@ -779,8 +778,6 @@ write_satscan <- function(x, file, sep = " ", na = "", quote = FALSE) {
     # For neighbor/met types, out_cols covers everything (ID + neighbors)
     # For cas/ctl/pop/geo, out_cols currently ONLY has required roles.
     # We should append the rest of the mapped roles to out_cols.
-
-    extra_cols <- setdiff(all_mapped_cols, out_cols)
 
     # HOWEVER, SaTScan expects specific order for optional columns too?
     # e.g. .geo: ID, X, Y, [Z]. Z must come after.

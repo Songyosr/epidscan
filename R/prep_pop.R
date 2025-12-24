@@ -46,7 +46,7 @@
 #' pop_obj2 <- prep_pop(pop_strat, loc_id = county, time = year, pop = pop, covars = "sex")
 #' }
 #' @importFrom rlang enquo eval_tidy quo_is_null
-#' @export
+#' @keywords internal
 prep_pop <- function(df, loc_id, time, pop, covars = NULL) {
     id_quo <- rlang::enquo(loc_id)
     time_quo <- rlang::enquo(time)

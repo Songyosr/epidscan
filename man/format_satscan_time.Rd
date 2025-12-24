@@ -17,3 +17,4 @@ Character vector formatted for SaTScan
 \description{
 Format Time for SaTScan
 }
+\keyword{internal}

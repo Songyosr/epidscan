@@ -709,7 +709,7 @@ attach_analysis_params <- function(result, params) {
 #'
 #' @param x A `satscan_result` object.
 #' @return List of parameters, or NULL if not stored.
-#' @export
+#' @keywords internal
 get_params <- function(x) {
     if (!inherits(x, "satscan_result")) {
         stop("x must be a satscan_result object", call. = FALSE)

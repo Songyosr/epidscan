@@ -90,3 +90,4 @@ cas_obj2 <- prep_cas(my_cases,
 \seealso{
 \code{\link[=ss_cas]{ss_cas()}} for the new \code{ss_tbl} interface.
 }
+\keyword{internal}

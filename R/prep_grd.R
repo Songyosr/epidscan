@@ -30,7 +30,7 @@
 #' grd_obj <- prep_grd(grid_sf, loc_id = id)
 #' }
 #' @importFrom rlang enquo eval_tidy quo_is_null
-#' @export
+#' @keywords internal
 prep_grd <- function(x, loc_id = NULL, coords = NULL) {
     # Reuse prep_geo logic but change kind
     # Grid file format is identical to Geo file: ID, X, Y
